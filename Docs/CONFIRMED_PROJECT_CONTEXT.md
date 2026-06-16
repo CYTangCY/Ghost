@@ -680,13 +680,15 @@ Every Codex task must update or produce:
 
 ---
 
-## 17. Next Required File
+## 17. Canonical Mapping File
 
-After this file, create:
+The canonical learning-content mapping lives in:
 
 ```text
-Docs/LEARNING_CONTENT_MAPPING.md
+Docs/LEARNING_CONTENT.md
 ```
+
+(This file replaces the previously planned Docs/LEARNING_CONTENT_MAPPING.md.)
 
 Purpose:
 
@@ -714,7 +716,8 @@ Do not start Unity coding yet.
 Next task:
 
 ```text
-M0-T02: Build the confirmed learning-content mapping table for Acts 0, 1, and 2 first.
+M0-T02: Complete the confirmed learning-content mapping for Acts 0, 1, and 2 in
+Docs/LEARNING_CONTENT.md, and confirm the mechanic assigned to each.
 ```
 
 Reason:

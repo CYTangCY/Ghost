@@ -6,7 +6,7 @@ Ghost
 
 ## One-Sentence Pitch
 
-Ghost is a cute ghost-themed narrative puzzle game that teaches selected AI chatbot and NLP concepts by turning Ghost's communication problems into playable puzzle mechanics.
+Ghost is a cute ghost-themed narrative puzzle game that teaches selected IBM SkillsBuild chatbot and NLP concepts by turning Ghost's communication problems into playable puzzle mechanics.
 
 ## Project Goal
 

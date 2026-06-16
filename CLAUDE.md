@@ -13,7 +13,7 @@ Before planning, always read:
 
 Ghost is a cute ghost-themed narrative puzzle game for teaching selected IBM SkillsBuild chatbot and NLP concepts.
 
-Ghost is a cute ghost, not literally an AI assistant.
+Ghost is a cute ghost, not literally an AI assistant, chatbot, or robot.
 
 while True: learn() is only a reference game, not this project's title.
 

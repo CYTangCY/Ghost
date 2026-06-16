@@ -40,7 +40,7 @@ Ghost responds in a cute but wrong/confused way.
 
 Lily should provide hints or interpretation without directly solving the puzzle.
 
-Lily's style must be nerdy, timid, technically capable, and human.
+Lily is the protagonist's postdoctoral senior from the lab. Her style must be nerdy, technically capable, pretty/cute, slightly timid, and a little deferential — human, not a generic tutor or AI assistant.
 
 ### FR6: Playable Prototype
 
