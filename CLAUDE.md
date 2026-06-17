@@ -63,6 +63,7 @@ When reviewing a task, check:
 - Does player action visibly change Ghost's response?
 - Does it avoid generic quiz design?
 - Is the code structure explainable?
+- Did Codex create a run log in `Docs/codex_runs/` for this run, with real (not claimed) test results and no chain-of-thought?
 
 ## Task Archiving Convention
 
@@ -72,3 +73,14 @@ When reviewing a task, check:
 - Each archived task file includes: completion status, date, summary, changed files, test / verification result, and next task.
 - `Docs/HANDOFF_LOG.md` keeps a short chronological summary; `Docs/completed_tasks/` stores the fuller task records.
 - Never delete or rename previous task files in `Docs/completed_tasks/`.
+
+## Codex Run Log Review
+
+When reviewing a Codex implementation or debugging run, Claude must check that:
+
+- a run log exists in `Docs/codex_runs/` for the run (filename `TASKID_RUNNUMBER_short_description.md`);
+- any "tests passed" claim is backed by tests that were actually run — otherwise the log should say `Not run — [reason].`;
+- the log records actions, decisions, results, and evidence only (no hidden reasoning / chain-of-thought);
+- older run logs were not deleted or overwritten.
+
+See `Docs/codex_runs/README.md` for the convention.

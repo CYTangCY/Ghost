@@ -46,6 +46,7 @@ After editing, report:
 - how to test it in Play Mode
 - assumptions made
 - risks or limitations
+- a run log saved in `Docs/codex_runs/` (see Codex Run Log Convention below)
 
 ## Task Archiving Convention
 
@@ -55,3 +56,15 @@ After editing, report:
 - Each archived task file includes: completion status, date, summary, changed files, test / verification result, and next task.
 - `Docs/HANDOFF_LOG.md` keeps a short chronological summary; `Docs/completed_tasks/` stores the fuller task records.
 - Never delete or rename previous task files in `Docs/completed_tasks/`.
+
+## Codex Run Log Convention
+
+After every implementation or debugging run, Codex must create one run log in `Docs/codex_runs/`.
+
+- Filename: `TASKID_RUNNUMBER_short_description.md` (e.g. `M0-T04_001_intent_validator_initial_implementation.md`); run numbers are zero-padded and increase per task.
+- The log must include: Task ID, run number, date, original request / prompt summary, files created, files modified, tests or checks run, test/check result, errors encountered, fixes applied, what was intentionally not changed, remaining risks, and next recommended step.
+- Do not claim tests passed unless they were actually run. If tests were not run, write exactly: `Not run — [reason].`
+- Never delete or overwrite older run logs; each run gets a new file with the next run number.
+- Do not put hidden reasoning or private chain-of-thought in the log — record actions, decisions, results, and evidence only.
+- `Docs/HANDOFF_LOG.md` keeps only a short chronological summary; `Docs/codex_runs/` stores the detailed per-run records.
+- See `Docs/codex_runs/README.md` for the full template.

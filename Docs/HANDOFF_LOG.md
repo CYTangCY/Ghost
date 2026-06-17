@@ -21,6 +21,15 @@ and Act 2 (span annotation with entity typing), using the IBM SkillsBuild source
 components and four challenges. Also added the task archiving convention.
 Archive: `Docs/completed_tasks/M0-T02_learning_content_mapping.md`. Next: M0-T03.
 
+### 2026-06-17 — M0-T03: Unity repo inventory — Completed
+Read-only inventory: clean Unity 6 Universal 2D / URP project, new Input System active,
+SampleScene only, no scripts, no game scenes, Test Framework installed. No files modified.
+Archive: `Docs/completed_tasks/M0-T03_repo_inventory.md`. Next: M0-T04.
+
+### 2026-06-17 — Convention: Codex run log added
+Every Codex implementation/debugging run now creates one log in `Docs/codex_runs/`
+(see `Docs/codex_runs/README.md`); AGENTS.md and CLAUDE.md updated accordingly.
+
 ---
 
 ## Entry Template

@@ -2,31 +2,43 @@
 
 ## ID
 
-M0-T03
+M0-T04
 
 ## Goal
 
-Inventory the actual Unity repository state before the first implementation task.
+Implement the Act 1 intent-classification core validator as pure C# logic with EditMode tests.
+
+## Context
+
+M0-T03 found a clean Unity 6 Universal 2D / URP project with the new Input System active,
+SampleScene only, no existing scripts, no game scenes, and the Unity Test Framework installed.
+The first implementation task should be scene-free, input-free, and testable.
 
 ## Scope
 
-- Inspect current Assets/, Packages/, ProjectSettings/, scenes, input settings, render pipeline
-  settings, and existing scripts if any.
-- Report what already exists.
-- Identify the safest first Unity implementation task.
-- Do not implement code yet.
+- Create a small runtime code structure for Act 1 intent classification.
+- Implement pure C# validation logic for grouping message cards by intent / purpose.
+- Add EditMode tests for correct grouping and incorrect grouping.
+- Add runtime and test asmdefs if appropriate.
+- Create a Codex run log for the implementation run when Codex performs it.
 
 ## Out of Scope
 
-- Do not create scripts.
 - Do not create scenes.
-- Do not modify prefabs or assets.
-- Do not change Unity project settings.
-- Do not invent level content.
+- Do not create UI.
+- Do not implement drag-and-drop yet.
+- Do not modify ProjectSettings.
+- Do not edit .meta files manually.
+- Do not implement Act 0, Act 2, or later Acts.
+- Do not add LLM / backend integration.
+- Do not create art assets.
 
 ## Acceptance Criteria
 
-- The repo inventory lists existing scenes, scripts, packages, render pipeline setup, input
-  system setup, and relevant project settings.
-- The next recommended implementation task is small and testable.
-- No Unity files are modified during inventory.
+- Intent-classification validation logic exists as pure C#.
+- EditMode tests cover at least one correct grouping and at least one incorrect grouping.
+- Code is scene-free and WebGL-safe.
+- No Unity scene or ProjectSettings files are modified.
+- A Codex run log is created under Docs/codex_runs/ after the implementation run.
+- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md are updated only when implementation actually
+  happens, not during this planning closure.
