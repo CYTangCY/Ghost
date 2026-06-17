@@ -27,39 +27,58 @@ Do not implement a level before its mapping is written here.
 
 ### Learning Objective
 
-TBD. The player should understand the basic components and limitations of chatbots.
+The player should understand what a chatbot is, tell a rule-based chatbot apart from an AI-enabled one, name the five chatbot components, and recognise the four common chatbot challenges.
+
+The five components (IBM SkillsBuild wording):
+1. User interface (UI): Facilitates interaction between the user and the chatbot
+2. NLP engine: Interprets and processes the user's input
+3. Dialogue management system: Decides on the appropriate response
+4. Response generation module: Generates appropriate responses
+5. Backend integration: Allows the chatbot to fetch additional data to provide accurate information
+
+The four challenges (IBM SkillsBuild wording):
+1. Handling unstructured data
+2. Misunderstanding queries
+3. Providing human-like interaction
+4. Contextual awareness
 
 ### Cute Ghost Communication Problem
 
-TBD.
-
-Possible direction:
-Ghost tries to communicate through several broken channels, but each channel represents one chatbot component.
+Ghost is a cute ghost whose communication process has become disconnected. The pieces Ghost needs to understand a message and reply have come apart, so Ghost's messages come out broken or jumbled. Each disconnected piece maps to one of the five chatbot components, and the four chatbot challenges appear as cute failure cases when parts are missing, misordered, or poorly connected.
 
 ### Puzzle Mechanic
 
-TBD.
-
-Possible mechanics:
-- flow diagram construction
-- ordered list
-- multiple choice only if used carefully as a minor mechanic
+Flow diagram construction. (Act 0 design: Option A — "Rebuild Ghost's voice".)
 
 ### Player Action
 
-TBD.
+The player arranges and connects the five components into a working communication pipeline:
+
+UI → NLP engine → Dialogue management system → Response generation module → UI
+
+with Backend integration connected where extra information is needed.
 
 ### Success Consequence
 
-TBD.
+When the pipeline is connected correctly, Ghost produces one clear, cute response because the communication process works end to end.
 
 ### Failure Consequence
 
-TBD.
+Ghost's response breaks at the wrong or missing stage, in a cute but confused way:
+- UI missing: Ghost cannot receive or show the message clearly.
+- NLP engine wrong: Ghost hears the words but does not interpret them.
+- Dialogue management system wrong: Ghost understands the input but chooses the wrong next step.
+- Response generation module wrong: Ghost knows what to say but says it awkwardly.
+- Backend integration missing: Ghost cannot fetch the extra information it needs.
+
+These broken pipelines are how the four chatbot challenges show up in play — handling unstructured data, misunderstanding queries, providing human-like interaction, and contextual awareness — so the player feels each challenge as a concrete, cute failure rather than reading it as a definition.
 
 ### Lily Hint Style
 
-Lily should nervously explain the system components without sounding like a lecturer.
+Lily sounds nervous, nerdy, technically capable, and slightly deferential. She does not lecture. She helps the player notice that Ghost's communication parts are disconnected, without naming the exact fix.
+
+Example:
+"Um... I don't think Ghost is broken-broken. It's more like... the parts that let it understand and reply got unplugged from each other? Maybe we line them up in the order a message would actually travel...?"
 
 ### Implementation Priority
 
@@ -86,14 +105,11 @@ For example, Ghost sees a message asking for help finding something but reacts a
 
 ### Puzzle Mechanic
 
-Likely:
-drag-and-drop classification
-
-Must be confirmed before implementation.
+Drag-and-drop classification.
 
 ### Player Action
 
-The player groups message cards by what the speaker wants, not by exact wording.
+The player groups message cards by intent — what the speaker wants (their purpose) — not by exact wording.
 
 ### Success Consequence
 
@@ -126,7 +142,7 @@ High.
 
 ### Learning Objective
 
-The player should understand that a chatbot needs to identify important details such as names, locations, times, and objects.
+The player should understand that a chatbot needs to identify important details (entity extraction) such as names, locations, times, and objects; that different words or spellings can refer to the same entity (synonyms); and that some entities are built-in system entities (for example time) while others are custom entities defined for this situation (for example a specific room or object).
 
 ### Cute Ghost Communication Problem
 
@@ -136,14 +152,19 @@ For example, Ghost knows someone wants help, but misses which room, object, name
 
 ### Puzzle Mechanic
 
-Likely:
-span annotation
-
-Must be confirmed before implementation.
+Span annotation with entity typing.
 
 ### Player Action
 
-The player marks important words or fragments in a message.
+The player highlights the important span(s) in a message and assigns each span an entity type, such as:
+- system entity
+- custom entity
+- location / room
+- object
+- time
+- name
+
+This covers entity extraction (finding the detail), synonyms (different words that map to the same entity), and the difference between system entities (built-in types such as time) and custom entities (game-specific types such as a particular room or object).
 
 ### Success Consequence
 

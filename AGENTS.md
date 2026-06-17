@@ -46,3 +46,12 @@ After editing, report:
 - how to test it in Play Mode
 - assumptions made
 - risks or limitations
+
+## Task Archiving Convention
+
+- `Docs/CURRENT_TASK.md` always contains only the active task.
+- When a task is completed, copy or summarize its final state into `Docs/completed_tasks/`.
+- Archive filename format: `TASKID_short_description.md` (e.g. `M0-T01_initialize_planning_docs.md`).
+- Each archived task file includes: completion status, date, summary, changed files, test / verification result, and next task.
+- `Docs/HANDOFF_LOG.md` keeps a short chronological summary; `Docs/completed_tasks/` stores the fuller task records.
+- Never delete or rename previous task files in `Docs/completed_tasks/`.
