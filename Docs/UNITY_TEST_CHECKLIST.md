@@ -32,3 +32,36 @@ Manual Play Mode check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T04. `IntentCard` and `IntentClassificationValidator` are pure C# classes and are not attached to GameObjects.
+
+---
+
+## M0-T05: Act 1 Intent Classification Sample Data
+
+### Automated EditMode Tests
+
+1. Open the Unity project.
+2. Open `Window > General > Test Runner`.
+3. Select the `EditMode` tab.
+4. Confirm the `Ghost.EditModeTests` assembly appears.
+5. Run the EditMode tests.
+6. Expected M0-T05 tests:
+   - `SampleData_WhenCorrectGroupsSubmitted_ValidatesSuccessfully`
+   - `SampleData_ContainsThreeIntentGroupsWithMultipleDifferentlyWordedMessages`
+   - `SampleData_WhenOneCardMovesToWrongPurpose_ValidatorRejectsIt`
+
+### Expected Result
+
+All M0-T05 EditMode tests should pass after Unity imports the new sample data script and test file.
+
+### Play Mode Check
+
+This task adds scene-free sample puzzle data only. There is no GameObject, prefab, UI, or scene setup to test in Play Mode yet.
+
+Manual Play Mode check:
+1. Open `Assets/Scenes/SampleScene.unity`.
+2. Enter Play Mode.
+3. Confirm no new errors appear in the Console from the M0-T05 scripts.
+
+### Inspector Setup
+
+No Inspector setup is required for M0-T05. `Act1IntentClassificationSampleData` is a pure C# static data provider and is not attached to a GameObject.

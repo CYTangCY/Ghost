@@ -158,3 +158,59 @@ The validator returns incorrect results with errors for:
 ### Unity Test
 
 Run the EditMode tests under `Assets/Tests/EditMode/IntentClassificationValidatorTests.cs`.
+
+---
+
+### Script Name
+
+Act1IntentClassificationSampleData.cs
+
+### Purpose
+
+Provides reusable sample data for the Act 1 intent-classification puzzle. The data demonstrates the learning concept that different wording can still share the same purpose / intent.
+
+### Attached GameObject
+
+None. This is pure C# sample data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future UI or puzzle controller code can call this class to get sample message cards and the correct intent groups. The class does not run by itself.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Constants:
+- `FindItemIntentId`
+- `AskLocationIntentId`
+- `AskIdentityIntentId`
+
+### Important Methods
+
+- `CreateCards()`: returns fresh `IntentCard` objects for the Act 1 sample puzzle.
+- `CreateCorrectGroups()`: returns the correct grouping by card id, ready to pass into `IntentClassificationValidator.Validate(...)`.
+
+### Input
+
+None. The sample data is created by method calls.
+
+### Output
+
+- Three intent groups.
+- Nine message cards total.
+- Three differently worded messages per intent.
+
+Sample intent groups:
+- `find_item`: messages about finding a missing key, notebook, or lantern.
+- `ask_location`: messages asking where Ghost is.
+- `ask_identity`: messages asking who Ghost is or what to call the little ghost.
+
+### Failure Cases
+
+- If card ids are edited later, `CreateCorrectGroups()` must be updated to match.
+- If sample cards are moved to data files later, tests should continue validating that every card appears in exactly one correct group.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act1IntentClassificationSampleDataTests.cs`.
