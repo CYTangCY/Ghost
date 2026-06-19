@@ -2,27 +2,32 @@
 
 ## ID
 
-M0-T05
+M0-T06
 
 ## Goal
 
-Define Act 1 sample puzzle data structure and sample content for the intent-classification puzzle,
-without creating UI or scenes.
+Implement the Act 1 intent-classification puzzle session state as pure C# logic, without creating
+UI or scenes.
 
 ## Context
 
-M0-T04 implemented the pure Act 1 intent-classification validator and EditMode tests. The next
-step is to define a small, reusable Act 1 puzzle data layer that later UI can render and pass into
-the validator.
+M0-T04 implemented the pure intent-classification validator. M0-T05 added Act 1 sample puzzle data.
+The next step is to create a small scene-free session/state layer that represents the player's
+current grouping before later UI work.
 
 ## Scope
 
-- Define a small Act 1 puzzle data structure if the existing M0-T04 model is not enough.
-- Add sample Act 1 message cards grouped by intent / purpose.
-- Ensure sample data can be validated by the existing IntentClassificationValidator.
-- Add or update EditMode tests for the sample data.
-- Keep this scene-free and UI-free.
-- Create a Codex run log when implementation happens.
+- Create a pure C# session/state class for Act 1 intent classification.
+- It should initialize from Act1IntentClassificationSampleData or a list of IntentCard objects.
+- It should track which card IDs are currently assigned to which player group.
+- It should support moving a card between groups.
+- It should support unassigned cards.
+- It should expose the current grouping in the format needed by IntentClassificationValidator.
+- It should allow validating the current state using IntentClassificationValidator.
+- Add EditMode tests for initialization, moving cards, unassigned state, incorrect grouping, and
+  validating a correct grouping.
+- Keep everything scene-free, UI-free, and WebGL-safe.
+- Create a Codex run log during implementation.
 
 ## Out of Scope
 
@@ -36,9 +41,10 @@ the validator.
 
 ## Acceptance Criteria
 
-- Act 1 sample puzzle data exists in a small, testable form.
-- The sample data includes multiple messages that share the same intent despite different wording.
-- The sample data includes at least two or three intent groups.
-- EditMode tests verify the sample data can be validated correctly.
+- A pure C# Act 1 session/state layer exists.
+- The state can represent unassigned and grouped cards.
+- Moving cards between groups is testable.
+- The current grouping can be passed into IntentClassificationValidator.
+- EditMode tests cover the core state behavior.
 - No Unity scene or ProjectSettings files are modified.
 - A Codex run log is created during implementation.

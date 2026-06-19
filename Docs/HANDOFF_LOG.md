@@ -37,6 +37,13 @@ verified in the Unity Editor that the project compiled and the EditMode tests pa
 committed and pushed. Archive: `Docs/completed_tasks/M0-T04_intent_classification_validator.md`.
 Next: M0-T05.
 
+### 2026-06-19 — M0-T05: Act 1 sample puzzle data — Completed
+Codex added Act1IntentClassificationSampleData (3 intent groups, 9 differently-worded cards) +
+EditMode tests; run 002 fixed a failing test by checking `groups.Count` directly instead of the
+NUnit `Has.Count` constraint. Both run logs recorded Unity tests as "Not run" in-session; the user
+later verified in the Editor that the project compiled and both EditMode suites passed, then
+committed and pushed. Archive: `Docs/completed_tasks/M0-T05_act1_sample_puzzle_data.md`. Next: M0-T06.
+
 ---
 
 ## Entry Template
