@@ -214,3 +214,65 @@ Sample intent groups:
 ### Unity Test
 
 Run the EditMode tests under `Assets/Tests/EditMode/Act1IntentClassificationSampleDataTests.cs`.
+
+---
+
+### Script Name
+
+IntentClassificationSession.cs
+
+### Purpose
+
+Tracks the player's current Act 1 intent-classification grouping before UI exists. It keeps puzzle state separate from display code, so later drag-and-drop UI can move card ids while this class owns the grouping state.
+
+### Attached GameObject
+
+None. This is pure C# session state and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future puzzle controller or UI code can create a session at the start of an Act 1 puzzle, move cards between player groups as the player acts, and ask the session to validate the current grouping.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- source `IntentCard` list
+- unassigned card ids
+- assigned card ids by player group id
+- current group id by card id
+
+### Important Methods
+
+- `IntentClassificationSession(IEnumerable<IntentCard> cards)`: initializes a session from any card list.
+- `CreateFromSampleData()`: initializes a session from `Act1IntentClassificationSampleData`.
+- `MoveCardToGroup(string cardId, string groupId)`: assigns or moves a known card into a player group.
+- `MoveCardToUnassigned(string cardId)`: returns a known card to the unassigned pile.
+- `GetAssignedGroupId(string cardId)`: returns the current group id for a card, or null if unassigned.
+- `GetAssignedCardIds(string groupId)`: returns the assigned card ids for a player group.
+- `CreateSubmittedGroups()`: returns the current non-empty groups in the format expected by `IntentClassificationValidator`.
+- `ValidateCurrentState()`: validates the current grouping with `IntentClassificationValidator`.
+
+### Input
+
+- `IntentCard` data at construction time.
+- Card ids and player group ids when cards are moved.
+
+### Output
+
+- Snapshots of cards, unassigned card ids, assigned group ids, and submitted groups.
+- An `IntentClassificationResult` when the session validates its current state.
+
+### Failure Cases
+
+- Null card list throws an `ArgumentNullException`.
+- Empty card list throws an `ArgumentException`.
+- Null cards or duplicate card ids throw an `ArgumentException`.
+- Empty or unknown card ids throw an `ArgumentException`.
+- Empty group ids throw an `ArgumentException`.
+- Partial groupings validate as incorrect because unassigned cards are missing from the submitted groups.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/IntentClassificationSessionTests.cs`.
