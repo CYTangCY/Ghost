@@ -29,3 +29,44 @@ If the generated scene still shows blank message cards, rebuild it from the Unit
 6. Confirm the three intent group areas still show `find_item`, `ask_location`, and `ask_identity`.
 
 The display fix keeps the UI static. It does not add drag-and-drop, validation, scoring, save/load, backend, LLM, or dialogue behaviour.
+
+## Refreshing after the M0-T08 click-to-assign interaction
+
+The prototype now supports a simple click flow:
+
+1. Click a message card to select it.
+2. Confirm the selected card changes to the yellow selected highlight.
+3. Click `find_item`, `ask_location`, or `ask_identity` to assign the selected card to that intent group.
+4. Confirm the assigned card text appears inside the clicked intent group area.
+5. Confirm assigned cards change to the green assigned highlight unless they are currently selected.
+
+If the scene does not respond to clicks after Unity imports the updated scripts, rebuild it from the Unity menu:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+5. Enter Play Mode and repeat the click-to-assign check above.
+
+M0-T08 keeps the UI placeholder-based. It does not add drag-and-drop, validation, scoring, save/load, animation, backend, LLM, dialogue behaviour, final art, or Build Settings changes.
+
+## Refreshing after the M0-T08 run 002 UI fix
+
+Run 002 fixes two prototype UI behaviours:
+
+1. Clicking the selected card again now deselects it.
+2. Assigning a selected card now clears the selection automatically.
+3. Assigned-card rows in each intent group use a compact clipped layout so text stays inside the group panel.
+
+If the visible scene still has older layout behaviour after Unity imports the updated scripts, refresh it from the Unity menu:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+5. Enter Play Mode.
+6. Confirm selecting the same card twice clears the highlight.
+7. Confirm assignment clears the selected-card highlight.
+8. Confirm assigned message rows stay visually inside the right-side group areas.
+
+Run 002 still does not add drag-and-drop, validation, scoring, save/load, animation, backend, LLM, dialogue behaviour, final art, or Build Settings changes.

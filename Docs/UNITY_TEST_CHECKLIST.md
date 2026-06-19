@@ -155,3 +155,59 @@ If the left-side message cards appear as blank pale rectangles:
 ### Inspector Setup
 
 If the scene is created through the menu builder, no manual Inspector setup should be required. The builder wires `Act1IntentClassificationStaticPresenter` to its card list root, intent group list root, card template, and intent group template.
+
+---
+
+## M0-T08: Click-to-Assign Act 1 Prototype Interaction
+
+### Scene Refresh Check
+
+If the existing prototype scene was generated before M0-T08:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Confirm `Assets/Scenes/Act1IntentClassificationPrototype.unity` is refreshed.
+5. Do not add the scene to Build Settings during M0-T08.
+
+### Play Mode Interaction Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm all nine sample message cards are visible in the left column.
+4. Confirm the three intent group areas are visible in the right column:
+   - `find_item`
+   - `ask_location`
+   - `ask_identity`
+5. Click a message card.
+6. Confirm the clicked card changes to the selected highlight.
+7. Click one of the three intent group areas.
+8. Confirm the selected card text appears inside that intent group area.
+9. Confirm the assigned card changes to the assigned highlight when it is no longer the selected card.
+10. Click another message card and confirm the selected highlight moves to the newly clicked card.
+11. Assign that card to a different intent group and confirm the visible assigned-card list updates.
+12. Confirm there is no drag-and-drop behaviour.
+13. Confirm there is no validation button, scoring, save/load, animation, backend, LLM, dialogue behaviour, or final art pass.
+14. Confirm no new Console errors appear.
+
+### Inspector Setup
+
+If the scene is created or refreshed through the menu builder, no manual Inspector setup should be required. The builder wires `Act1IntentClassificationStaticPresenter` to its card list root, intent group list root, card template, and intent group template, and creates an `EventSystem` for UI clicks.
+
+### M0-T08 Run 002 UI Fix Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Click a message card and confirm it receives the selected highlight.
+4. Click the same message card again and confirm the selected highlight disappears.
+5. Click another message card, then click an intent group area.
+6. Confirm the card is assigned and no card remains selected afterward.
+7. Assign multiple cards to the same intent group area.
+8. Confirm the assigned message rows stay visually inside the group panel.
+9. Confirm the three intent group areas remain visible:
+   - `find_item`
+   - `ask_location`
+   - `ask_identity`
+10. Confirm there is still no drag-and-drop behaviour.
+11. Confirm there is still no validation button, scoring, save/load, animation, backend, LLM, dialogue behaviour, or final art pass.
+12. Confirm no new Console errors appear.

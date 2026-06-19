@@ -2,6 +2,8 @@ using Ghost.Presentation.Act1IntentClassification;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -18,6 +20,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             CreateCamera();
             var canvas = CreateCanvas();
+            CreateEventSystem();
             CreateStaticUi(canvas.transform);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -48,6 +51,13 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             canvasObject.AddComponent<GraphicRaycaster>();
             return canvas;
+        }
+
+        private static void CreateEventSystem()
+        {
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystemObject.AddComponent<EventSystem>();
+            eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
 
         private static void CreateStaticUi(Transform canvasTransform)
@@ -234,11 +244,14 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
                 new Color(0.91f, 0.96f, 1f)).gameObject;
 
             var layoutElement = group.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 128f;
+            layoutElement.minHeight = 216f;
+            layoutElement.preferredHeight = 216f;
+
+            group.AddComponent<RectMask2D>();
 
             var layout = group.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(18, 18, 16, 14);
-            layout.spacing = 10f;
+            layout.padding = new RectOffset(18, 18, 14, 12);
+            layout.spacing = 8f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -246,8 +259,29 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             CreateLabel("IntentTitleText", group.transform, "intent_id", 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 42f);
             CreateLabel("IntentHintText", group.transform, "Purpose description", 18, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.34f, 0.44f), 52f);
+            CreateAssignmentRoot(group.transform);
 
             return group;
+        }
+
+        private static void CreateAssignmentRoot(Transform parent)
+        {
+            var assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            assignmentRoot.SetParent(parent, false);
+
+            var layoutElement = assignmentRoot.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = 68f;
+            layoutElement.preferredHeight = 68f;
+            layoutElement.flexibleHeight = 1f;
+
+            assignmentRoot.gameObject.AddComponent<RectMask2D>();
+
+            var layout = assignmentRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 2f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
         }
 
         private static RectTransform CreatePanel(
@@ -292,6 +326,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             label.color = color;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.raycastTarget = false;
 
             var layoutElement = label.gameObject.AddComponent<LayoutElement>();
             layoutElement.minHeight = preferredHeight;
