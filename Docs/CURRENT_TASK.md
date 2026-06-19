@@ -2,43 +2,43 @@
 
 ## ID
 
-M0-T04
+M0-T05
 
 ## Goal
 
-Implement the Act 1 intent-classification core validator as pure C# logic with EditMode tests.
+Define Act 1 sample puzzle data structure and sample content for the intent-classification puzzle,
+without creating UI or scenes.
 
 ## Context
 
-M0-T03 found a clean Unity 6 Universal 2D / URP project with the new Input System active,
-SampleScene only, no existing scripts, no game scenes, and the Unity Test Framework installed.
-The first implementation task should be scene-free, input-free, and testable.
+M0-T04 implemented the pure Act 1 intent-classification validator and EditMode tests. The next
+step is to define a small, reusable Act 1 puzzle data layer that later UI can render and pass into
+the validator.
 
 ## Scope
 
-- Create a small runtime code structure for Act 1 intent classification.
-- Implement pure C# validation logic for grouping message cards by intent / purpose.
-- Add EditMode tests for correct grouping and incorrect grouping.
-- Add runtime and test asmdefs if appropriate.
-- Create a Codex run log for the implementation run when Codex performs it.
+- Define a small Act 1 puzzle data structure if the existing M0-T04 model is not enough.
+- Add sample Act 1 message cards grouped by intent / purpose.
+- Ensure sample data can be validated by the existing IntentClassificationValidator.
+- Add or update EditMode tests for the sample data.
+- Keep this scene-free and UI-free.
+- Create a Codex run log when implementation happens.
 
 ## Out of Scope
 
 - Do not create scenes.
-- Do not create UI.
-- Do not implement drag-and-drop yet.
-- Do not modify ProjectSettings.
-- Do not edit .meta files manually.
-- Do not implement Act 0, Act 2, or later Acts.
-- Do not add LLM / backend integration.
+- Do not create drag-and-drop UI.
+- Do not create prefabs.
 - Do not create art assets.
+- Do not modify ProjectSettings.
+- Do not implement Act 0, Act 2, or later Acts.
+- Do not implement backend, LLM, save system, or dialogue system.
 
 ## Acceptance Criteria
 
-- Intent-classification validation logic exists as pure C#.
-- EditMode tests cover at least one correct grouping and at least one incorrect grouping.
-- Code is scene-free and WebGL-safe.
+- Act 1 sample puzzle data exists in a small, testable form.
+- The sample data includes multiple messages that share the same intent despite different wording.
+- The sample data includes at least two or three intent groups.
+- EditMode tests verify the sample data can be validated correctly.
 - No Unity scene or ProjectSettings files are modified.
-- A Codex run log is created under Docs/codex_runs/ after the implementation run.
-- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md are updated only when implementation actually
-  happens, not during this planning closure.
+- A Codex run log is created during implementation.

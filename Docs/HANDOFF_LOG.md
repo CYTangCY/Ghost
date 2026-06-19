@@ -30,6 +30,13 @@ Archive: `Docs/completed_tasks/M0-T03_repo_inventory.md`. Next: M0-T04.
 Every Codex implementation/debugging run now creates one log in `Docs/codex_runs/`
 (see `Docs/codex_runs/README.md`); AGENTS.md and CLAUDE.md updated accordingly.
 
+### 2026-06-19 — M0-T04: Act 1 intent-classification validator — Completed
+Codex implemented the pure C# intent-classification validator + EditMode tests (runtime/test
+asmdefs). The Codex run log honestly recorded Unity tests as "Not run" in-session; the user later
+verified in the Unity Editor that the project compiled and the EditMode tests passed, then
+committed and pushed. Archive: `Docs/completed_tasks/M0-T04_intent_classification_validator.md`.
+Next: M0-T05.
+
 ---
 
 ## Entry Template
