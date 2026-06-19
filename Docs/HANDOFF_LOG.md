@@ -62,6 +62,17 @@ run" in-session; the user later verified in the Editor that the project compiled
 (no interaction, as expected). Scene not added to Build Settings.
 Archive: `Docs/completed_tasks/M0-T07_static_act1_ui_scene.md`. Next: M0-T08.
 
+### 2026-06-19 — M0-T08: Click-to-assign interaction — Completed
+Codex extended the Act 1 presenter + scene builder for click-to-select / click-to-assign via the
+existing IntentClassificationSession, and added an EventSystem with InputSystemUIInputModule. Run
+002 added deselect (click selected card again), auto-clear selection after assignment, and
+RectMask2D clipping + compact rows so assigned text stays inside the group panels. Run logs recorded
+Play Mode/tests as "Not run" in-session; the user later verified in the Editor that selection,
+deselection, assignment, selection-clearing, no text overflow, and Console-clean Play Mode all work
+(no drag-and-drop). Known issue deferred to M0-T09: assigning many cards to one group can hide some
+(clipping without scrolling/overflow indicator).
+Archive: `Docs/completed_tasks/M0-T08_click_to_assign_interaction.md`. Next: M0-T09.
+
 ---
 
 ## Entry Template
