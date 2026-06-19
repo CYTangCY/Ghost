@@ -287,7 +287,7 @@ Act1IntentClassificationStaticPresenter.cs
 
 ### Purpose
 
-Renders the Act 1 sample intent-classification data into Unity UI and provides the first simple prototype interaction: click a message card to select it, then click an intent group area to assign that card. It remains a placeholder presentation script without drag-and-drop, validation buttons, scoring, save/load, or dialogue behaviour.
+Renders the Act 1 sample intent-classification data into Unity UI and provides the click-based prototype interaction: click a message card to select it, click an intent group area to assign it, click assigned rows to return cards to unassigned, and click Validate to check the grouping. It remains a placeholder presentation script without drag-and-drop, scoring, save/load, or dialogue behaviour.
 
 ### Attached GameObject
 
@@ -295,7 +295,7 @@ Attach to the root UI object in `Assets/Scenes/Act1IntentClassificationPrototype
 
 ### Runtime Role
 
-On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `IntentClassificationSession`, and wires card/group clicks to that session. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
+On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `IntentClassificationSession`, and wires card/group/assigned-row/validation clicks to that session. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
 
 ### Important Fields
 
@@ -308,8 +308,9 @@ On `Start`, it optionally refreshes the card and intent group UI from `Act1Inten
 Internal runtime state:
 - rendered card views by card id
 - rendered intent group views by intent id
-- assignment list roots by intent id
+- scrollable assignment list content roots by intent id
 - the selected card id
+- validation feedback text
 - one `IntentClassificationSession` for the current prototype play session
 
 ### Important Methods
@@ -317,13 +318,17 @@ Internal runtime state:
 - `RenderSampleData()`: clears existing rendered children, creates a fresh sample-data session, displays the nine sample cards, and displays the `find_item`, `ask_location`, and `ask_identity` group areas.
 - `SelectCard(string cardId)`: selects an unselected card, or deselects the currently selected card when clicked again, then refreshes visual highlights.
 - `AssignSelectedCardToIntent(string intentId)`: moves the selected card into the clicked intent group through `IntentClassificationSession.MoveCardToGroup(...)`, clears the selection, and refreshes the UI.
+- `MoveAssignedCardToUnassigned(string cardId)`: moves an assigned card back to the unassigned state when its assigned row is clicked.
+- `ValidateCurrentGrouping()`: calls `IntentClassificationSession.ValidateCurrentState()` and displays simple correct/incorrect feedback.
 - `UpdateVisualState()`: updates card colors, group colors, and assigned-card text lists.
+- `EnsureAssignmentRoot(...)`: builds or upgrades each intent group's assigned-card area into a vertical `ScrollRect`.
+- `EnsureValidationControls()`: creates or reuses the Validate button and feedback text under the intent group column.
 - `EnsureEventSystem()`: creates an `EventSystem` with `InputSystemUIInputModule` at runtime if the scene does not already contain one.
 
 ### Input
 
 - Sample cards and intent ids from `Act1IntentClassificationSampleData`.
-- Pointer clicks on rendered message cards and intent group areas.
+- Pointer clicks on rendered message cards, intent group areas, assigned-card rows, and the Validate button.
 
 ### Output
 
@@ -332,8 +337,9 @@ UGUI objects showing:
 - three intent group areas
 - short intent-purpose descriptions
 - selected-card highlight
-- assigned-card text listed inside each intent group area
-- compact clipped assigned-card rows so assignment text stays inside each placeholder group panel
+- assigned-card rows listed inside each intent group area
+- scrollable assigned-card lists so assigning many cards to one group does not silently hide them
+- basic validation feedback for correct or incorrect grouping
 
 ### Failure Cases
 
@@ -342,10 +348,11 @@ UGUI objects showing:
 - If cards appear as blank pale rectangles, regenerate the scene with the Unity menu builder so the compact card template is saved, or enter Play Mode so `RenderSampleData()` rebuilds the card views from the updated presenter.
 - If group areas do not respond to clicks in an older generated scene, rerun the Unity menu builder so the saved scene includes the generated `EventSystem` and updated group templates. The presenter also attempts to create a runtime `EventSystem` if one is missing.
 - If assigned-card text still appears outside a group after script import, rerun the Unity menu builder so the saved scene includes the M0-T08 run 002 clipped assignment-list template. Play Mode startup also reapplies the compact/clipped runtime layout.
+- If assigned-card rows are not scrollable or the Validate button is missing in an older generated scene, rerun the Unity menu builder so the saved scene includes the M0-T09 scrollable assignment areas and validation controls. Play Mode startup also rebuilds these controls.
 
 ### Unity Test
 
-Manual scene check for M0-T08. Open the prototype scene after running the menu builder if needed, enter Play Mode, click a card, click the same card again to confirm deselection, then assign cards into intent group areas and confirm the selected-card highlight clears and assigned-card text stays inside each group without Console errors.
+Manual scene check for M0-T09. Open the prototype scene after running the menu builder if needed, enter Play Mode, assign many cards to one group and scroll the assigned list, click an assigned `Back:` row to return a card to unassigned, correct a wrong assignment, click Validate, and confirm the feedback changes without Console errors.
 
 ---
 
@@ -371,7 +378,7 @@ No Inspector fields.
 
 ### Important Methods
 
-- `BuildAct1IntentClassificationPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, adds an EventSystem for UI clicks, wires the presenter, renders the sample data with clipped assignment-list areas, and saves `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+- `BuildAct1IntentClassificationPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, adds an EventSystem for UI clicks, wires the presenter, renders the sample data with scrollable assignment-list areas and validation controls, and saves `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
 
 ### Input
 
@@ -389,6 +396,7 @@ Manual Unity Editor menu action:
 - If the left-side cards show blank text after an older scene generation, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the compact card template from M0-T07 run 002.
 - If an older generated scene does not show assigned-card lists or does not respond to clicks, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T08 EventSystem and assignment-list template.
 - If an older generated scene still lets assigned-card text overflow, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T08 run 002 clipped group template.
+- If an older generated scene does not show scrollable assignment lists or validation feedback, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T09 presenter output.
 
 ### Unity Test
 

@@ -11,16 +11,21 @@ namespace Ghost.Presentation.Act1IntentClassification
     {
         private const float CardPreferredHeight = 72f;
         private const float MessageTextPreferredHeight = 48f;
-        private const float GroupPreferredHeight = 216f;
-        private const float AssignmentRootPreferredHeight = 68f;
-        private const float AssignedTextPreferredHeight = 18f;
+        private const float GroupPreferredHeight = 200f;
+        private const float AssignmentViewportPreferredHeight = 72f;
+        private const float AssignedRowPreferredHeight = 32f;
         private const float AssignedPlaceholderPreferredHeight = 22f;
+        private const float ValidationControlsPreferredHeight = 58f;
 
         private static readonly Color CardDefaultColor = new Color(1f, 0.98f, 0.92f);
         private static readonly Color CardSelectedColor = new Color(1f, 0.89f, 0.45f);
         private static readonly Color CardAssignedColor = new Color(0.91f, 1f, 0.89f);
         private static readonly Color GroupDefaultColor = new Color(0.91f, 0.96f, 1f);
         private static readonly Color GroupReadyColor = new Color(0.84f, 0.92f, 1f);
+        private static readonly Color FeedbackDefaultColor = new Color(0.24f, 0.22f, 0.30f);
+        private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
+        private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
+        private static readonly Color AssignedRowColor = new Color(0.97f, 0.99f, 1f);
 
         [SerializeField] private RectTransform cardListRoot;
         [SerializeField] private RectTransform intentGroupListRoot;
@@ -36,6 +41,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private IntentClassificationSession session;
         private string selectedCardId;
+        private Text validationFeedbackText;
 
         private static readonly string[] IntentIds =
         {
@@ -79,6 +85,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 CreateIntentGroupView(intentId);
             }
 
+            EnsureValidationControls();
+            SetValidationFeedback("Group all cards, then click Validate.", FeedbackDefaultColor);
             UpdateVisualState();
         }
 
@@ -120,6 +128,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             SetChildText(view.transform, "IntentHintText", GetIntentDescription(intentId));
 
             var assignmentRoot = EnsureAssignmentRoot(view.transform);
+            ConfigureAssignmentViewportClick(assignmentRoot, intentId);
             assignmentRootsByIntentId.Add(intentId, assignmentRoot);
             groupImagesById.Add(intentId, view.GetComponent<Image>());
         }
@@ -139,7 +148,46 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             session.MoveCardToGroup(selectedCardId, intentId);
             selectedCardId = null;
+            SetValidationFeedback("Assignment changed. Click Validate when ready.", FeedbackDefaultColor);
             UpdateVisualState();
+        }
+
+        private void MoveAssignedCardToUnassigned(string cardId)
+        {
+            if (session == null)
+            {
+                return;
+            }
+
+            session.MoveCardToUnassigned(cardId);
+
+            if (selectedCardId == cardId)
+            {
+                selectedCardId = null;
+            }
+
+            SetValidationFeedback("Card returned to unassigned. Click Validate when ready.", FeedbackDefaultColor);
+            UpdateVisualState();
+        }
+
+        private void ValidateCurrentGrouping()
+        {
+            if (session == null)
+            {
+                SetValidationFeedback("No puzzle session is available yet.", FeedbackIncorrectColor);
+                return;
+            }
+
+            var result = session.ValidateCurrentState();
+            if (result.IsCorrect)
+            {
+                SetValidationFeedback("Correct grouping. Ghost can react to the right purpose now.", FeedbackCorrectColor);
+                return;
+            }
+
+            SetValidationFeedback(
+                "Incorrect grouping. " + result.Errors.Count + " issue(s) to fix.",
+                FeedbackIncorrectColor);
         }
 
         private void UpdateVisualState()
@@ -148,6 +196,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             UpdateIntentGroupVisuals();
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(cardListRoot);
+            foreach (var assignmentRoot in assignmentRootsByIntentId.Values)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(assignmentRoot);
+            }
+
             LayoutRebuilder.ForceRebuildLayoutImmediate(intentGroupListRoot);
         }
 
@@ -206,7 +259,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 {
                     if (cardsById.TryGetValue(cardId, out var card))
                     {
-                        CreateAssignedText(assignmentRoot, card.MessageText, false);
+                        CreateAssignedCardRow(assignmentRoot, card.Id, card.MessageText);
                     }
                 }
             }
@@ -340,33 +393,107 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private static RectTransform EnsureAssignmentRoot(Transform groupRoot)
         {
-            var existing = groupRoot.Find("AssignedCardsRoot");
-            if (existing != null)
+            var viewport = groupRoot.Find("AssignedCardsScrollView") as RectTransform;
+            if (viewport == null)
             {
-                var existingRoot = (RectTransform)existing;
-                ConfigureAssignmentRoot(existingRoot);
-                return existingRoot;
+                viewport = new GameObject("AssignedCardsScrollView", typeof(RectTransform)).GetComponent<RectTransform>();
+                viewport.SetParent(groupRoot, false);
             }
 
-            var assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
-            assignmentRoot.SetParent(groupRoot, false);
+            var assignmentRoot = viewport.Find("AssignedCardsRoot") as RectTransform;
+            var oldDirectRoot = groupRoot.Find("AssignedCardsRoot") as RectTransform;
 
+            if (assignmentRoot == null && oldDirectRoot != null)
+            {
+                assignmentRoot = oldDirectRoot;
+                assignmentRoot.SetParent(viewport, false);
+            }
+
+            if (assignmentRoot == null)
+            {
+                assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+                assignmentRoot.SetParent(viewport, false);
+            }
+
+            ConfigureAssignmentScrollView(viewport, assignmentRoot);
             ConfigureAssignmentRoot(assignmentRoot);
 
             return assignmentRoot;
         }
 
-        private static void ConfigureAssignmentRoot(RectTransform assignmentRoot)
+        private static void ConfigureAssignmentScrollView(RectTransform viewport, RectTransform content)
         {
-            var layoutElement = assignmentRoot.GetComponent<LayoutElement>();
+            var layoutElement = viewport.GetComponent<LayoutElement>();
             if (layoutElement == null)
             {
-                layoutElement = assignmentRoot.gameObject.AddComponent<LayoutElement>();
+                layoutElement = viewport.gameObject.AddComponent<LayoutElement>();
             }
 
-            layoutElement.minHeight = AssignmentRootPreferredHeight;
-            layoutElement.preferredHeight = AssignmentRootPreferredHeight;
+            layoutElement.minHeight = AssignmentViewportPreferredHeight;
+            layoutElement.preferredHeight = AssignmentViewportPreferredHeight;
             layoutElement.flexibleHeight = 1f;
+
+            var image = viewport.GetComponent<Image>();
+            if (image == null)
+            {
+                image = viewport.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(1f, 1f, 1f, 0.32f);
+            image.raycastTarget = true;
+
+            if (viewport.GetComponent<RectMask2D>() == null)
+            {
+                viewport.gameObject.AddComponent<RectMask2D>();
+            }
+
+            var scrollRect = viewport.GetComponent<ScrollRect>();
+            if (scrollRect == null)
+            {
+                scrollRect = viewport.gameObject.AddComponent<ScrollRect>();
+            }
+
+            scrollRect.viewport = viewport;
+            scrollRect.content = content;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.inertia = true;
+
+            var button = viewport.GetComponent<Button>();
+            if (button == null)
+            {
+                button = viewport.gameObject.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+        }
+
+        private void ConfigureAssignmentViewportClick(RectTransform assignmentRoot, string intentId)
+        {
+            var viewport = assignmentRoot.parent;
+            if (viewport == null)
+            {
+                return;
+            }
+
+            var button = viewport.GetComponent<Button>();
+            if (button == null)
+            {
+                return;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => AssignSelectedCardToIntent(intentId));
+        }
+
+        private static void ConfigureAssignmentRoot(RectTransform assignmentRoot)
+        {
+            assignmentRoot.anchorMin = new Vector2(0f, 1f);
+            assignmentRoot.anchorMax = new Vector2(1f, 1f);
+            assignmentRoot.pivot = new Vector2(0.5f, 1f);
+            assignmentRoot.anchoredPosition = Vector2.zero;
+            assignmentRoot.sizeDelta = Vector2.zero;
 
             if (assignmentRoot.GetComponent<RectMask2D>() == null)
             {
@@ -384,6 +511,15 @@ namespace Ghost.Presentation.Act1IntentClassification
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+
+            var fitter = assignmentRoot.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = assignmentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
 
         private static void CreateAssignedText(Transform parent, string message, bool isPlaceholder)
@@ -401,9 +537,201 @@ namespace Ghost.Presentation.Act1IntentClassification
             text.raycastTarget = false;
 
             var layoutElement = text.gameObject.AddComponent<LayoutElement>();
-            var preferredHeight = isPlaceholder ? AssignedPlaceholderPreferredHeight : AssignedTextPreferredHeight;
+            var preferredHeight = isPlaceholder ? AssignedPlaceholderPreferredHeight : AssignedRowPreferredHeight;
             layoutElement.minHeight = preferredHeight;
             layoutElement.preferredHeight = preferredHeight;
+        }
+
+        private void CreateAssignedCardRow(Transform parent, string cardId, string message)
+        {
+            var row = new GameObject("Assigned Card - " + cardId, typeof(RectTransform));
+            row.transform.SetParent(parent, false);
+
+            var image = row.AddComponent<Image>();
+            image.color = AssignedRowColor;
+            image.raycastTarget = true;
+
+            var button = row.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() => MoveAssignedCardToUnassigned(cardId));
+
+            var layoutElement = row.AddComponent<LayoutElement>();
+            layoutElement.minHeight = AssignedRowPreferredHeight;
+            layoutElement.preferredHeight = AssignedRowPreferredHeight;
+
+            var layout = row.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(8, 8, 2, 2);
+            layout.spacing = 4f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            var label = new GameObject("Assigned Card Text", typeof(RectTransform)).AddComponent<Text>();
+            label.transform.SetParent(row.transform, false);
+            label.text = "Back: " + message;
+            label.font = GetBuiltinFont();
+            label.fontSize = 12;
+            label.fontStyle = FontStyle.Normal;
+            label.alignment = TextAnchor.MiddleLeft;
+            label.color = new Color(0.12f, 0.20f, 0.30f);
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.raycastTarget = false;
+        }
+
+        private void EnsureValidationControls()
+        {
+            var parent = intentGroupListRoot.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
+            var controls = parent.Find("Validation Controls") as RectTransform;
+            if (controls == null)
+            {
+                controls = new GameObject("Validation Controls", typeof(RectTransform)).GetComponent<RectTransform>();
+                controls.SetParent(parent, false);
+            }
+
+            controls.SetAsLastSibling();
+
+            var layoutElement = controls.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = controls.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = ValidationControlsPreferredHeight;
+            layoutElement.preferredHeight = ValidationControlsPreferredHeight;
+
+            var layout = controls.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = controls.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.spacing = 12f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            var validateButton = EnsureValidateButton(controls);
+            validateButton.onClick.RemoveAllListeners();
+            validateButton.onClick.AddListener(ValidateCurrentGrouping);
+
+            validationFeedbackText = EnsureValidationFeedbackText(controls);
+        }
+
+        private static Button EnsureValidateButton(Transform parent)
+        {
+            var buttonTransform = parent.Find("Validate Button") as RectTransform;
+            if (buttonTransform == null)
+            {
+                buttonTransform = new GameObject("Validate Button", typeof(RectTransform)).GetComponent<RectTransform>();
+                buttonTransform.SetParent(parent, false);
+            }
+
+            var image = buttonTransform.GetComponent<Image>();
+            if (image == null)
+            {
+                image = buttonTransform.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(0.84f, 0.92f, 1f);
+            image.raycastTarget = true;
+
+            var button = buttonTransform.GetComponent<Button>();
+            if (button == null)
+            {
+                button = buttonTransform.gameObject.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+
+            var layoutElement = buttonTransform.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = buttonTransform.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minWidth = 138f;
+            layoutElement.preferredWidth = 138f;
+
+            var label = buttonTransform.Find("Button Text") as RectTransform;
+            if (label == null)
+            {
+                label = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
+                label.SetParent(buttonTransform, false);
+            }
+
+            label.anchorMin = Vector2.zero;
+            label.anchorMax = Vector2.one;
+            label.offsetMin = Vector2.zero;
+            label.offsetMax = Vector2.zero;
+
+            var text = label.GetComponent<Text>();
+            if (text == null)
+            {
+                text = label.gameObject.AddComponent<Text>();
+            }
+
+            text.text = "Validate";
+            text.font = GetBuiltinFont();
+            text.fontSize = 18;
+            text.fontStyle = FontStyle.Bold;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = new Color(0.10f, 0.20f, 0.32f);
+            text.raycastTarget = false;
+
+            return button;
+        }
+
+        private static Text EnsureValidationFeedbackText(Transform parent)
+        {
+            var feedbackTransform = parent.Find("Validation Feedback") as RectTransform;
+            if (feedbackTransform == null)
+            {
+                feedbackTransform = new GameObject("Validation Feedback", typeof(RectTransform)).GetComponent<RectTransform>();
+                feedbackTransform.SetParent(parent, false);
+            }
+
+            var layoutElement = feedbackTransform.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = feedbackTransform.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.flexibleWidth = 1f;
+
+            var text = feedbackTransform.GetComponent<Text>();
+            if (text == null)
+            {
+                text = feedbackTransform.gameObject.AddComponent<Text>();
+            }
+
+            text.font = GetBuiltinFont();
+            text.fontSize = 16;
+            text.fontStyle = FontStyle.Normal;
+            text.alignment = TextAnchor.MiddleLeft;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+
+            return text;
+        }
+
+        private void SetValidationFeedback(string message, Color color)
+        {
+            if (validationFeedbackText == null)
+            {
+                return;
+            }
+
+            validationFeedbackText.text = message;
+            validationFeedbackText.color = color;
         }
 
         private static void ClearChildren(Transform root)

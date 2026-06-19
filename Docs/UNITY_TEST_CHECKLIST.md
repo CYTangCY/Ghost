@@ -211,3 +211,48 @@ If the scene is created or refreshed through the menu builder, no manual Inspect
 10. Confirm there is still no drag-and-drop behaviour.
 11. Confirm there is still no validation button, scoring, save/load, animation, backend, LLM, dialogue behaviour, or final art pass.
 12. Confirm no new Console errors appear.
+
+---
+
+## M0-T09: Assignment Editing, Group Capacity, and Validation Feedback
+
+### Scene Refresh Check
+
+If the existing prototype scene was generated before M0-T09:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Confirm `Assets/Scenes/Act1IntentClassificationPrototype.unity` is refreshed.
+5. Do not add the scene to Build Settings during M0-T09.
+
+### Play Mode Interaction Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm all nine sample message cards are visible in the left column.
+4. Confirm the three intent group areas are visible:
+   - `find_item`
+   - `ask_location`
+   - `ask_identity`
+5. Confirm a `Validate` button and feedback text are visible under the intent group column.
+6. Select a message card, then click an intent group area to assign it.
+7. Confirm the assigned card appears as a `Back:` row inside that group.
+8. Click the assigned `Back:` row.
+9. Confirm the card returns to the unassigned/default visual state in the left list.
+10. Assign a card to the wrong group, then select it again from the left list and click the correct group.
+11. Confirm the card moves from the wrong group to the correct group without restarting Play Mode.
+12. Assign many or all cards to one group.
+13. Confirm the assigned list can be scrolled and cards do not silently disappear.
+14. Click `Validate` with an incomplete or incorrect grouping.
+15. Confirm feedback reports an incorrect grouping and shows an issue count.
+16. Assign all cards to their correct intent groups.
+17. Click `Validate`.
+18. Confirm feedback reports a correct grouping.
+19. Confirm there is no drag-and-drop behaviour.
+20. Confirm there is no scoring, save/load, animation, backend, LLM, dialogue behaviour, or final art pass.
+21. Confirm no new Console errors appear.
+
+### Inspector Setup
+
+If the scene is created or refreshed through the menu builder, no manual Inspector setup should be required. The presenter creates the scrollable assigned-card areas, the `Back:` row buttons, the Validate button, and the validation feedback text from the generated UI roots and templates.

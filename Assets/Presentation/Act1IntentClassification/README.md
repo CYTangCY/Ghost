@@ -70,3 +70,26 @@ If the visible scene still has older layout behaviour after Unity imports the up
 8. Confirm assigned message rows stay visually inside the right-side group areas.
 
 Run 002 still does not add drag-and-drop, validation, scoring, save/load, animation, backend, LLM, dialogue behaviour, final art, or Build Settings changes.
+
+## Refreshing after M0-T09 assignment editing and validation feedback
+
+M0-T09 keeps the prototype click-based and adds:
+
+1. Scrollable assigned-card lists in each intent group.
+2. Clickable assigned-card rows labelled `Back:` for returning a card to unassigned.
+3. A `Validate` button under the intent group column.
+4. Basic validation feedback for correct and incorrect groupings.
+
+To refresh the scene if needed:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+5. Enter Play Mode.
+6. Assign several or all cards to one intent group and confirm the assigned list can be scrolled.
+7. Click an assigned `Back:` row and confirm that card returns to the unassigned state in the left list.
+8. Correct a wrong assignment by selecting the card again and clicking a different intent group.
+9. Click `Validate` and confirm feedback says whether the grouping is correct or incorrect.
+
+M0-T09 still does not add drag-and-drop, scoring, save/load, animation, backend, LLM, dialogue behaviour, final art, or Build Settings changes.

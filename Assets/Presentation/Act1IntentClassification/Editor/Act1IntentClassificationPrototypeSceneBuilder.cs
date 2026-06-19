@@ -244,8 +244,8 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
                 new Color(0.91f, 0.96f, 1f)).gameObject;
 
             var layoutElement = group.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 216f;
-            layoutElement.preferredHeight = 216f;
+            layoutElement.minHeight = 200f;
+            layoutElement.preferredHeight = 200f;
 
             group.AddComponent<RectMask2D>();
 
@@ -259,22 +259,34 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             CreateLabel("IntentTitleText", group.transform, "intent_id", 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 42f);
             CreateLabel("IntentHintText", group.transform, "Purpose description", 18, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.34f, 0.44f), 52f);
-            CreateAssignmentRoot(group.transform);
+            CreateAssignmentScrollView(group.transform);
 
             return group;
         }
 
-        private static void CreateAssignmentRoot(Transform parent)
+        private static void CreateAssignmentScrollView(Transform parent)
         {
-            var assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
-            assignmentRoot.SetParent(parent, false);
+            var viewport = new GameObject("AssignedCardsScrollView", typeof(RectTransform)).GetComponent<RectTransform>();
+            viewport.SetParent(parent, false);
 
-            var layoutElement = assignmentRoot.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 68f;
-            layoutElement.preferredHeight = 68f;
+            var layoutElement = viewport.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = 72f;
+            layoutElement.preferredHeight = 72f;
             layoutElement.flexibleHeight = 1f;
 
-            assignmentRoot.gameObject.AddComponent<RectMask2D>();
+            var image = viewport.gameObject.AddComponent<Image>();
+            image.color = new Color(1f, 1f, 1f, 0.32f);
+            image.raycastTarget = true;
+
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            var assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            assignmentRoot.SetParent(viewport, false);
+            assignmentRoot.anchorMin = new Vector2(0f, 1f);
+            assignmentRoot.anchorMax = new Vector2(1f, 1f);
+            assignmentRoot.pivot = new Vector2(0.5f, 1f);
+            assignmentRoot.anchoredPosition = Vector2.zero;
+            assignmentRoot.sizeDelta = Vector2.zero;
 
             var layout = assignmentRoot.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 2f;
@@ -282,6 +294,21 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+
+            var fitter = assignmentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scrollRect = viewport.gameObject.AddComponent<ScrollRect>();
+            scrollRect.viewport = viewport;
+            scrollRect.content = assignmentRoot;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.inertia = true;
+
+            var button = viewport.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
         }
 
         private static RectTransform CreatePanel(
