@@ -73,6 +73,16 @@ deselection, assignment, selection-clearing, no text overflow, and Console-clean
 (clipping without scrolling/overflow indicator).
 Archive: `Docs/completed_tasks/M0-T08_click_to_assign_interaction.md`. Next: M0-T09.
 
+### 2026-06-19 — M0-T09: Assignment editing + group capacity + validation feedback — Completed
+Codex added clickable "Back:" rows to unassign cards (MoveCardToUnassigned), kept reassignment via
+MoveCardToGroup, replaced the clipped group area with a per-group vertical ScrollRect (many assigned
+cards stay inspectable), and added a Validate button + feedback text wired to
+IntentClassificationSession.ValidateCurrentState(). Run log recorded Play Mode/tests as "Not run"
+in-session; the user later verified in the Editor that compile, click flow, remove/correct,
+no-card-loss scrolling, correct/incorrect feedback, and Console-clean Play Mode all work (no
+drag-and-drop). Archive:
+`Docs/completed_tasks/M0-T09_assignment_editing_validation_feedback.md`. Next: M0-T10 (architecture review).
+
 ---
 
 ## Entry Template
