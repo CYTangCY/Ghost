@@ -105,3 +105,53 @@ Manual Play Mode check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T06. `IntentClassificationSession` is a pure C# state object and is not attached to a GameObject.
+
+---
+
+## M0-T07: Static Act 1 UI Prototype Scene
+
+### Scene Creation Check
+
+Codex could not create the scene automatically because Unity batch mode exited before project import and scene generation. Use the manual Unity Editor path:
+
+1. Open the Ghost Unity project.
+2. Wait for scripts to import and compile.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Confirm `Assets/Scenes/Act1IntentClassificationPrototype.unity` is created.
+5. Do not add the scene to Build Settings during M0-T07.
+
+### Static UI Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Confirm the scene displays the Act 1 title.
+3. Confirm the scene displays nine sample message cards.
+4. Confirm the scene displays three intent group areas:
+   - `find_item`
+   - `ask_location`
+   - `ask_identity`
+5. Confirm there is no drag-and-drop behaviour.
+6. Confirm there is no validation button, scoring, save/load, animation, backend, LLM, or dialogue behaviour.
+
+### M0-T07 Run 002 Display Fix Check
+
+If the left-side message cards appear as blank pale rectangles:
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene` again.
+2. Reopen `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+3. Confirm all nine message card texts are visible in the left column.
+4. Confirm the three right-side intent group areas still show:
+   - `find_item`
+   - `ask_location`
+   - `ask_identity`
+5. Enter Play Mode and confirm all nine message texts remain visible.
+
+### Play Mode Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm no new Console errors appear.
+4. Confirm the static cards and intent group areas remain visible.
+
+### Inspector Setup
+
+If the scene is created through the menu builder, no manual Inspector setup should be required. The builder wires `Act1IntentClassificationStaticPresenter` to its card list root, intent group list root, card template, and intent group template.

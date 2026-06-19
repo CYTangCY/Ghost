@@ -276,3 +276,101 @@ Internal state:
 ### Unity Test
 
 Run the EditMode tests under `Assets/Tests/EditMode/IntentClassificationSessionTests.cs`.
+
+---
+
+## Act 1 Static UI Prototype
+
+### Script Name
+
+Act1IntentClassificationStaticPresenter.cs
+
+### Purpose
+
+Renders the Act 1 sample intent-classification data into static Unity UI. It displays sample message cards and the three intent group areas without drag-and-drop, validation, scoring, save/load, or dialogue behaviour.
+
+### Attached GameObject
+
+Attach to the root UI object in `Assets/Scenes/Act1IntentClassificationPrototype.unity`, once that scene is created through the Unity menu builder.
+
+### Runtime Role
+
+On `Start`, it optionally refreshes the static card and intent group UI from `Act1IntentClassificationSampleData`. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the static layout when opened.
+
+### Important Fields
+
+- `cardListRoot`: parent `RectTransform` for sample message cards.
+- `intentGroupListRoot`: parent `RectTransform` for intent group areas.
+- `cardTemplate`: inactive in-scene template used to render a card.
+- `intentGroupTemplate`: inactive in-scene template used to render an intent group area.
+- `renderOnStart`: when true, rebuilds the static UI at Play Mode start.
+
+### Important Methods
+
+- `RenderSampleData()`: clears existing rendered children and displays the sample cards plus `find_item`, `ask_location`, and `ask_identity` group areas.
+
+### Input
+
+No player input. It reads static sample data from `Act1IntentClassificationSampleData`.
+
+### Output
+
+Static UGUI objects showing:
+- nine sample message cards
+- three intent group areas
+- short intent-purpose descriptions
+
+### Failure Cases
+
+- Missing template or root references leave the UI unchanged.
+- If sample card ids or intent ids change later, the displayed labels will change because the presenter reads from sample data.
+- If cards appear as blank pale rectangles, regenerate the scene with the Unity menu builder so the compact card template is saved, or enter Play Mode so `RenderSampleData()` rebuilds the card views from the updated presenter.
+
+### Unity Test
+
+Manual scene check only for M0-T07. Open the prototype scene after running the menu builder and confirm the static cards and intent group areas are visible. Then enter Play Mode and confirm there are no Console errors.
+
+---
+
+### Script Name
+
+Act1IntentClassificationPrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor-only helper that creates the static Act 1 prototype scene through Unity-supported scene serialization. It avoids hand-writing `.unity` YAML.
+
+### Attached GameObject
+
+None. This script lives under an `Editor` folder and runs from the Unity Editor menu.
+
+### Runtime Role
+
+No runtime role. It is excluded from player builds by the `Editor` folder.
+
+### Important Fields
+
+No Inspector fields.
+
+### Important Methods
+
+- `BuildAct1IntentClassificationPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, wires the static presenter, renders the sample data, and saves `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+
+### Input
+
+Manual Unity Editor menu action:
+`Ghost > Build Act 1 Intent Classification Prototype Scene`
+
+### Output
+
+`Assets/Scenes/Act1IntentClassificationPrototype.unity`, when Unity can execute the builder successfully.
+
+### Failure Cases
+
+- If Unity cannot run batch mode or cannot import the project, Codex cannot create the scene automatically.
+- If the menu builder fails in the Editor, check the Console for compile errors before rerunning it.
+- If the left-side cards show blank text after an older scene generation, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the compact card template from M0-T07 run 002.
+
+### Unity Test
+
+Run the menu builder in Unity, open the generated scene, and enter Play Mode. Confirm there are no Console errors.
