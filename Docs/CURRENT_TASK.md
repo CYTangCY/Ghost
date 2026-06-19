@@ -2,49 +2,49 @@
 
 ## ID
 
-M0-T06
+M0-T07
 
 ## Goal
 
-Implement the Act 1 intent-classification puzzle session state as pure C# logic, without creating
-UI or scenes.
+Create a static Act 1 intent-classification UI prototype scene, without drag-and-drop interaction
+yet.
 
 ## Context
 
 M0-T04 implemented the pure intent-classification validator. M0-T05 added Act 1 sample puzzle data.
-The next step is to create a small scene-free session/state layer that represents the player's
-current grouping before later UI work.
+M0-T06 added the pure session/state layer. The next step is to create a minimal static Unity UI
+layer that can display the sample cards and intent groups, but does not yet implement drag-and-drop.
 
 ## Scope
 
-- Create a pure C# session/state class for Act 1 intent classification.
-- It should initialize from Act1IntentClassificationSampleData or a list of IntentCard objects.
-- It should track which card IDs are currently assigned to which player group.
-- It should support moving a card between groups.
-- It should support unassigned cards.
-- It should expose the current grouping in the format needed by IntentClassificationValidator.
-- It should allow validating the current state using IntentClassificationValidator.
-- Add EditMode tests for initialization, moving cards, unassigned state, incorrect grouping, and
-  validating a correct grouping.
-- Keep everything scene-free, UI-free, and WebGL-safe.
+- Create or prepare a dedicated Act 1 prototype scene.
+- Display the Act 1 sample message cards as static UI elements.
+- Display the target intent groups / drop zones as static UI elements.
+- Add a simple presenter/view script only if needed to render the sample data.
+- Keep the interaction non-draggable for this task.
+- Use UGUI or another Unity UI approach consistent with the project setup.
+- Keep the UI simple and placeholder-based.
+- Do not implement validation button behaviour yet unless it is trivial and scene-safe.
+- Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md.
 - Create a Codex run log during implementation.
 
 ## Out of Scope
 
-- Do not create scenes.
-- Do not create drag-and-drop UI.
-- Do not create prefabs.
-- Do not create art assets.
-- Do not modify ProjectSettings.
+- Do not implement drag-and-drop.
+- Do not implement scoring.
+- Do not implement animations.
+- Do not implement save/load.
 - Do not implement Act 0, Act 2, or later Acts.
-- Do not implement backend, LLM, save system, or dialogue system.
+- Do not implement backend, LLM, or dialogue system.
+- Do not create final art assets.
+- Do not change ProjectSettings unless explicitly required and approved.
 
 ## Acceptance Criteria
 
-- A pure C# Act 1 session/state layer exists.
-- The state can represent unassigned and grouped cards.
-- Moving cards between groups is testable.
-- The current grouping can be passed into IntentClassificationValidator.
-- EditMode tests cover the core state behavior.
-- No Unity scene or ProjectSettings files are modified.
+- A static Act 1 prototype scene exists.
+- The scene displays the sample message cards.
+- The scene displays the intent group areas.
+- The scene can enter Play Mode without Console errors.
+- No drag-and-drop interaction is implemented yet.
+- No unrelated ProjectSettings, Packages, or scene files are modified.
 - A Codex run log is created during implementation.

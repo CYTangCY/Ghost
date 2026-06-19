@@ -44,6 +44,13 @@ NUnit `Has.Count` constraint. Both run logs recorded Unity tests as "Not run" in
 later verified in the Editor that the project compiled and both EditMode suites passed, then
 committed and pushed. Archive: `Docs/completed_tasks/M0-T05_act1_sample_puzzle_data.md`. Next: M0-T06.
 
+### 2026-06-19 — M0-T06: Act 1 session/state layer — Completed
+Codex added IntentClassificationSession (tracks unassigned + grouped cards, move/validate, exposes
+submitted groups for the validator) + 10 EditMode tests. The run log recorded Unity tests as
+"Not run" in-session; the user later verified in the Editor that the project compiled and all three
+EditMode suites passed, then committed and pushed. Archive:
+`Docs/completed_tasks/M0-T06_intent_classification_session_state.md`. Next: M0-T07.
+
 ---
 
 ## Entry Template
