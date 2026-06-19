@@ -83,6 +83,17 @@ no-card-loss scrolling, correct/incorrect feedback, and Console-clean Play Mode 
 drag-and-drop). Archive:
 `Docs/completed_tasks/M0-T09_assignment_editing_validation_feedback.md`. Next: M0-T10 (architecture review).
 
+### 2026-06-19 — M0-T10: Act 1 UI/code architecture review — Completed (review)
+Claude reviewed the Act 1 prototype before drag-and-drop. The pure logic layer is clean and
+compiler-separated (Ghost.Runtime.asmdef `noEngineReferences`); validator/session/sample-data/card
+have single responsibilities. Main risk is the presentation layer:
+Act1IntentClassificationStaticPresenter (~824 lines) mixes rendering, session ownership, interaction,
+visual state, assignment editing, and validation feedback; presenter/builder duplicate UI
+construction; the scene builder injects fields via reflection and regeneration overwrites manual
+edits. Recommendation: small behaviour-preserving presentation refactor before drag-and-drop. No code
+changed (review only).
+Archive: `Docs/completed_tasks/M0-T10_act1_ui_code_architecture_review.md`. Next: M0-T11 (refactor).
+
 ---
 
 ## Entry Template
