@@ -94,6 +94,18 @@ edits. Recommendation: small behaviour-preserving presentation refactor before d
 changed (review only).
 Archive: `Docs/completed_tasks/M0-T10_act1_ui_code_architecture_review.md`. Next: M0-T11 (refactor).
 
+### 2026-06-19 — M0-T11: Act 1 presentation refactor — Completed
+Codex added a presentation assembly boundary (Ghost.Presentation.asmdef + Ghost.Presentation.Editor.asmdef)
+and extracted session/interaction orchestration out of the presenter into a new
+Act1IntentClassificationInteractionController (owns session, selected card, select/deselect, assign,
+unassign, validate, state/feedback callbacks); the presenter now renders from controller state and
+forwards clicks. Scene builder unchanged (presenter creates the controller internally). Run log
+recorded Play Mode/tests as "Not run" in-session; the user later verified in the Editor that the
+project compiled, EditMode tests passed, and all M0-T09 behaviour still works with no Console errors
+(no drag-and-drop, no pure-logic/test changes). Deferred from M0-T10 and still open: presenter/builder
+UI-construction duplication (R2) and reflection field injection (R4). Archive:
+`Docs/completed_tasks/M0-T11_presentation_refactor.md`. Next: M0-T12 (drag-to-assign).
+
 ---
 
 ## Entry Template
