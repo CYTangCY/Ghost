@@ -281,13 +281,78 @@ Run the EditMode tests under `Assets/Tests/EditMode/IntentClassificationSessionT
 
 ## Act 1 Static UI Prototype
 
+## Presentation Assembly Boundary
+
+- `Assets/Presentation/Ghost.Presentation.asmdef` compiles Unity-facing presentation scripts into `Ghost.Presentation`.
+- `Ghost.Presentation` references `Ghost.Runtime`, `UnityEngine.UI`, and `Unity.InputSystem`.
+- `Assets/Presentation/Act1IntentClassification/Editor/Ghost.Presentation.Editor.asmdef` keeps editor-only scene builder code in `Ghost.Presentation.Editor`.
+- The pure puzzle logic remains in `Ghost.Runtime` with `noEngineReferences` enabled.
+
+---
+
+### Script Name
+
+Act1IntentClassificationInteractionController.cs
+
+### Purpose
+
+Owns the Act 1 presentation interaction state before drag-and-drop is added. It coordinates the pure `IntentClassificationSession`, selected card id, assignment, unassignment, validation, and simple state/feedback notifications.
+
+### Attached GameObject
+
+None. This is a plain C# presentation controller created by `Act1IntentClassificationStaticPresenter` at runtime.
+
+### Runtime Role
+
+When the presenter renders sample data, it creates one controller for that UI session. UI clicks are forwarded from the presenter into this controller, and the controller notifies the presenter when visual state or validation feedback should refresh.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- source `IntentCard` list
+- one `IntentClassificationSession`
+- selected card id
+- current validation feedback message and kind
+
+### Important Methods
+
+- `SelectCard(string cardId)`: selects an unselected card or deselects the currently selected card.
+- `AssignSelectedCardToIntent(string intentId)`: assigns the selected card to the clicked intent group, clears selection, and sends neutral feedback.
+- `MoveAssignedCardToUnassigned(string cardId)`: moves an assigned card back to unassigned and sends neutral feedback.
+- `ValidateCurrentGrouping()`: validates through `IntentClassificationSession.ValidateCurrentState()` and sends correct/incorrect feedback.
+- `GetAssignedGroupId(string cardId)`: exposes assignment state for card highlighting.
+- `GetAssignedCardIds(string groupId)`: exposes group contents for rendering.
+- `StateChanged`: event used by the presenter to refresh visuals.
+- `FeedbackChanged`: event used by the presenter to refresh validation feedback text.
+
+### Input
+
+Plain C# method calls from the presenter in response to UI clicks.
+
+### Output
+
+Updated interaction/session state plus simple callbacks. It does not create UI objects directly.
+
+### Failure Cases
+
+- Invalid card ids or group ids still fail through `IntentClassificationSession`.
+- If no card is selected, assigning to a group is ignored.
+
+### Unity Test
+
+Manual scene check for M0-T11. Use the M0-T09 Play Mode checklist and confirm visible behaviour is unchanged after the refactor.
+
+---
+
 ### Script Name
 
 Act1IntentClassificationStaticPresenter.cs
 
 ### Purpose
 
-Renders the Act 1 sample intent-classification data into Unity UI and provides the click-based prototype interaction: click a message card to select it, click an intent group area to assign it, click assigned rows to return cards to unassigned, and click Validate to check the grouping. It remains a placeholder presentation script without drag-and-drop, scoring, save/load, or dialogue behaviour.
+Renders the Act 1 sample intent-classification UI and connects UI events to `Act1IntentClassificationInteractionController`. It remains a placeholder presentation script without drag-and-drop, scoring, save/load, or dialogue behaviour.
 
 ### Attached GameObject
 
@@ -295,7 +360,7 @@ Attach to the root UI object in `Assets/Scenes/Act1IntentClassificationPrototype
 
 ### Runtime Role
 
-On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `IntentClassificationSession`, and wires card/group/assigned-row/validation clicks to that session. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
+On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `Act1IntentClassificationInteractionController`, renders the UI, and wires card/group/assigned-row/validation clicks to that controller. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
 
 ### Important Fields
 
@@ -309,20 +374,16 @@ Internal runtime state:
 - rendered card views by card id
 - rendered intent group views by intent id
 - scrollable assignment list content roots by intent id
-- the selected card id
+- one `Act1IntentClassificationInteractionController`
 - validation feedback text
-- one `IntentClassificationSession` for the current prototype play session
 
 ### Important Methods
 
-- `RenderSampleData()`: clears existing rendered children, creates a fresh sample-data session, displays the nine sample cards, and displays the `find_item`, `ask_location`, and `ask_identity` group areas.
-- `SelectCard(string cardId)`: selects an unselected card, or deselects the currently selected card when clicked again, then refreshes visual highlights.
-- `AssignSelectedCardToIntent(string intentId)`: moves the selected card into the clicked intent group through `IntentClassificationSession.MoveCardToGroup(...)`, clears the selection, and refreshes the UI.
-- `MoveAssignedCardToUnassigned(string cardId)`: moves an assigned card back to the unassigned state when its assigned row is clicked.
-- `ValidateCurrentGrouping()`: calls `IntentClassificationSession.ValidateCurrentState()` and displays simple correct/incorrect feedback.
-- `UpdateVisualState()`: updates card colors, group colors, and assigned-card text lists.
+- `RenderSampleData()`: clears existing rendered children, creates a fresh interaction controller from sample data, displays the nine sample cards, and displays the `find_item`, `ask_location`, and `ask_identity` group areas.
+- `UpdateVisualState()`: reads controller state to update card colors, group colors, and assigned-card text lists.
 - `EnsureAssignmentRoot(...)`: builds or upgrades each intent group's assigned-card area into a vertical `ScrollRect`.
 - `EnsureValidationControls()`: creates or reuses the Validate button and feedback text under the intent group column.
+- `ApplyValidationFeedback(...)`: displays feedback produced by the controller.
 - `EnsureEventSystem()`: creates an `EventSystem` with `InputSystemUIInputModule` at runtime if the scene does not already contain one.
 
 ### Input
@@ -345,14 +406,16 @@ UGUI objects showing:
 
 - Missing template or root references leave the UI unchanged.
 - If sample card ids or intent ids change later, the displayed labels will change because the presenter reads from sample data.
+- If the controller is missing, the presenter can still render placeholder UI but click actions will not update state.
 - If cards appear as blank pale rectangles, regenerate the scene with the Unity menu builder so the compact card template is saved, or enter Play Mode so `RenderSampleData()` rebuilds the card views from the updated presenter.
 - If group areas do not respond to clicks in an older generated scene, rerun the Unity menu builder so the saved scene includes the generated `EventSystem` and updated group templates. The presenter also attempts to create a runtime `EventSystem` if one is missing.
 - If assigned-card text still appears outside a group after script import, rerun the Unity menu builder so the saved scene includes the M0-T08 run 002 clipped assignment-list template. Play Mode startup also reapplies the compact/clipped runtime layout.
 - If assigned-card rows are not scrollable or the Validate button is missing in an older generated scene, rerun the Unity menu builder so the saved scene includes the M0-T09 scrollable assignment areas and validation controls. Play Mode startup also rebuilds these controls.
+- After M0-T11, Unity must import the new `Ghost.Presentation` assembly definitions before the presentation scripts compile in their explicit assembly boundary.
 
 ### Unity Test
 
-Manual scene check for M0-T09. Open the prototype scene after running the menu builder if needed, enter Play Mode, assign many cards to one group and scroll the assigned list, click an assigned `Back:` row to return a card to unassigned, correct a wrong assignment, click Validate, and confirm the feedback changes without Console errors.
+Manual scene check for M0-T11. Open the prototype scene after running the menu builder if needed, enter Play Mode, and repeat the M0-T09 behaviour checks. Visible behaviour should be unchanged by the refactor.
 
 ---
 
@@ -397,6 +460,7 @@ Manual Unity Editor menu action:
 - If an older generated scene does not show assigned-card lists or does not respond to clicks, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T08 EventSystem and assignment-list template.
 - If an older generated scene still lets assigned-card text overflow, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T08 run 002 clipped group template.
 - If an older generated scene does not show scrollable assignment lists or validation feedback, rerun `Ghost > Build Act 1 Intent Classification Prototype Scene` to rebuild the scene with the M0-T09 presenter output.
+- M0-T11 does not require scene regeneration for behaviour because the presenter component remains the same script asset, but Unity must import the new presentation/editor assembly definitions. If the scene shows stale serialized layout after import, rerun the builder.
 
 ### Unity Test
 

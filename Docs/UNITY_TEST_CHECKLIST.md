@@ -256,3 +256,46 @@ If the existing prototype scene was generated before M0-T09:
 ### Inspector Setup
 
 If the scene is created or refreshed through the menu builder, no manual Inspector setup should be required. The presenter creates the scrollable assigned-card areas, the `Back:` row buttons, the Validate button, and the validation feedback text from the generated UI roots and templates.
+
+---
+
+## M0-T11: Presentation Refactor Regression Check
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the new presentation assembly definitions:
+   - `Assets/Presentation/Ghost.Presentation.asmdef`
+   - `Assets/Presentation/Act1IntentClassification/Editor/Ghost.Presentation.Editor.asmdef`
+3. Confirm there are no Console compile errors.
+4. Confirm the existing EditMode test assembly still appears in `Window > General > Test Runner`.
+
+### Scene Refresh Check
+
+M0-T11 should not require scene regeneration because the same presenter script remains attached. If Unity reports missing script references or the prototype scene appears stale:
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+2. Confirm `Assets/Scenes/Act1IntentClassificationPrototype.unity` is refreshed.
+3. Do not add the scene to Build Settings during M0-T11.
+
+### Play Mode Regression Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm all nine sample message cards are visible.
+4. Click a message card and confirm it receives the selected highlight.
+5. Click the same card again and confirm it deselects.
+6. Select a card, then click an intent group area to assign it.
+7. Confirm the assigned card appears as a `Back:` row inside that group.
+8. Click the assigned `Back:` row and confirm the card returns to the unassigned/default visual state.
+9. Assign many or all cards to one group and confirm the assigned list remains scrollable.
+10. Correct a wrong assignment by selecting the card again and clicking a different group.
+11. Click `Validate` with an incomplete or incorrect grouping and confirm incorrect feedback appears.
+12. Assign all cards to their correct groups, click `Validate`, and confirm correct feedback appears.
+13. Confirm there is no drag-and-drop behaviour.
+14. Confirm there is no scoring, save/load, animation, backend, LLM, dialogue behaviour, or final art pass.
+15. Confirm no new Console errors appear.
+
+### Automated EditMode Tests
+
+Run the existing EditMode tests without modifying them. M0-T11 is a presentation refactor, so the pure logic tests should still pass after Unity imports the new assembly definitions.

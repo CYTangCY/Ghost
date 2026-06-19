@@ -1,0 +1,18 @@
+{
+    "name": "Ghost.Presentation",
+    "rootNamespace": "Ghost.Presentation",
+    "references": [
+        "Ghost.Runtime",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

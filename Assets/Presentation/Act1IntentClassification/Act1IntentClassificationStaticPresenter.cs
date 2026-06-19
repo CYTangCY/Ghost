@@ -39,8 +39,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         private readonly Dictionary<string, Image> groupImagesById = new Dictionary<string, Image>();
         private readonly Dictionary<string, RectTransform> assignmentRootsByIntentId = new Dictionary<string, RectTransform>();
 
-        private IntentClassificationSession session;
-        private string selectedCardId;
+        private Act1IntentClassificationInteractionController controller;
         private Text validationFeedbackText;
 
         private static readonly string[] IntentIds =
@@ -72,9 +71,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             ClearRenderedState();
 
             var cards = Act1IntentClassificationSampleData.CreateCards();
-            session = new IntentClassificationSession(cards);
+            controller = new Act1IntentClassificationInteractionController(cards);
+            controller.StateChanged += UpdateVisualState;
+            controller.FeedbackChanged += ApplyValidationFeedback;
 
-            foreach (var card in cards)
+            foreach (var card in controller.Cards)
             {
                 cardsById.Add(card.Id, card);
                 CreateCardView(card);
@@ -86,13 +87,13 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             EnsureValidationControls();
-            SetValidationFeedback("Group all cards, then click Validate.", FeedbackDefaultColor);
+            ApplyValidationFeedback(controller.CurrentFeedback);
             UpdateVisualState();
         }
 
         private void ClearRenderedState()
         {
-            selectedCardId = null;
+            DetachController();
             cardsById.Clear();
             cardViewsById.Clear();
             cardImagesById.Clear();
@@ -133,61 +134,16 @@ namespace Ghost.Presentation.Act1IntentClassification
             groupImagesById.Add(intentId, view.GetComponent<Image>());
         }
 
-        private void SelectCard(string cardId)
+        private void DetachController()
         {
-            selectedCardId = selectedCardId == cardId ? null : cardId;
-            UpdateVisualState();
-        }
-
-        private void AssignSelectedCardToIntent(string intentId)
-        {
-            if (string.IsNullOrEmpty(selectedCardId) || session == null)
+            if (controller == null)
             {
                 return;
             }
 
-            session.MoveCardToGroup(selectedCardId, intentId);
-            selectedCardId = null;
-            SetValidationFeedback("Assignment changed. Click Validate when ready.", FeedbackDefaultColor);
-            UpdateVisualState();
-        }
-
-        private void MoveAssignedCardToUnassigned(string cardId)
-        {
-            if (session == null)
-            {
-                return;
-            }
-
-            session.MoveCardToUnassigned(cardId);
-
-            if (selectedCardId == cardId)
-            {
-                selectedCardId = null;
-            }
-
-            SetValidationFeedback("Card returned to unassigned. Click Validate when ready.", FeedbackDefaultColor);
-            UpdateVisualState();
-        }
-
-        private void ValidateCurrentGrouping()
-        {
-            if (session == null)
-            {
-                SetValidationFeedback("No puzzle session is available yet.", FeedbackIncorrectColor);
-                return;
-            }
-
-            var result = session.ValidateCurrentState();
-            if (result.IsCorrect)
-            {
-                SetValidationFeedback("Correct grouping. Ghost can react to the right purpose now.", FeedbackCorrectColor);
-                return;
-            }
-
-            SetValidationFeedback(
-                "Incorrect grouping. " + result.Errors.Count + " issue(s) to fix.",
-                FeedbackIncorrectColor);
+            controller.StateChanged -= UpdateVisualState;
+            controller.FeedbackChanged -= ApplyValidationFeedback;
+            controller = null;
         }
 
         private void UpdateVisualState()
@@ -215,11 +171,11 @@ namespace Ghost.Presentation.Act1IntentClassification
                     continue;
                 }
 
-                if (cardId == selectedCardId)
+                if (controller != null && cardId == controller.SelectedCardId)
                 {
                     image.color = CardSelectedColor;
                 }
-                else if (session != null && session.GetAssignedGroupId(cardId) != null)
+                else if (controller != null && controller.GetAssignedGroupId(cardId) != null)
                 {
                     image.color = CardAssignedColor;
                 }
@@ -236,7 +192,9 @@ namespace Ghost.Presentation.Act1IntentClassification
             {
                 if (groupImagesById.TryGetValue(intentId, out var groupImage) && groupImage != null)
                 {
-                    groupImage.color = string.IsNullOrEmpty(selectedCardId) ? GroupDefaultColor : GroupReadyColor;
+                    groupImage.color = controller == null || !controller.HasSelectedCard
+                        ? GroupDefaultColor
+                        : GroupReadyColor;
                 }
 
                 if (!assignmentRootsByIntentId.TryGetValue(intentId, out var assignmentRoot))
@@ -245,9 +203,9 @@ namespace Ghost.Presentation.Act1IntentClassification
                 }
 
                 ClearChildren(assignmentRoot);
-                IReadOnlyList<string> assignedCardIds = session == null
+                IReadOnlyList<string> assignedCardIds = controller == null
                     ? new string[0]
-                    : session.GetAssignedCardIds(intentId);
+                    : controller.GetAssignedCardIds(intentId);
 
                 if (assignedCardIds.Count == 0)
                 {
@@ -281,7 +239,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => SelectCard(cardId));
+            button.onClick.AddListener(() => controller?.SelectCard(cardId));
             button.targetGraphic = image;
 
             var layoutElement = view.GetComponent<LayoutElement>();
@@ -323,7 +281,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => AssignSelectedCardToIntent(intentId));
+            button.onClick.AddListener(() => controller?.AssignSelectedCardToIntent(intentId));
             button.targetGraphic = image;
 
             var layoutElement = view.GetComponent<LayoutElement>();
@@ -484,7 +442,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => AssignSelectedCardToIntent(intentId));
+            button.onClick.AddListener(() => controller?.AssignSelectedCardToIntent(intentId));
         }
 
         private static void ConfigureAssignmentRoot(RectTransform assignmentRoot)
@@ -553,7 +511,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             var button = row.AddComponent<Button>();
             button.targetGraphic = image;
-            button.onClick.AddListener(() => MoveAssignedCardToUnassigned(cardId));
+            button.onClick.AddListener(() => controller?.MoveAssignedCardToUnassigned(cardId));
 
             var layoutElement = row.AddComponent<LayoutElement>();
             layoutElement.minHeight = AssignedRowPreferredHeight;
@@ -620,7 +578,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             var validateButton = EnsureValidateButton(controls);
             validateButton.onClick.RemoveAllListeners();
-            validateButton.onClick.AddListener(ValidateCurrentGrouping);
+            validateButton.onClick.AddListener(() => controller?.ValidateCurrentGrouping());
 
             validationFeedbackText = EnsureValidationFeedbackText(controls);
         }
@@ -723,15 +681,27 @@ namespace Ghost.Presentation.Act1IntentClassification
             return text;
         }
 
-        private void SetValidationFeedback(string message, Color color)
+        private void ApplyValidationFeedback(Act1IntentClassificationFeedback feedback)
         {
             if (validationFeedbackText == null)
             {
                 return;
             }
 
-            validationFeedbackText.text = message;
-            validationFeedbackText.color = color;
+            validationFeedbackText.text = feedback.Message;
+
+            switch (feedback.Kind)
+            {
+                case Act1IntentClassificationFeedbackKind.Correct:
+                    validationFeedbackText.color = FeedbackCorrectColor;
+                    break;
+                case Act1IntentClassificationFeedbackKind.Incorrect:
+                    validationFeedbackText.color = FeedbackIncorrectColor;
+                    break;
+                default:
+                    validationFeedbackText.color = FeedbackDefaultColor;
+                    break;
+            }
         }
 
         private static void ClearChildren(Transform root)
