@@ -51,6 +51,17 @@ submitted groups for the validator) + 10 EditMode tests. The run log recorded Un
 EditMode suites passed, then committed and pushed. Archive:
 `Docs/completed_tasks/M0-T06_intent_classification_session_state.md`. Next: M0-T07.
 
+### 2026-06-19 — M0-T07: Static Act 1 UI prototype scene — Completed
+Codex (run 001) added a static UGUI presenter + an Editor menu scene builder (Codex batch mode could
+not generate the scene, so it shipped the builder + a manual setup plan); the user ran
+`Ghost > Build Act 1 Intent Classification Prototype Scene` to generate
+`Assets/Scenes/Act1IntentClassificationPrototype.unity`. Run 002 fixed blank-looking cards (compact
+card template, explicit font/contrast, layout rebuild). Run logs recorded Play Mode/tests as "Not
+run" in-session; the user later verified in the Editor that the project compiled, the scene showed
+9 cards + 3 intent areas (find_item/ask_location/ask_identity), and Play Mode had no Console errors
+(no interaction, as expected). Scene not added to Build Settings.
+Archive: `Docs/completed_tasks/M0-T07_static_act1_ui_scene.md`. Next: M0-T08.
+
 ---
 
 ## Entry Template
