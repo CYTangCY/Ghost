@@ -299,3 +299,47 @@ M0-T11 should not require scene regeneration because the same presenter script r
 ### Automated EditMode Tests
 
 Run the existing EditMode tests without modifying them. M0-T11 is a presentation refactor, so the pure logic tests should still pass after Unity imports the new assembly definitions.
+
+---
+
+## M0-T12: Minimal Drag-to-Assign Act 1 Prototype
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationDraggableCard.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationDropTarget.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Refresh Check
+
+M0-T12 should work at Play Mode startup because `Act1IntentClassificationStaticPresenter` attaches the drag and drop behaviours while rendering sample data. If the open scene appears stale:
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+2. Confirm `Assets/Scenes/Act1IntentClassificationPrototype.unity` is refreshed.
+3. Do not add the scene to Build Settings during M0-T12.
+
+### Play Mode Interaction Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm all nine sample message cards are visible.
+4. Click a message card and click an intent group to confirm click-to-assign still works.
+5. Click an assigned `Back:` row and confirm the card returns to unassigned.
+6. Click `Validate` with an incomplete or incorrect grouping and confirm incorrect feedback still appears.
+7. Drag a message card and confirm a solid card-like preview follows the pointer.
+8. Drop the card anywhere inside `find_item`, `ask_location`, or `ask_identity`, including the background/scroll area rather than only the assigned-card rows.
+9. Confirm the card appears as a compact `Back:` row in the dropped group's normal assigned-card list, not as a free-placed object.
+10. Drag that assigned `Back:` row back to the left message-card list and confirm the card returns to unassigned.
+11. Drag an assigned row from one intent group to a different intent group and confirm it moves through the normal assigned-card list.
+12. Drag another card outside all valid target areas and confirm the UI state does not change.
+13. After each successful or cancelled drop, confirm no stale `Drag Preview` objects remain in the Hierarchy.
+14. Assign many cards to one group and confirm the compact assigned rows remain readable and the assigned list remains scrollable.
+15. Assign all cards to their correct groups, click `Validate`, and confirm correct feedback still appears.
+16. Confirm there is no scoring, save/load, animation, backend, LLM, dialogue behaviour, final art pass, free placement, or group reordering.
+17. Confirm no new Console errors appear.
+
+### Inspector Setup
+
+If the scene is created or refreshed through the menu builder, no manual Inspector setup should be required. The presenter attaches `Act1IntentClassificationDraggableCard` to rendered cards and assigned rows, and attaches `Act1IntentClassificationDropTarget` to rendered intent group areas, their scroll viewports, and the left message-card list at render time.

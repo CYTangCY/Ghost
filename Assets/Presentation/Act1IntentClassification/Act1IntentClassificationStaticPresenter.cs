@@ -13,8 +13,8 @@ namespace Ghost.Presentation.Act1IntentClassification
         private const float MessageTextPreferredHeight = 48f;
         private const float GroupPreferredHeight = 200f;
         private const float AssignmentViewportPreferredHeight = 72f;
-        private const float AssignedRowPreferredHeight = 32f;
-        private const float AssignedPlaceholderPreferredHeight = 22f;
+        private const float AssignedRowPreferredHeight = 24f;
+        private const float AssignedPlaceholderPreferredHeight = 20f;
         private const float ValidationControlsPreferredHeight = 58f;
 
         private static readonly Color CardDefaultColor = new Color(1f, 0.98f, 0.92f);
@@ -25,7 +25,8 @@ namespace Ghost.Presentation.Act1IntentClassification
         private static readonly Color FeedbackDefaultColor = new Color(0.24f, 0.22f, 0.30f);
         private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
         private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
-        private static readonly Color AssignedRowColor = new Color(0.97f, 0.99f, 1f);
+        private static readonly Color AssignedRowColor = new Color(1f, 0.98f, 0.93f);
+        private static readonly Color AssignedRowOutlineColor = new Color(0.76f, 0.70f, 0.88f, 0.55f);
 
         [SerializeField] private RectTransform cardListRoot;
         [SerializeField] private RectTransform intentGroupListRoot;
@@ -74,6 +75,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             controller = new Act1IntentClassificationInteractionController(cards);
             controller.StateChanged += UpdateVisualState;
             controller.FeedbackChanged += ApplyValidationFeedback;
+            ConfigureUnassignedDropTarget(cardListRoot.gameObject);
 
             foreach (var card in controller.Cards)
             {
@@ -130,6 +132,12 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             var assignmentRoot = EnsureAssignmentRoot(view.transform);
             ConfigureAssignmentViewportClick(assignmentRoot, intentId);
+            var assignmentViewport = assignmentRoot.parent;
+            if (assignmentViewport != null)
+            {
+                ConfigureIntentGroupDropTarget(assignmentViewport.gameObject, intentId);
+            }
+
             assignmentRootsByIntentId.Add(intentId, assignmentRoot);
             groupImagesById.Add(intentId, view.GetComponent<Image>());
         }
@@ -242,6 +250,8 @@ namespace Ghost.Presentation.Act1IntentClassification
             button.onClick.AddListener(() => controller?.SelectCard(cardId));
             button.targetGraphic = image;
 
+            ConfigureCardDrag(view, cardId);
+
             var layoutElement = view.GetComponent<LayoutElement>();
             if (layoutElement == null)
             {
@@ -284,6 +294,8 @@ namespace Ghost.Presentation.Act1IntentClassification
             button.onClick.AddListener(() => controller?.AssignSelectedCardToIntent(intentId));
             button.targetGraphic = image;
 
+            ConfigureIntentGroupDropTarget(view, intentId);
+
             var layoutElement = view.GetComponent<LayoutElement>();
             if (layoutElement == null)
             {
@@ -310,6 +322,83 @@ namespace Ghost.Presentation.Act1IntentClassification
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+        }
+
+        private void ConfigureCardDrag(GameObject view, string cardId)
+        {
+            var draggable = view.GetComponent<Act1IntentClassificationDraggableCard>();
+            if (draggable == null)
+            {
+                draggable = view.AddComponent<Act1IntentClassificationDraggableCard>();
+            }
+
+            draggable.Initialize(cardId, view.GetComponentInParent<Canvas>());
+        }
+
+        private void ConfigureIntentGroupDropTarget(GameObject view, string intentId)
+        {
+            var dropTarget = view.GetComponent<Act1IntentClassificationDropTarget>();
+            if (dropTarget == null)
+            {
+                dropTarget = view.AddComponent<Act1IntentClassificationDropTarget>();
+            }
+
+            EnsureRaycastTarget(view);
+            dropTarget.InitializeIntentGroup(intentId, AssignDraggedCardToIntent);
+        }
+
+        private void ConfigureUnassignedDropTarget(GameObject view)
+        {
+            var dropTarget = view.GetComponent<Act1IntentClassificationDropTarget>();
+            if (dropTarget == null)
+            {
+                dropTarget = view.AddComponent<Act1IntentClassificationDropTarget>();
+            }
+
+            EnsureRaycastTarget(view);
+            dropTarget.InitializeUnassigned(MoveDraggedCardToUnassigned);
+        }
+
+        private void AssignDraggedCardToIntent(string cardId, string intentId)
+        {
+            if (controller == null || string.IsNullOrEmpty(cardId))
+            {
+                return;
+            }
+
+            if (controller.GetAssignedGroupId(cardId) == intentId)
+            {
+                return;
+            }
+
+            controller.AssignCardToIntent(cardId, intentId);
+        }
+
+        private void MoveDraggedCardToUnassigned(string cardId)
+        {
+            if (controller == null || string.IsNullOrEmpty(cardId))
+            {
+                return;
+            }
+
+            if (controller.GetAssignedGroupId(cardId) == null)
+            {
+                return;
+            }
+
+            controller.MoveAssignedCardToUnassigned(cardId);
+        }
+
+        private static void EnsureRaycastTarget(GameObject view)
+        {
+            var image = view.GetComponent<Image>();
+            if (image == null)
+            {
+                image = view.AddComponent<Image>();
+                image.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            image.raycastTarget = true;
         }
 
         private static void ConfigureCardMessageText(Transform cardRoot, string messageText)
@@ -509,6 +598,10 @@ namespace Ghost.Presentation.Act1IntentClassification
             image.color = AssignedRowColor;
             image.raycastTarget = true;
 
+            var outline = row.AddComponent<Outline>();
+            outline.effectColor = AssignedRowOutlineColor;
+            outline.effectDistance = new Vector2(1f, -1f);
+
             var button = row.AddComponent<Button>();
             button.targetGraphic = image;
             button.onClick.AddListener(() => controller?.MoveAssignedCardToUnassigned(cardId));
@@ -518,8 +611,8 @@ namespace Ghost.Presentation.Act1IntentClassification
             layoutElement.preferredHeight = AssignedRowPreferredHeight;
 
             var layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(8, 8, 2, 2);
-            layout.spacing = 4f;
+            layout.padding = new RectOffset(6, 6, 1, 1);
+            layout.spacing = 3f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -529,13 +622,15 @@ namespace Ghost.Presentation.Act1IntentClassification
             label.transform.SetParent(row.transform, false);
             label.text = "Back: " + message;
             label.font = GetBuiltinFont();
-            label.fontSize = 12;
+            label.fontSize = 10;
             label.fontStyle = FontStyle.Normal;
             label.alignment = TextAnchor.MiddleLeft;
             label.color = new Color(0.12f, 0.20f, 0.30f);
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
             label.raycastTarget = false;
+
+            ConfigureCardDrag(row, cardId);
         }
 
         private void EnsureValidationControls()

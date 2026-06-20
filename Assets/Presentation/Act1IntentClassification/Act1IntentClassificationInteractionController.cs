@@ -59,6 +59,12 @@ namespace Ghost.Presentation.Act1IntentClassification
             NotifyStateChanged();
         }
 
+        public void AssignCardToIntent(string cardId, string intentId)
+        {
+            SelectedCardId = cardId;
+            AssignSelectedCardToIntent(intentId);
+        }
+
         public void MoveAssignedCardToUnassigned(string cardId)
         {
             session.MoveCardToUnassigned(cardId);

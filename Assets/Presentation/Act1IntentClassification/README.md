@@ -93,3 +93,27 @@ To refresh the scene if needed:
 9. Click `Validate` and confirm feedback says whether the grouping is correct or incorrect.
 
 M0-T09 still does not add drag-and-drop, scoring, save/load, animation, backend, LLM, dialogue behaviour, final art, or Build Settings changes.
+
+## Refreshing after M0-T12 minimal drag-to-assign
+
+M0-T12 keeps the existing click flow and adds a minimal drag flow:
+
+1. Drag a message card from the left column.
+2. Confirm one solid card-like preview follows the pointer.
+3. Drop the card anywhere inside `find_item`, `ask_location`, or `ask_identity`.
+4. Confirm the card is assigned through the same session/controller flow and appears as a compact `Back:` row in the dropped group's assigned-card list.
+5. Drag an assigned `Back:` row to the left message-card list and confirm it returns to unassigned.
+6. Drag an assigned `Back:` row to a different intent group and confirm it reassigns through the normal assigned-card list.
+7. Drop a card outside valid targets and confirm the UI returns to normal without changing assignment state.
+8. After successful and cancelled drops, confirm no stale `Drag Preview` objects remain in the Hierarchy.
+9. Confirm click-to-assign, `Back:` unassign, compact scrollable group lists, and `Validate` feedback still work.
+
+The presenter attaches the drag and drop behaviours when it renders sample data, so scene regeneration should not be required after script import. If Unity shows stale serialized UI or missing script references, refresh the scene from the Unity menu:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+5. Enter Play Mode and repeat the drag-to-assign and drag-back-to-unassigned checks above.
+
+M0-T12 still does not add scoring, save/load, animation beyond minimal drag feedback, backend, LLM, dialogue behaviour, final art, free placement, group reordering, mobile/touch polish, Build Settings changes, or ProjectSettings changes.
