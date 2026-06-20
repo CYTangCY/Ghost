@@ -106,6 +106,18 @@ project compiled, EditMode tests passed, and all M0-T09 behaviour still works wi
 UI-construction duplication (R2) and reflection field injection (R4). Archive:
 `Docs/completed_tasks/M0-T11_presentation_refactor.md`. Next: M0-T12 (drag-to-assign).
 
+### 2026-06-20 — M0-T12: Drag-to-assign interaction — Completed
+Codex added drag-to-assign across three runs: 001 = minimal drag (Act1IntentClassificationDraggableCard
++ Act1IntentClassificationDropTarget, new controller AssignCardToIntent); 002 = bidirectional drag
+(assigned rows draggable back to unassigned or to another group, group-wide drop zones, compact rows);
+003 = drag visual cleanup (single active preview, reliable cleanup on success/fail/source-destroy,
+compact chip rows). All assign/unassign/reassign route through Act1IntentClassificationInteractionController
++ IntentClassificationSession; pure logic untouched. Run logs recorded Play Mode/tests as "Not run"
+in-session; the user later verified in the Editor that compile, click-to-assign, drag left→group,
+group-based drop, drag→unassign, drag→reassign, drop-outside safety, Back, Validate/feedback, and no
+ghost artifacts all work. Deferred cleanups (R2 duplication, R4 reflection) still open.
+Archive: `Docs/completed_tasks/M0-T12_drag_to_assign_interaction.md`. Next: M0-T13 (visual/instruction polish).
+
 ---
 
 ## Entry Template

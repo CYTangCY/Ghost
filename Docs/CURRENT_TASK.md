@@ -2,52 +2,56 @@
 
 ## ID
 
-M0-T12
+M0-T13
 
 ## Goal
 
-Add minimal drag-to-assign interaction for the Act 1 prototype, reusing the existing
-session/controller flow.
+Polish the Act 1 prototype's visual hierarchy and player-facing instructional clarity, without
+changing core mechanics.
 
 ## Context
 
 M0-T04 implemented the pure validator. M0-T05 added sample data. M0-T06 added session/state logic.
-M0-T07 created the static UI scene. M0-T08 added click-to-assign. M0-T09 added assignment editing
-and validation feedback. M0-T10 reviewed the architecture. M0-T11 refactored presentation logic into
-a smaller interaction controller. The next step is the smallest safe drag-and-drop layer.
+M0-T07 created the static UI. M0-T08 added click-to-assign. M0-T09 added assignment editing and
+validation feedback. M0-T10 reviewed architecture. M0-T11 refactored presentation logic. M0-T12
+added drag-to-assign, bidirectional drag, group-wide drop zones, drag visual cleanup, and compact
+assigned rows. The next step is small visual/instruction polish before moving to the next Act.
 
 ## Scope
 
-- Add drag interaction for message cards.
-- Add drop handling for the three intent group areas.
-- On successful drop, assign the card through the existing interaction controller/session flow.
-- Keep click-to-assign as a fallback unless removing it is clearly safer.
-- Keep Validate button and feedback behaviour unchanged.
-- Keep assignment editing / Back behaviour unchanged.
-- Keep pure logic unchanged.
-- Keep the UI simple and placeholder-based.
+- Improve the player-facing instructions for Act 1.
+- Make the card/group visual hierarchy clearer and cuter while staying placeholder-based.
+- Keep card rows compact and readable.
+- Improve feedback text wording if needed.
+- Make selected, assigned, dragging, and valid drop-area states easier to understand.
+- Keep all current mechanics unchanged:
+  - click-to-assign
+  - drag-to-assign
+  - drag back to unassigned
+  - drag between groups
+  - Back/unassign
+  - Validate
 - Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md.
 - Create a Codex run log during implementation.
 
 ## Out of Scope
 
+- Do not change puzzle rules.
+- Do not change sample data.
 - Do not implement scoring.
-- Do not implement animations beyond minimal drag visual feedback if necessary.
-- Do not implement reorder within groups.
-- Do not implement mobile/touch polish yet.
+- Do not implement Act 0 or Act 2.
 - Do not implement final art.
-- Do not implement Act 0, Act 2, backend, LLM, dialogue, save/load, or narrative UI.
-- Do not add the scene to Build Settings unless explicitly approved.
-- Do not change ProjectSettings unless explicitly required and approved.
+- Do not implement backend, LLM, dialogue, save/load, or narrative UI.
+- Do not add Build Settings.
+- Do not edit ProjectSettings unless explicitly required and approved.
+- Do not refactor architecture unless a small UI polish requires it.
 
 ## Acceptance Criteria
 
-- A message card can be dragged onto an intent group area.
-- Dropping a card onto a group assigns it through the existing controller/session path.
-- The UI visibly reflects the assignment.
-- Existing click-to-assign still works, unless intentionally removed and documented.
-- Validate button still works.
-- Back/unassign still works.
-- The scene enters Play Mode without Console errors.
-- Pure logic files are unchanged.
+- The Act 1 UI is clearer to a new player.
+- Instructions explain drag/click assignment and validation in simple language.
+- Visual states are easier to understand.
+- Existing mechanics continue to work.
+- Scene enters Play Mode without Console errors.
+- Pure logic files remain unchanged.
 - A Codex run log is created during implementation.
