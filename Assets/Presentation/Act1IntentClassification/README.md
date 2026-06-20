@@ -117,3 +117,23 @@ The presenter attaches the drag and drop behaviours when it renders sample data,
 5. Enter Play Mode and repeat the drag-to-assign and drag-back-to-unassigned checks above.
 
 M0-T12 still does not add scoring, save/load, animation beyond minimal drag feedback, backend, LLM, dialogue behaviour, final art, free placement, group reordering, mobile/touch polish, Build Settings changes, or ProjectSettings changes.
+
+## Refreshing after visual and instruction polish
+
+The presentation polish keeps all M0-T12 mechanics and improves readability:
+
+1. The top instructions explain that messages should be grouped by speaker intent, not exact wording.
+2. The instructions mention click assignment, drag assignment, dragging assigned cards back/between groups, and Validate.
+3. The left column is labelled `Unassigned Messages`.
+4. The right column is labelled `Intent Groups`.
+5. Selected cards, assigned cards, valid drop areas, compact assigned rows, and validation feedback have clearer colour/outline cues.
+
+Scene regeneration should not be required because the presenter applies this polish when it renders sample data. If the scene appears stale after script import:
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile the updated presentation scripts.
+3. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+4. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+5. Enter Play Mode and confirm the polished instructions and visual cues are visible.
+
+This polish does not change puzzle rules, sample data, scoring, save/load, backend, LLM, dialogue behaviour, final art, free placement, group reordering, Build Settings, or ProjectSettings.

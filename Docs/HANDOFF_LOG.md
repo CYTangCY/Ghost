@@ -118,6 +118,31 @@ group-based drop, drag→unassign, drag→reassign, drop-outside safety, Back, V
 ghost artifacts all work. Deferred cleanups (R2 duplication, R4 reflection) still open.
 Archive: `Docs/completed_tasks/M0-T12_drag_to_assign_interaction.md`. Next: M0-T13 (visual/instruction polish).
 
+### 2026-06-20 — Milestone & roadmap revision (planning, no code)
+Act 1 core gameplay is a completed playable milestone (click + drag assignment, bidirectional
+reassign, Back/unassign, Validate, feedback). Roadmap revised after Act 1: created `Docs/ROADMAP.md`;
+revised Act structure to Act 1 Intent → Act 2 Entity → Act 3 Dialog Node Graph (flagship) →
+Acts 4–6 graph extensions → Act 7 NLP Lab → Act 8 Capstone "Repair Ghost's Voice". Act 1 polish is
+deferred. **CURRENT_TASK M0-T13 changed from Act 1 polish to Game Shell + Lily + Act Select.** The
+former Act 0 fundamentals move to the Game Shell intro (Lily) + the Act 8 capstone. Updated
+LEARNING_CONTENT, DESIGN_RATIONALE, ARCHITECTURE, AGENTS, CLAUDE; recorded the AI-collaboration
+workflow (ChatGPT plans, Claude reviews/docs/closure, Codex implements only CURRENT_TASK + run logs).
+Open item: `Docs/CONFIRMED_PROJECT_CONTEXT.md` §5 still shows the earlier Act structure and should be
+reconciled. Next: M0-T13 (Game Shell prototype).
+
+### 2026-06-20 — M0-T13: Game Shell prototype — Completed
+Codex run 002 added the Game Shell (title, act-select/hub, reusable Lily dialogue frame with text from
+ShellDialogueData, Ghost placeholder, SceneManager shell↔Act1 navigation, runtime Return-to-Hub
+overlay, menu builder + shell Editor asmdef). Codex batch mode could not generate the scene, so the
+user ran `Ghost > Build Game Shell Scene`: `GameShellPrototype.unity` now exists and both it and
+`Act1IntentClassificationPrototype.unity` are in Build Settings (the approved exception). Run logs
+recorded Play Mode/tests as "Not run" in-session; the user verified in the Editor that the shell,
+shell↔Act1 navigation, Return to Hub, and all Act 1 mechanics work with no Console errors ("全部完成了").
+Note: M0-T13 has two run logs under one ID — 001 = superseded Act-1 visual/instruction polish (earlier
+definition, also landed in the tree), 002 = this Game Shell. `CONFIRMED_PROJECT_CONTEXT.md` §5 was also
+reconciled to the 8-Act structure this round (resolving the open item above). Archive:
+`Docs/completed_tasks/M0-T13_game_shell_prototype.md`. Next: M0-T14 (Act 2 entity-extraction logic).
+
 ---
 
 ## Entry Template

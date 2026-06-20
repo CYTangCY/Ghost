@@ -343,3 +343,56 @@ M0-T12 should work at Play Mode startup because `Act1IntentClassificationStaticP
 ### Inspector Setup
 
 If the scene is created or refreshed through the menu builder, no manual Inspector setup should be required. The presenter attaches `Act1IntentClassificationDraggableCard` to rendered cards and assigned rows, and attaches `Act1IntentClassificationDropTarget` to rendered intent group areas, their scroll viewports, and the left message-card list at render time.
+
+---
+
+## M0-T13: Game Shell Prototype
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Shell/ShellSceneNames.cs`
+   - `Assets/Presentation/Shell/ShellDialogueData.cs`
+   - `Assets/Presentation/Shell/LilyDialogueFrame.cs`
+   - `Assets/Presentation/Shell/ShellSceneNavigationButton.cs`
+   - `Assets/Presentation/Shell/GameShellPresenter.cs`
+   - `Assets/Presentation/Shell/ShellReturnToHubOverlay.cs`
+   - `Assets/Presentation/Shell/Editor/GameShellSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Build / Build Settings Check
+
+M0-T13 creates the shell scene through a Unity editor builder, not by hand-editing scene YAML.
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+2. Select `Ghost > Build Game Shell Scene`.
+3. Confirm `Assets/Scenes/GameShellPrototype.unity` exists.
+4. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+5. Confirm `Assets/Scenes/GameShellPrototype.unity` and `Assets/Scenes/Act1IntentClassificationPrototype.unity` are enabled in Build Settings.
+6. Confirm no other ProjectSettings files were intentionally changed.
+
+### Play Mode Shell Check
+
+1. Open `Assets/Scenes/GameShellPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm the title screen shows the project title `Ghost`.
+4. Confirm Ghost has a visible placeholder presence.
+5. Confirm Lily has a visible placeholder presence and a reusable dialogue-frame panel.
+6. Confirm Lily's dialogue text appears from `ShellDialogueData`, not from separate hardcoded per-screen presenter text.
+7. Click `Start / Continue`.
+8. Confirm the act select / hub screen appears.
+9. Confirm Lily's dialogue updates to the hub guidance line.
+10. Confirm Act 1 is visible as a selectable prototype act.
+11. Click `Start Act 1`.
+12. Confirm Unity loads `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+13. In Act 1, confirm the existing click assignment, drag assignment, bidirectional reassignment, Back/unassign, Validate, and validation feedback still work.
+14. Confirm a `Return to Hub` button appears in Act 1.
+15. Click `Return to Hub`.
+16. Confirm Unity loads `Assets/Scenes/GameShellPrototype.unity`.
+17. Confirm no new Console errors appear.
+18. Confirm there is no Act 2 implementation, node graph, save/load, backend, LLM, full visual-novel dialogue system, scoring, final art pass, coordinate-based free placement, or group reordering added by this task.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter`, `LilyDialogueFrame`, the title screen, the act hub screen, and the shell buttons. The Act 1 return button is added at runtime by `ShellReturnToHubOverlay` when the Act 1 scene loads.

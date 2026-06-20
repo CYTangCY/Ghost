@@ -4,6 +4,7 @@ This repository is for the Ghost project.
 
 Before implementation, always read:
 - Docs/CONFIRMED_PROJECT_CONTEXT.md
+- Docs/ROADMAP.md
 - Docs/CURRENT_TASK.md
 - Docs/REQUIREMENTS.md
 - Docs/LEARNING_CONTENT.md
@@ -68,3 +69,23 @@ After every implementation or debugging run, Codex must create one run log in `D
 - Do not put hidden reasoning or private chain-of-thought in the log — record actions, decisions, results, and evidence only.
 - `Docs/HANDOFF_LOG.md` keeps only a short chronological summary; `Docs/codex_runs/` stores the detailed per-run records.
 - See `Docs/codex_runs/README.md` for the full template.
+
+## AI Collaboration Workflow
+
+This project is built with a three-party workflow. Each party has a lane:
+
+- **ChatGPT (with the user):** helps the user plan, control scope, write task prompts, and make
+  design decisions. Produces the intent behind each CURRENT_TASK.
+- **Claude:** inspects the actual repo, updates docs, performs task closure/archiving, and performs
+  architecture/scope reviews. Claude does not silently change the confirmed direction.
+- **Codex:** implements ONLY the active `Docs/CURRENT_TASK.md` scope and writes a run log.
+
+Rules for Codex in this workflow:
+- Implement only what CURRENT_TASK.md defines; do not silently expand scope.
+- Do not intentionally edit ProjectSettings, Packages, Build Settings, or unrelated scenes.
+- Run logs must state honestly whether Unity Play Mode or tests were actually run
+  (use `Not run — [reason].` when they were not).
+- Human Editor verification is recorded separately from Codex in-session checks — Codex must not
+  claim Editor/Play Mode results it did not produce.
+- Follow the current Act structure in `Docs/ROADMAP.md` and `Docs/LEARNING_CONTENT.md`; do not
+  invent new Acts.

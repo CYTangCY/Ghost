@@ -16,7 +16,46 @@ Do not implement a level before its mapping is written here.
 
 ---
 
+## Intended Act Structure (revised roadmap — 2026-06-20)
+
+This is the current working Act sequence (user-directed revision; see `Docs/ROADMAP.md`). It refines
+the structure in `Docs/CONFIRMED_PROJECT_CONTEXT.md` §5 (to be reconciled there). For each Act: what
+the player does → the chatbot/NLP concept it teaches → how it connects to earlier Acts.
+
+- **Act 1 — Intent Classification.** Player groups message cards by purpose. Teaches that different
+  wording can share one intent. (Foundation.)
+- **Act 2 — Entity Extraction.** Player tags phrases/chips and assigns entity types. Teaches that a
+  chatbot must pull key details (names/places/times/objects), synonyms, and system vs custom
+  entities. Connects to Act 1: intent = what is wanted; entity = the details inside that request.
+- **Act 3 — Dialog Management via Node Graph (flagship).** Player assembles a dialog node graph
+  (nodes, branching, slots, responses, context). Teaches how a conversation is structured. Connects
+  to Acts 1–2: intents trigger nodes and entities fill slots/conditions. The node graph is the
+  flagship mechanic, reused/extended in Acts 4–6.
+- **Act 4 — Confidence and Fallback.** Player tunes thresholds and adds fallback/disambiguation
+  nodes in the graph. Teaches confidence scoring and graceful failure. Extends the Act 3 graph.
+- **Act 5 — Testing and Debugging.** Player runs test conversations through the graph and fixes
+  faults. Teaches chatbot testing/debugging. Extends the Act 3 graph.
+- **Act 6 — Integration / Backend Action / Response Generation.** Player adds backend/action and
+  response-generation nodes. Teaches how a bot fetches data and forms a reply. Extends the Act 3
+  graph.
+- **Act 7 — NLP Pipeline Lab.** Tokenisation, POS tagging, NER, sentiment (the former optional
+  Act *). Supplementary lab that supports the concepts behind earlier Acts.
+- **Act 8 — Capstone / "Repair Ghost's Voice".** Player reconnects the five chatbot components into
+  a working pipeline (the former Act 0 mechanic). Teaches how the whole system fits together; the
+  integration demo that ties every prior Act's concept into one playable whole.
+
+Fundamentals note: the former Act 0 (chatbot definition, rule-based vs AI-enabled, five components,
+four challenges) is preserved — its concepts are introduced by Lily in the Game Shell, and its
+"Rebuild Ghost's Voice" pipeline mechanic becomes the Act 8 capstone. The detailed per-Act sections
+below still use the earlier numbering and are being migrated to this structure.
+
+---
+
 ## Act 0: Chatbot Fundamentals
+
+> Revised mapping (2026-06-20): the fundamentals concepts here are now introduced by Lily in the
+> Game Shell, and the "Rebuild Ghost's Voice" pipeline mechanic below is re-planned as the **Act 8
+> capstone**. This section is retained for that reuse.
 
 ### Confirmed Topic
 
@@ -187,7 +226,7 @@ High.
 
 ---
 
-## Act *: Supplementary NLP Pipeline
+## Act *: Supplementary NLP Pipeline (revised: Act 7 — NLP Pipeline Lab)
 
 ### Confirmed Topic
 
@@ -220,7 +259,10 @@ Medium / optional.
 
 ---
 
-## Act 3: Dialog
+## Act 3: Dialog (Dialog Management via Node Graph — flagship mechanic)
+
+> Revised mapping (2026-06-20): Act 3 is the flagship **node graph** gameplay, built after Act 2 so
+> intents and entities can act as triggers/slots inside dialog nodes; Acts 4–6 extend this graph.
 
 ### Confirmed Topic
 
@@ -326,3 +368,27 @@ form configuration or deployment design puzzle.
 ### Implementation Priority
 
 Medium / late.
+
+---
+
+## Act 8: Capstone — "Repair Ghost's Voice" (revised roadmap)
+
+### Confirmed Topic
+
+Integration of all prior Acts: the five chatbot components working together as one pipeline.
+
+### Player Action
+
+The player reconnects the five components (UI → NLP engine → Dialogue management system → Response
+generation module → UI, with Backend integration) into a working pipeline — reusing the former
+Act 0 "Rebuild Ghost's Voice" mechanic as the final integration demo.
+
+### Connection to Earlier Acts
+
+Ties together intent (Act 1), entity (Act 2), dialog node graph (Act 3), confidence/fallback
+(Act 4), testing (Act 5), and backend/response (Act 6): the player sees the whole system Ghost
+needs to communicate clearly.
+
+### Implementation Priority
+
+Late / if time allows.

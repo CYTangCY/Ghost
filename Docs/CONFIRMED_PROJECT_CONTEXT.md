@@ -231,11 +231,32 @@ The project should not become a general AI literacy game unless explicitly redes
 
 ## 5. Confirmed Act Structure
 
-**Confirmed from preliminary report**
+**Confirmed from preliminary report; Act sequence revised and confirmed by user (Chao-Yang) on 2026-06-20.**
 
-Do not invent a new Act structure.
+Do not invent a new Act structure. Follow the revised structure below (mirrored in `Docs/ROADMAP.md`
+and `Docs/LEARNING_CONTENT.md`).
 
-Use the confirmed structure:
+### Revised Act structure (user-confirmed 2026-06-20)
+
+```text
+Act 1: Intent classification
+Act 2: Entity extraction
+Act 3: Dialog management via node graph   (flagship mechanic; built after Act 2)
+Act 4: Confidence and fallback            (extends the Act 3 graph)
+Act 5: Testing and debugging              (extends the Act 3 graph)
+Act 6: Integration / backend action / response generation  (extends the Act 3 graph)
+Act 7: NLP pipeline lab                    (tokenisation, POS tagging, NER, sentiment; former Act *)
+Act 8: Capstone — "Repair Ghost's Voice"   (reconnect the five chatbot components; former Act 0 mechanic)
+```
+
+Notes on the revision:
+- Chatbot fundamentals (definitions, rule-based vs AI-enabled, five components, four challenges) —
+  the former Act 0 — are now introduced by Lily in the Game Shell, and the "Rebuild Ghost's Voice"
+  five-component pipeline mechanic becomes the Act 8 capstone.
+- The node graph (Act 3) is the flagship mechanic and is reused/extended by Acts 4–6.
+- A Game Shell / Lily / Act Select layer precedes Act 2 work (see ROADMAP Phase A).
+
+### Original report structure (retained for traceability)
 
 ```text
 Act 0: Chatbot fundamentals
@@ -280,7 +301,8 @@ Act 6: Integration and deployment
 - not a production chatbot deployment
 ```
 
-Important: The naming can later be made more cute or narrative-facing in UI, but the underlying curriculum structure must remain traceable to these Acts.
+Important: UI naming can be cuter/narrative-facing, but the curriculum must remain traceable to
+these Acts (the revised structure above; the original report structure is retained for lineage).
 
 ---
 

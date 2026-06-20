@@ -296,7 +296,7 @@ Act1IntentClassificationInteractionController.cs
 
 ### Purpose
 
-Owns the Act 1 presentation interaction state for click and drag assignment. It coordinates the pure `IntentClassificationSession`, selected card id, assignment, unassignment, validation, and simple state/feedback notifications.
+Owns the Act 1 presentation interaction state for click and drag assignment. It coordinates the pure `IntentClassificationSession`, selected card id, assignment, unassignment, validation, and simple state/feedback notifications. The feedback strings are player-facing UI copy, not puzzle-rule logic.
 
 ### Attached GameObject
 
@@ -322,7 +322,7 @@ Internal state:
 - `AssignSelectedCardToIntent(string intentId)`: assigns the selected card to the clicked intent group, clears selection, and sends neutral feedback.
 - `AssignCardToIntent(string cardId, string intentId)`: assigns a specific dragged card to the dropped intent group through the same session assignment path.
 - `MoveAssignedCardToUnassigned(string cardId)`: moves an assigned card back to unassigned and sends neutral feedback. The presenter uses this for both `Back:` row clicks and assigned-card drops onto the left message-card area.
-- `ValidateCurrentGrouping()`: validates through `IntentClassificationSession.ValidateCurrentState()` and sends correct/incorrect feedback.
+- `ValidateCurrentGrouping()`: validates through `IntentClassificationSession.ValidateCurrentState()` and sends player-facing correct/incorrect feedback.
 - `GetAssignedGroupId(string cardId)`: exposes assignment state for card highlighting.
 - `GetAssignedCardIds(string groupId)`: exposes group contents for rendering.
 - `StateChanged`: event used by the presenter to refresh visuals.
@@ -334,7 +334,7 @@ Plain C# method calls from the presenter in response to UI clicks and drop-targe
 
 ### Output
 
-Updated interaction/session state plus simple callbacks. It does not create UI objects directly.
+Updated interaction/session state plus simple callbacks. It does not create UI objects directly. Feedback wording explains that the player is grouping by speaker intent, confirms when all messages are grouped by intent, and suggests comparing what the speaker wants when the grouping is incorrect.
 
 ### Failure Cases
 
@@ -343,7 +343,7 @@ Updated interaction/session state plus simple callbacks. It does not create UI o
 
 ### Unity Test
 
-Manual scene check for M0-T12. Use the M0-T12 Play Mode checklist and confirm click assignment, drag assignment, drag-back-to-unassigned, `Back:` row clicks, and validation feedback all route through the controller.
+Manual Act 1 scene check. Confirm click assignment, drag assignment, drag-back-to-unassigned, `Back:` row clicks, and validation feedback still route through the controller.
 
 ---
 
@@ -353,7 +353,7 @@ Act1IntentClassificationStaticPresenter.cs
 
 ### Purpose
 
-Renders the Act 1 sample intent-classification UI and connects UI events to `Act1IntentClassificationInteractionController`. It remains a placeholder presentation script with click assignment, minimal drag-to-assign, validation feedback, and no scoring, save/load, or dialogue behaviour.
+Renders the Act 1 sample intent-classification UI and connects UI events to `Act1IntentClassificationInteractionController`. It remains a placeholder presentation script with click assignment, minimal drag-to-assign, validation feedback, clearer placeholder instruction/visual hierarchy polish, and no scoring, save/load, or dialogue behaviour.
 
 ### Attached GameObject
 
@@ -361,7 +361,7 @@ Attach to the root UI object in `Assets/Scenes/Act1IntentClassificationPrototype
 
 ### Runtime Role
 
-On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `Act1IntentClassificationInteractionController`, renders the UI, and wires card/group/assigned-row/validation clicks plus drag/drop behaviours to that controller. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
+On `Start`, it optionally refreshes the card and intent group UI from `Act1IntentClassificationSampleData`, creates an `Act1IntentClassificationInteractionController`, applies the current player-facing instruction labels, renders the UI, and wires card/group/assigned-row/validation clicks plus drag/drop behaviours to that controller. The generated prototype scene also calls the same render method in the Editor before saving, so the scene can show the layout when opened.
 
 ### Important Fields
 
@@ -381,6 +381,7 @@ Internal runtime state:
 ### Important Methods
 
 - `RenderSampleData()`: clears existing rendered children, creates a fresh interaction controller from sample data, displays the nine sample cards, and displays the `find_item`, `ask_location`, and `ask_identity` group areas.
+- `EnsureInstructionText()`: updates the title, instruction copy, column headings, and soft panel surfaces so the prototype explains grouping by intent, click/drag assignment, correction by dragging back or between groups, and Validate.
 - `UpdateVisualState()`: reads controller state to update card colors, group colors, and assigned-card text lists.
 - `ConfigureCardDrag(...)`: attaches `Act1IntentClassificationDraggableCard` to left-side message cards and right-side assigned-card rows.
 - `ConfigureIntentGroupDropTarget(...)`: attaches `Act1IntentClassificationDropTarget` to each intent group area and its assigned-card scroll viewport so dropping anywhere in the group panel is more forgiving.
@@ -391,6 +392,9 @@ Internal runtime state:
 - `CreateAssignedCardRow(...)`: renders assigned cards as compact draggable rows/chips in the group list, not as free-positioned objects.
 - `EnsureValidationControls()`: creates or reuses the Validate button and feedback text under the intent group column.
 - `ApplyValidationFeedback(...)`: displays feedback produced by the controller.
+- `ConfigureExistingLabel(...)`: updates existing generated text labels without requiring scene YAML edits.
+- `ConfigurePanelSurface(...)`: softens the left and right panel backgrounds.
+- `SetOutline(...)`: applies selected, assigned, ready-drop, and panel outline cues.
 - `EnsureEventSystem()`: creates an `EventSystem` with `InputSystemUIInputModule` at runtime if the scene does not already contain one.
 
 ### Input
@@ -403,14 +407,17 @@ Internal runtime state:
 ### Output
 
 UGUI objects showing:
+- title and instructions explaining that cards should be grouped by speaker intent rather than exact wording
+- labelled `Unassigned Messages` and `Intent Groups` columns
 - nine sample message cards
 - three intent group areas
 - short intent-purpose descriptions
-- selected-card highlight
+- selected-card highlight using a warmer fill and stronger outline
 - compact assigned-card rows listed inside each intent group area
+- assigned-card row/chip styling distinct from left-side unassigned cards
 - scrollable assigned-card lists so assigning many cards to one group does not silently hide them
 - a single opaque temporary drag preview while a message card or assigned-card row is being dragged
-- basic validation feedback for correct or incorrect grouping
+- basic validation feedback for correct or incorrect grouping inside a small feedback panel
 
 ### Failure Cases
 
@@ -424,10 +431,11 @@ UGUI objects showing:
 - After M0-T11, Unity must import the new `Ghost.Presentation` assembly definitions before the presentation scripts compile in their explicit assembly boundary.
 - If drag-to-assign or drag-back-to-unassigned does not work after importing M0-T12, confirm the scene has an `EventSystem` with `InputSystemUIInputModule`, then rerun the menu builder or enter Play Mode so the presenter attaches the draggable card and drop target behaviours.
 - If drag previews remain visible after a drop, confirm the imported `Act1IntentClassificationDropTarget` calls `CompleteDragVisuals()` before invoking assignment callbacks.
+- If the title, instruction copy, or column labels still show older wording after presentation changes, enter Play Mode so `RenderSampleData()` applies the updated labels, or rerun the Unity menu builder if a refreshed saved scene preview is needed.
 
 ### Unity Test
 
-Manual scene check for M0-T12. Open the prototype scene after running the menu builder if needed, enter Play Mode, and repeat the M0-T09 behaviour checks plus drag a message card onto each intent group area, drag an assigned row back to the left message-card list, and drag an assigned row to a different intent group.
+Manual Act 1 scene check. Open the prototype scene after running the menu builder if needed, enter Play Mode, and repeat the M0-T12 behaviour checks. Also confirm the instruction text explains intent grouping, click/drag assignment, mistake correction, and Validate, and that unassigned cards, intent group panels, assigned chips, selected state, drop-ready group state, and validation feedback are visually distinct.
 
 ---
 
@@ -579,3 +587,326 @@ Manual Unity Editor menu action:
 ### Unity Test
 
 Run the menu builder in Unity, open the generated scene, and enter Play Mode. Confirm there are no Console errors.
+
+---
+
+## Game Shell Prototype
+
+### Script Name
+
+ShellSceneNames.cs
+
+### Purpose
+
+Stores the shared scene names and scene asset paths used by the Game Shell and Act 1 navigation.
+
+### Attached GameObject
+
+None. This is a static constants class.
+
+### Runtime Role
+
+Used by shell navigation scripts when loading the shell scene or Act 1 scene with `SceneManager`.
+
+### Important Fields
+
+- `GameShellSceneName`: scene name used to load the shell.
+- `Act1SceneName`: scene name used to load the Act 1 prototype.
+- `GameShellScenePath`: asset path used by the editor builder.
+- `Act1ScenePath`: asset path used by the editor builder and Build Settings registration.
+
+### Important Methods
+
+None.
+
+### Input
+
+None.
+
+### Output
+
+Scene-name and scene-path constants.
+
+### Failure Cases
+
+If scene asset names are changed later, these constants must be updated to keep SceneManager loading and Build Settings registration aligned.
+
+### Unity Test
+
+Run `Ghost > Build Game Shell Scene`, then confirm the generated shell can load Act 1 and the Act 1 return button can load the shell.
+
+---
+
+### Script Name
+
+ShellDialogueData.cs
+
+### Purpose
+
+Provides small data-backed Lily dialogue lines for the shell title screen and act hub screen. The shell presenter asks this data class for text instead of hardcoding separate Lily lines inside each screen method.
+
+### Attached GameObject
+
+None. This is plain C# data used by shell presentation scripts.
+
+### Runtime Role
+
+When the shell changes screens, `GameShellPresenter` requests the matching `ShellDialogueLine` and passes it to `LilyDialogueFrame`.
+
+### Important Fields
+
+- `TitleScreenId`: id for the title-screen Lily line.
+- `ActHubScreenId`: id for the act-select / hub Lily line.
+- `ShellDialogueLine`: immutable speaker/text data.
+
+### Important Methods
+
+- `GetLine(string screenId)`: returns the Lily line for a known shell screen id.
+
+### Input
+
+A shell screen id.
+
+### Output
+
+A `ShellDialogueLine` containing speaker name and dialogue text.
+
+### Failure Cases
+
+Unknown screen ids throw `ArgumentException`, which should make missing dialogue wiring obvious during testing.
+
+### Unity Test
+
+Enter Play Mode in the shell scene, click `Start / Continue`, and confirm the Lily dialogue frame changes from the title line to the act hub line.
+
+---
+
+### Script Name
+
+LilyDialogueFrame.cs
+
+### Purpose
+
+Reusable UI frame for displaying Lily dialogue from `ShellDialogueData`.
+
+### Attached GameObject
+
+Attached to the `Lily Dialogue Frame` GameObject created by `GameShellSceneBuilder`.
+
+### Runtime Role
+
+Receives `ShellDialogueLine` values and writes the speaker name and dialogue text into UGUI `Text` components.
+
+### Important Fields
+
+- `speakerNameText`: text component for Lily's name.
+- `dialogueText`: text component for Lily's current guidance line.
+
+### Important Methods
+
+- `Configure(...)`: used by the editor builder to assign the text references.
+- `Show(ShellDialogueLine line)`: updates the visible dialogue frame.
+
+### Input
+
+Dialogue data from `ShellDialogueData`.
+
+### Output
+
+Visible Lily speaker name and dialogue text in the shell UI.
+
+### Failure Cases
+
+Missing text references leave that part of the frame unchanged.
+
+### Unity Test
+
+Open the shell scene in Play Mode and confirm the Lily frame appears on both the title screen and the act hub screen with different text.
+
+---
+
+### Script Name
+
+GameShellPresenter.cs
+
+### Purpose
+
+Controls the placeholder shell scene: title screen, act-select/hub screen, Lily dialogue-frame updates, and starting Act 1.
+
+### Attached GameObject
+
+Attached to the `Game Shell Root` GameObject created by `GameShellSceneBuilder`.
+
+### Runtime Role
+
+On `Start`, it wires the shell buttons, shows the title screen, and displays the title-screen Lily dialogue. It switches to the hub screen when the player clicks `Start / Continue`, and loads Act 1 when the player clicks `Start Act 1`.
+
+### Important Fields
+
+- `titleScreen`: root GameObject for the title screen.
+- `actHubScreen`: root GameObject for the act-select/hub screen.
+- `lilyDialogueFrame`: reusable Lily dialogue UI.
+- `startButton`: title-screen button that opens the hub.
+- `act1Button`: hub button that loads Act 1.
+- `backToTitleButton`: hub button that returns to the title screen.
+
+### Important Methods
+
+- `Configure(...)`: used by the editor builder to assign all scene references.
+- `ShowTitle()`: shows the title screen and title Lily line.
+- `ShowActHub()`: shows the act hub and hub Lily line.
+- `StartAct1()`: loads `Act1IntentClassificationPrototype` through `SceneManager`.
+
+### Input
+
+Button clicks from the shell UI.
+
+### Output
+
+Screen visibility changes, Lily dialogue-frame text changes, and SceneManager loading of Act 1.
+
+### Failure Cases
+
+- Missing screen references prevent that screen from being shown or hidden.
+- Missing button references mean that button will not be wired.
+- If Act 1 is not in Build Settings, `StartAct1()` can fail to load the scene.
+
+### Unity Test
+
+Open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, click `Start / Continue`, then click `Start Act 1` and confirm the Act 1 scene loads.
+
+---
+
+### Script Name
+
+ShellSceneNavigationButton.cs
+
+### Purpose
+
+Reusable button helper that loads a configured scene name with `SceneManager`.
+
+### Attached GameObject
+
+Attached to any UGUI Button that should load a scene. M0-T13 uses it for the runtime Act 1 `Return to Hub` button.
+
+### Runtime Role
+
+On `Awake`, it wires the host `Button` to call `LoadTargetScene()`.
+
+### Important Fields
+
+- `targetSceneName`: scene name to load when clicked.
+
+### Important Methods
+
+- `Configure(string sceneName)`: sets the target scene name.
+- `LoadTargetScene()`: loads the configured scene if the name is not empty.
+
+### Input
+
+Button click from Unity UI.
+
+### Output
+
+SceneManager loads the configured scene.
+
+### Failure Cases
+
+If `targetSceneName` is empty or the target scene is missing from Build Settings, the button cannot navigate successfully.
+
+### Unity Test
+
+Load Act 1 from the shell, click `Return to Hub`, and confirm the shell scene loads.
+
+---
+
+### Script Name
+
+ShellReturnToHubOverlay.cs
+
+### Purpose
+
+Adds a lightweight return-to-hub UI overlay when the Act 1 prototype scene is loaded. This keeps Act 1 puzzle rules and pure logic unchanged while still providing shell navigation.
+
+### Attached GameObject
+
+None in the scene. The static runtime hook creates a `Shell Return To Hub Overlay` button when the active scene is `Act1IntentClassificationPrototype`.
+
+### Runtime Role
+
+After scene load, it checks the active scene name. If Act 1 is active and no return overlay exists, it finds or creates a Canvas/EventSystem and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`.
+
+### Important Fields
+
+No Inspector fields.
+
+### Important Methods
+
+- `RegisterSceneHook()`: registers the scene-loaded callback.
+- `CreateForScene(...)`: creates the overlay only for the Act 1 scene.
+- `CreateReturnButton(...)`: builds the placeholder UGUI return button.
+
+### Input
+
+Unity scene-load events.
+
+### Output
+
+A small `Return to Hub` button in Act 1 that loads `GameShellPrototype`.
+
+### Failure Cases
+
+- If the shell scene is not in Build Settings, the return button cannot load it.
+- If another system later creates a button with the same overlay name, this script will treat it as already present.
+
+### Unity Test
+
+Start from the shell, enter Act 1, confirm the `Return to Hub` button appears, and click it to return to the shell.
+
+---
+
+### Script Name
+
+GameShellSceneBuilder.cs
+
+### Purpose
+
+Editor-only helper that creates the placeholder Game Shell scene through Unity-supported scene serialization and registers the shell and Act 1 scenes in Build Settings.
+
+### Attached GameObject
+
+None. This script lives under an `Editor` folder and runs from Unity Editor menu items.
+
+### Runtime Role
+
+No runtime role. It is excluded from player builds by `Assets/Presentation/Shell/Editor/Ghost.Presentation.Shell.Editor.asmdef`.
+
+### Important Fields
+
+No Inspector fields.
+
+### Important Methods
+
+- `BuildGameShellScene()`: creates `Assets/Scenes/GameShellPrototype.unity`, builds the placeholder UGUI title/hub/companion/dialogue layout, wires `GameShellPresenter`, and registers shell + Act 1 in Build Settings.
+- `RegisterGameShellBuildSettings()`: updates Build Settings without rebuilding the shell scene.
+
+### Input
+
+Manual Unity Editor menu actions:
+- `Ghost > Build Game Shell Scene`
+- `Ghost > Register Game Shell Build Settings`
+
+### Output
+
+- `Assets/Scenes/GameShellPrototype.unity`, when Unity can execute the builder successfully.
+- `ProjectSettings/EditorBuildSettings.asset` updated to include the shell and Act 1 scenes.
+
+### Failure Cases
+
+- If Unity cannot execute the editor builder, Codex cannot safely create the scene asset because hand-writing `.unity` YAML is out of scope.
+- If compile errors exist, the menu item may not be available until they are fixed.
+- If Build Settings are not updated, SceneManager scene loading can fail.
+
+### Unity Test
+
+Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, navigate to Act 1, then click `Return to Hub`.

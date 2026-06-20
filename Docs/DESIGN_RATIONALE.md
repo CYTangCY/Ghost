@@ -40,3 +40,39 @@ This is an MSc final project prototype, not a commercial game.
 The code must be explainable, testable, and maintainable by the student.
 
 The implementation should avoid overengineering.
+
+## Why Build the Game Shell and Lily Before More Acts
+
+Act 1 proved the core mechanic loop works, but a sequence of isolated puzzle scenes does not read as
+a game. A small game shell (title, act select/hub, Lily dialogue frame, Ghost presence) gives the
+prototype a frame: the player meets Lily, understands why they are helping Ghost, and enters Acts
+from one place. Introducing Lily early also establishes the human guide voice that every later Act's
+hints depend on. This is cheaper to add now than to retrofit after several Acts exist.
+
+## Why Treat Act 1 as a Milestone Now
+
+Act 1 already covers click-assign, drag-assign, bidirectional reassignment, unassign, Validate, and
+feedback — enough to demonstrate the intent-classification concept end to end. Polishing it further
+has diminishing returns compared with proving the game can grow (shell, second concept, flagship
+mechanic). Act 1 visual polish is deferred, not abandoned.
+
+## Why Act 2 Comes Before the Node Graph
+
+The node graph (dialog management) is most learnable once the player already understands intent
+(Act 1) and entity (Act 2), because intents and entities become the triggers, slots, and conditions
+inside dialog nodes. Teaching the graph first would force those concepts to be explained abstractly
+instead of reused.
+
+## Why the Node Graph Is the Core / Flagship Mechanic
+
+Dialog management is the heart of how a chatbot decides what to do, and a node graph makes that
+structure directly manipulable and visible. It is also the most reusable mechanic: confidence,
+fallback, testing, and backend/response can be expressed as additional node types rather than
+separate mini-games.
+
+## Why Acts 4–6 Should Extend the Graph
+
+Reusing one deepening system (the node graph) keeps the player learning a coherent model instead of
+many disconnected puzzle systems, and keeps the codebase smaller and more explainable (NFR1/NFR2).
+Where a concept genuinely does not fit the graph, a separate small mechanic is acceptable, but the
+graph is the default home.

@@ -2,56 +2,53 @@
 
 ## ID
 
-M0-T13
+M0-T14
 
 ## Goal
 
-Polish the Act 1 prototype's visual hierarchy and player-facing instructional clarity, without
-changing core mechanics.
+Implement the Act 2 entity-extraction core as pure C# logic (entity-span model + validator) plus
+sample data and EditMode tests — scene-free and UI-free.
 
 ## Context
 
-M0-T04 implemented the pure validator. M0-T05 added sample data. M0-T06 added session/state logic.
-M0-T07 created the static UI. M0-T08 added click-to-assign. M0-T09 added assignment editing and
-validation feedback. M0-T10 reviewed architecture. M0-T11 refactored presentation logic. M0-T12
-added drag-to-assign, bidirectional drag, group-wide drop zones, drag visual cleanup, and compact
-assigned rows. The next step is small visual/instruction polish before moving to the next Act.
+ROADMAP Phase B = Act 2 Entity Extraction. Act 1 was built logic-first (M0-T04 validator → M0-T05
+sample data → M0-T06 session) before any UI, and that pattern worked well; M0-T13 added the Game
+Shell. This task is the first scene-free slice of Act 2, mirroring the proven Act 1 logic-first
+pattern. Confirmed mechanic (Docs/LEARNING_CONTENT.md, Act 2): span annotation with entity typing,
+covering entity extraction, synonyms, and system vs custom entities.
 
 ## Scope
 
-- Improve the player-facing instructions for Act 1.
-- Make the card/group visual hierarchy clearer and cuter while staying placeholder-based.
-- Keep card rows compact and readable.
-- Improve feedback text wording if needed.
-- Make selected, assigned, dragging, and valid drop-area states easier to understand.
-- Keep all current mechanics unchanged:
-  - click-to-assign
-  - drag-to-assign
-  - drag back to unassigned
-  - drag between groups
-  - Back/unassign
-  - Validate
+- Create a pure C# model for an entity span: the target message text, a span (e.g. start index +
+  length, or matched substring), and an entity type.
+- Create a pure C# validator that checks a player's submitted spans/types against the correct answer
+  for a message (correct spans found, correct types; handles synonyms and the system-vs-custom
+  entity distinction).
+- Add Act 2 sample data: messages with their correct entity spans/types, covering entity extraction,
+  synonyms, and system vs custom entities.
+- Add EditMode tests for at least one correct annotation and several incorrect cases (missing span,
+  wrong type, wrong boundary, extra span).
+- Put runtime code in the existing `Ghost.Runtime` assembly (namespace under it), reusing the Act 1
+  logic-layer conventions (no UnityEngine dependency).
+- Keep everything scene-free, UI-free, and WebGL-safe.
 - Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md.
 - Create a Codex run log during implementation.
 
 ## Out of Scope
 
-- Do not change puzzle rules.
-- Do not change sample data.
-- Do not implement scoring.
-- Do not implement Act 0 or Act 2.
-- Do not implement final art.
-- Do not implement backend, LLM, dialogue, save/load, or narrative UI.
-- Do not add Build Settings.
-- Do not edit ProjectSettings unless explicitly required and approved.
-- Do not refactor architecture unless a small UI polish requires it.
+- Do not create scenes, UI, or span-annotation interaction (a later Act 2 sub-task).
+- Do not implement the node graph, Act 3+, or change Act 0/1.
+- Do not implement backend, LLM, dialogue, or save/load.
+- Do not edit ProjectSettings, Packages, Build Settings, or .meta files.
+- Do not change Act 1 pure logic or the Game Shell.
 
 ## Acceptance Criteria
 
-- The Act 1 UI is clearer to a new player.
-- Instructions explain drag/click assignment and validation in simple language.
-- Visual states are easier to understand.
-- Existing mechanics continue to work.
-- Scene enters Play Mode without Console errors.
-- Pure logic files remain unchanged.
-- A Codex run log is created during implementation.
+- Act 2 entity-extraction validation logic exists as pure C# (no UnityEngine dependency, like the
+  Act 1 validator).
+- Act 2 sample data exists with multiple messages and correct spans/types, including a synonym case
+  and a system-vs-custom-entity distinction.
+- EditMode tests cover at least one correct annotation and several incorrect cases.
+- Code is scene-free and WebGL-safe.
+- No Unity scene or ProjectSettings files are modified.
+- A Codex run log is created under Docs/codex_runs/ after the implementation run.

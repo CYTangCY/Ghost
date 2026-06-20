@@ -90,3 +90,38 @@ Possible approach:
 - Level controllers manage progression.
 - Ghost and Lily text should come from data, not hardcoded everywhere.
 - Avoid complex event bus unless truly needed.
+
+## Future-Facing Layers (roadmap, not yet implemented)
+
+> Forward-looking notes added with the 2026-06-20 roadmap revision (see `Docs/ROADMAP.md`). They are
+> intentionally high-level; do not over-specify until each is the active task.
+
+### Game Shell Layer (Phase A — next)
+
+Responsibility: frame the prototype as one Ghost game and route the player between screens.
+
+Conceptual pieces:
+- Title screen.
+- Act select / hub.
+- Lily dialogue frame (a reusable panel that shows short tutorial/instruction text in Lily's voice).
+- Ghost placeholder/presence.
+- Start-Act and return-to-hub flow.
+
+Notes: keep the shell a thin routing/presentation layer; Acts stay self-contained scenes/screens.
+The Lily dialogue frame should read its text from data, not hardcode it per screen.
+
+### Node Graph System (Phase C — flagship, later)
+
+Responsibility: represent and play dialog management as an editable graph; reused/extended in
+Acts 4–6.
+
+Conceptual pieces:
+- Graph data model (pure C#, Unity-independent where possible — like the existing puzzle logic).
+- Node UI (presentation layer: nodes, ports/connections).
+- Graph validation/simulation (run a message/conversation through the graph and report the result,
+  analogous to how `IntentClassificationValidator` validates a grouping).
+- Extension node types for confidence/fallback (Act 4), testing/debugging (Act 5), and
+  backend-action/response-generation (Act 6).
+
+Notes: follow the Act 1 pattern that worked well — keep the graph rules in a pure, testable logic
+assembly (no UnityEngine dependency), with presentation and an interaction controller on top.

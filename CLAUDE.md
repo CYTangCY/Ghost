@@ -4,6 +4,7 @@ Use Claude as planner, architecture reviewer, debugger, and explainability revie
 
 Before planning, always read:
 - Docs/CONFIRMED_PROJECT_CONTEXT.md
+- Docs/ROADMAP.md
 - Docs/CURRENT_TASK.md
 - Docs/REQUIREMENTS.md
 - Docs/LEARNING_CONTENT.md
@@ -84,3 +85,14 @@ When reviewing a Codex implementation or debugging run, Claude must check that:
 - older run logs were not deleted or overwritten.
 
 See `Docs/codex_runs/README.md` for the convention.
+
+## AI Collaboration Workflow
+
+- ChatGPT (with the user) plans, controls scope, and drafts task prompts and design decisions.
+- Claude inspects the actual repo, updates docs, performs task closure/archiving, and runs
+  architecture/scope reviews — Claude follows `Docs/ROADMAP.md` + `Docs/LEARNING_CONTENT.md`, does
+  not invent new Acts, and does not silently change the confirmed direction.
+- Codex implements only the active CURRENT_TASK.md scope and writes a run log; it must not expand
+  scope or edit ProjectSettings/Packages/Build Settings/unrelated scenes.
+- During review/closure, Claude records human Editor verification separately from Codex's in-session
+  "Not run" status, and never rewrites a run log's honest "Not run" as if Codex ran tests.

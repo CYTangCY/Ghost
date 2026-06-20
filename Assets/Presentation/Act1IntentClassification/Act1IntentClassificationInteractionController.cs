@@ -14,7 +14,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             this.cards = new List<IntentCard>(cards);
             session = new IntentClassificationSession(this.cards);
             CurrentFeedback = Act1IntentClassificationFeedback.Neutral(
-                "Group all cards, then click Validate.");
+                "Group by intent: what the speaker wants. Click or drag cards, then Validate.");
         }
 
         public event Action StateChanged;
@@ -55,7 +55,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             session.MoveCardToGroup(SelectedCardId, intentId);
             SelectedCardId = null;
             SetFeedback(Act1IntentClassificationFeedback.Neutral(
-                "Assignment changed. Click Validate when ready."));
+                "Assignment updated. Keep grouping by purpose, then Validate."));
             NotifyStateChanged();
         }
 
@@ -75,7 +75,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             SetFeedback(Act1IntentClassificationFeedback.Neutral(
-                "Card returned to unassigned. Click Validate when ready."));
+                "Card moved back to unassigned. Try another intent group when ready."));
             NotifyStateChanged();
         }
 
@@ -85,12 +85,12 @@ namespace Ghost.Presentation.Act1IntentClassification
             if (result.IsCorrect)
             {
                 SetFeedback(Act1IntentClassificationFeedback.Correct(
-                    "Correct grouping. Ghost can react to the right purpose now."));
+                    "All messages are grouped by intent."));
                 return;
             }
 
             SetFeedback(Act1IntentClassificationFeedback.Incorrect(
-                "Incorrect grouping. " + result.Errors.Count + " issue(s) to fix."));
+                "Some messages are in the wrong group. Compare what the speaker wants."));
         }
 
         private void SetFeedback(Act1IntentClassificationFeedback feedback)
