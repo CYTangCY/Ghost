@@ -304,20 +304,71 @@ Medium / optional.
 
 ### Learning Objective
 
-TBD.
+The player should understand dialog management: a chatbot decides its next reply by following a
+structured conversation flow. The detected intent routes the conversation (branching); required
+entities act as slots that must be filled before the bot can answer; context variables remember the
+details already collected; and the right response type is produced at the right step. Different inputs
+follow different paths.
 
 ### Cute Ghost Communication Problem
 
-TBD.
+Ghost can now tell what people want (intent, Act 1) and catch the key details (entities, Act 2) — but
+Ghost's replies come out in the wrong order. Ghost answers before it has the information it needs, or
+responds to the wrong step (says goodbye to a greeting; gives an answer before learning which room).
+Ghost's conversation has no map. The player builds Ghost a small conversation map (a dialog node
+graph) so Ghost follows the right steps: work out what is wanted, check it has the needed detail, ask
+if something is missing, then reply.
 
 ### Puzzle Mechanic
 
-Likely:
-node assembly or flow diagram construction.
+Node assembly (flow / graph construction): the player assembles and configures a small dialog node
+graph from a node palette.
+
+### Player Action
+
+Given a target conversation (a few test messages, each with its intent + entities already detected,
+and the expected Ghost behaviour), the player:
+- places and connects dialog nodes from a palette (start, intent branch, slot check / ask, response);
+- sets each branch node's triggering intent, each slot node's required entity type, and each response
+  node's reply;
+- so that simulating each test message through the graph makes Ghost reach the expected response — and
+  ask for a missing slot when the entity is absent — using context to remember collected details.
+
+### Success Consequence
+
+When the graph is correct, the simulation drives Ghost to respond appropriately: it follows the right
+branch for each intent, asks for a missing detail instead of guessing, remembers it, and gives the
+right reply. Ghost's conversation becomes coherent and in order.
+
+### Failure Consequence
+
+A wrong graph (wrong intent wired, missing slot check, wrong/duplicated response, or a dead-end /
+unreachable node) makes Ghost answer out of order, ignore missing info, or reply with the wrong type —
+cute but broken. The simulator reports which test message produced the wrong result.
+
+### Lily Hint Style
+
+Nervous, nerdy, competent, and non-spoiling. Example:
+"Um... Ghost knows what they want and even caught the details, but it's... replying before it actually
+has everything? Maybe there should be a step that checks the room is known before Ghost answers...?"
+
+### Connection to Earlier Acts
+
+Act 1 intents become the triggers that pick which branch fires; Act 2 entities become the slots a node
+requires and fills (context remembers them). Act 3 is where intent + entity combine into a flow. The
+same graph is extended later: Act 4 adds confidence thresholds + fallback nodes, Act 5 runs more test
+conversations to debug the graph, and Act 6 adds backend-action + response-generation nodes.
+
+### Deterministic Correctness
+
+Correctness comes from a deterministic graph simulator/validator: each test conversation is run through
+the assembled graph and checked against expected responses, plus structural checks (reachability, no
+dead ends, every expected intent handled). The LLM never decides correctness; later it may only voice
+Ghost's responses or Lily's hints. See `Docs/ARCHITECTURE.md` (Node Graph System) for the data model.
 
 ### Implementation Priority
 
-Medium.
+High (flagship; ROADMAP Phase C).
 
 ---
 

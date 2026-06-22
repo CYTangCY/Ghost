@@ -127,6 +127,51 @@ Conceptual pieces:
 Notes: follow the Act 1 pattern that worked well — keep the graph rules in a pure, testable logic
 assembly (no UnityEngine dependency), with presentation and an interaction controller on top.
 
+#### Act 3 minimal concrete design (M0-T20, for the prototype level)
+
+Pure logic in `Ghost.Runtime` (no UnityEngine), mirroring the Act 1/2 validators. Kept deliberately
+small (NFR1/NFR2); Acts 4–6 add node types, not new systems.
+
+Data model:
+- `DialogNodeType`: `Start`, `IntentBranch`, `SlotCheck`, `Response` (minimal set; Acts 4–6 add
+  `Fallback`, `Test`, `BackendAction`, `ResponseGen`).
+- `DialogNode { Id; Type; IntentId (IntentBranch); RequiredEntityType (SlotCheck); ResponseId (Response) }`.
+- `DialogTransition { FromNodeId; ToNodeId; Condition }`, `Condition ∈ { Always, SlotPresent, SlotMissing }`.
+- `DialogGraph { Nodes; Transitions; StartNodeId }`.
+
+Simulation input (intent + entities are pre-detected — Act 3 is about the flow, not re-classifying):
+- `ConversationTurn { IntentId; Entities (type→value, from the Act 2 model) }`.
+- `DialogContext { filled slots (entity type→value) }`, carried across turns.
+
+`DialogGraphSimulator.Simulate(graph, turn, context)` → walk from `Start`; at `IntentBranch` follow the
+outgoing transition matching `turn.IntentId`; at `SlotCheck` follow `SlotPresent`/`SlotMissing` based on
+whether the required entity is in the turn/context (fill context when present); stop at a `Response` node
+and return its `ResponseId` (+ updated context). Deterministic, with a step cap to guard against cycles.
+
+`DialogGraphValidator.Validate(graph, testCases)` → for each test case (`turn` → expected `ResponseId`,
+e.g. an answer id or an `ask_for_<entity>` id) run the simulator and compare; plus structural checks
+(Start present, no unreachable nodes, no dead ends, each expected intent handled). Returns
+`IsCorrect` + `Errors`, exactly like `IntentClassificationValidator` / `EntityExtractionValidator`. The
+LLM is never involved in scoring.
+
+Sample data: one Act 3 level = the node palette + the intents/entities vocabulary + the target test
+conversation(s) with expected responses.
+
+#### Act 3 build slices (logic-first, mirrors Acts 1–2)
+
+- **M0-T21** — core: data model + `DialogGraphSimulator` + `DialogGraphValidator` + sample data +
+  EditMode tests (scene-free).
+- **M0-T22** — graph session/state: the player builds/edits the graph (add/remove/connect nodes, set
+  node config), validate current state, + EditMode tests (scene-free).
+- **M0-T23** — static node-graph UI scene (palette + canvas + target/test panel + placeholder
+  Validate) via an Editor menu builder; display-only.
+- **M0-T24** — node placement + connection interaction (place nodes, draw transitions, set
+  intent/slot/response), routed through the session.
+- **M0-T25** — validation feedback (run the validator on Validate; show correct/incorrect + which test
+  failed).
+- **M0-T26** — shell integration (Start Act 3 from the hub + Return to Hub + Build Settings), like
+  M0-T19.
+
 ### Backend Layer (Phase D — full-system foundation)
 
 Responsibility: a server-side boundary the Unity/WebGL client talks to for content, progress, logs,

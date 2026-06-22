@@ -244,6 +244,16 @@ puzzle logic/UI or Act 1 mechanics changed). **This completes ROADMAP Phase B (A
 `Docs/completed_tasks/M0-T19_act2_shell_integration.md`. Next: M0-T20 (Act 3 node-graph design +
 learning-content mapping, Phase C).
 
+### 2026-06-22 — M0-T20: Act 3 node-graph design + learning-content mapping — Completed (planning)
+Claude-led design (docs only). Completed the Act 3 section of LEARNING_CONTENT (objective, cute Ghost
+problem, node-assembly mechanic, player action, success/failure, Lily hint, connection to Acts 1–2,
+deterministic correctness), and added to ARCHITECTURE a minimal node-graph model
+(DialogNode/DialogTransition/DialogGraph; Start/IntentBranch/SlotCheck/Response; ConversationTurn +
+DialogContext), the DialogGraphSimulator/DialogGraphValidator design, and the M0-T21…M0-T26 build
+slices. Intent = branch triggers, entity = slots, context remembers; correctness deterministic (LLM
+never scores). The user confirmed the design ("確認"). No Unity code. Archive:
+`Docs/completed_tasks/M0-T20_act3_node_graph_design.md`. Next: M0-T21 (Act 3 core logic).
+
 ---
 
 ## Entry Template
