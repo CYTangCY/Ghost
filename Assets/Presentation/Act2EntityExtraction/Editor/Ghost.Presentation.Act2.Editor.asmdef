@@ -1,0 +1,20 @@
+{
+    "name": "Ghost.Presentation.Act2.Editor",
+    "rootNamespace": "Ghost.Presentation.Act2.Editor",
+    "references": [
+        "Ghost.Presentation",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

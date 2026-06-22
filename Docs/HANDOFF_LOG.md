@@ -198,6 +198,18 @@ ProjectSettings / Packages / scenes / CURRENT_TASK changes. Archive:
 `Docs/completed_tasks/M0-T15_act2_entity_extraction_session.md`. Next: M0-T16 (Act 2 static
 span-annotation UI).
 
+### 2026-06-22 — M0-T16: Act 2 static span-annotation UI — Completed
+Codex run 001 added the display-only Act 2 UI: `Act2EntityExtractionStaticPresenter` +
+`Act2EntityChipView` (each chip stores Start/Length/Text; the word tokenizer trims surrounding
+punctuation so sample entities align to one chip) + an Editor scene builder (menu `Ghost > Build Act 2
+Entity Extraction Prototype Scene`) + a new Act 2 Editor asmdef. The user ran the builder, generating
+`Assets/Scenes/Act2EntityExtractionPrototype.unity` (NOT added to Build Settings), and verified the
+rendered scene (title, word chips, entity-type legend with System/Custom, placeholder Validate +
+feedback, no interaction) via screenshot. Run log honest ("Not run" for scene-gen/Play Mode/tests in
+the Codex session). Claude reviewed scope (clean), display-only behaviour, and chip-offset readiness.
+Archive: `Docs/completed_tasks/M0-T16_act2_static_span_annotation_ui.md`. Next: M0-T17 (Act 2 chip
+selection + type assignment interaction).
+
 ---
 
 ## Entry Template

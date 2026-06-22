@@ -1168,6 +1168,152 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## Act 2 Static Span-Annotation UI Prototype
+
+### Script Name
+
+Act2EntityChipView.cs
+
+### Purpose
+
+Stores the display metadata for one rendered Act 2 word chip. Each chip records the trimmed word's character `Start`, `Length`, and displayed `Text` from the source message.
+
+### Attached GameObject
+
+Attached by `Act2EntityExtractionStaticPresenter` to each rendered word chip.
+
+### Runtime Role
+
+During Play Mode, the presenter creates one component per chip while rendering the display-only sample message. The component does not listen for input or validate anything.
+
+### Important Fields
+
+- `Start`: zero-based character index into the message text.
+- `Length`: number of characters covered by the chip.
+- `Text`: displayed chip text.
+
+### Important Methods
+
+- `Configure(int start, int length, string text)`: stores the chip metadata after the presenter tokenizes the message.
+
+### Input
+
+Character-offset data from the presenter.
+
+### Output
+
+Inspectable chip metadata for future span-selection work.
+
+### Failure Cases
+
+- This component does not validate offsets. The presenter is responsible for assigning offsets that match the message text.
+
+### Unity Test
+
+After running `Ghost > Build Act 2 Entity Extraction Prototype Scene`, open the generated scene and inspect rendered chip GameObjects. Each should have `Act2EntityChipView` with the chip's `Start`, `Length`, and `Text`. This script has no Play Mode interaction.
+
+---
+
+### Script Name
+
+Act2EntityExtractionStaticPresenter.cs
+
+### Purpose
+
+Renders the display-only Act 2 span-annotation prototype. It loads the first Act 2 sample message, creates an `EntityExtractionSession` from it, displays the message as word chips, displays the available entity types as a palette/legend, and creates placeholder Validate/feedback UI with no validation wiring.
+
+### Attached GameObject
+
+Attached to the root UI object created by `Act2EntityExtractionPrototypeSceneBuilder`.
+
+### Runtime Role
+
+On `Start`, when `renderOnStart` is true, it rebuilds the display-only UI from sample data. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
+
+### Important Fields
+
+- `messageChipRoot`: parent `RectTransform` for word chips.
+- `entityPaletteRoot`: parent `RectTransform` for entity-type legend items.
+- `validationControlsRoot`: parent `RectTransform` for placeholder Validate/feedback UI.
+- `chipTemplate`: inactive template for word chips.
+- `entityTypeTemplate`: inactive template for entity-type legend rows.
+- `renderOnStart`: when true, rebuilds the display at Play Mode start.
+
+### Important Methods
+
+- `Configure(...)`: wires generated UI roots/templates without using reflection.
+- `RenderSampleData()`: clears prior rendered UI, loads sample message 0, creates a session, renders chips, renders entity types, and renders placeholder validation controls.
+- `CreateWordTokens(...)`: splits message text into whitespace-delimited word chips and trims surrounding punctuation so chip offsets match word characters.
+- `EnsureEventSystem()`: creates an `EventSystem` plus `InputSystemUIInputModule` when one is missing.
+
+### Input
+
+Sample data from `Act2EntityExtractionSampleData` and `EntityExtractionSession.CreateFromSampleMessage(...)`.
+
+### Output
+
+UGUI objects showing:
+- one sample message rendered as word chips
+- entity types `time`, `room`, and `object` with System/Custom categories
+- a disabled placeholder Validate button and placeholder feedback text
+
+### Failure Cases
+
+- Missing roots or templates cause `RenderSampleData()` to return without rendering.
+- If sample entity spans later become multi-word, the display will still render word chips but later interaction work may need phrase grouping.
+- The Validate button is intentionally disabled and has no validation callback in M0-T16.
+
+### Unity Test
+
+Run `Ghost > Build Act 2 Entity Extraction Prototype Scene`, open `Assets/Scenes/Act2EntityExtractionPrototype.unity`, and enter Play Mode. Confirm the chips, entity type legend, placeholder Validate button, and feedback text render with no Console errors. Confirm no chip selection, type assignment, or real validation happens.
+
+---
+
+### Script Name
+
+Act2EntityExtractionPrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor-only helper that creates the display-only Act 2 prototype scene through Unity-supported scene serialization. It avoids hand-writing `.unity` YAML.
+
+### Attached GameObject
+
+None. This script lives under an `Editor` folder and runs from a Unity Editor menu item.
+
+### Runtime Role
+
+No runtime role. It is excluded from player builds by the new Act 2 editor asmdef and the `Editor` folder.
+
+### Important Fields
+
+No Inspector fields.
+
+### Important Methods
+
+- `BuildAct2EntityExtractionPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, adds an EventSystem, wires `Act2EntityExtractionStaticPresenter`, renders the sample data, and saves `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+
+### Input
+
+Manual Unity Editor menu action:
+`Ghost > Build Act 2 Entity Extraction Prototype Scene`
+
+### Output
+
+`Assets/Scenes/Act2EntityExtractionPrototype.unity`, when the user runs the menu builder in Unity.
+
+### Failure Cases
+
+- If Unity has compile errors, the menu item may not be available until they are fixed.
+- If the scene is not generated through the menu item, Codex does not create the `.unity` file automatically.
+- M0-T16 intentionally does not add the generated scene to Build Settings.
+
+### Unity Test
+
+Run the menu builder in Unity, open the generated Act 2 scene, enter Play Mode, and confirm there are no Console errors. Confirm the scene remains display-only.
+
+---
+
 ## Act 2 Entity Extraction Session State
 
 ### Script Name

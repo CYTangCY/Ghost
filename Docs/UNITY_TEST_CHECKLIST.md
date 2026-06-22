@@ -489,3 +489,54 @@ Optional Console sanity check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T15. `EntityExtractionSession` is a pure C# state object and is not attached to a GameObject.
+
+---
+
+## M0-T16: Display-Only Act 2 Span-Annotation UI Prototype
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityChipView.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Editor/Ghost.Presentation.Act2.Editor.asmdef`
+   - `Assets/Presentation/Act2EntityExtraction/Editor/Act2EntityExtractionPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Builder Check
+
+1. Select `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is created.
+3. Do not add the scene to Build Settings during M0-T16.
+
+### Static UI Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+2. Confirm the scene displays the Act 2 title.
+3. Confirm the sample message is rendered as word chips.
+4. Inspect rendered chip GameObjects and confirm each has `Act2EntityChipView` with `Start`, `Length`, and `Text`.
+5. Confirm the `lab` and `9pm` chips align to their exact word text and character spans.
+6. Confirm the entity-type palette/legend displays:
+   - `time` / `System`
+   - `room` / `Custom`
+   - `object` / `Custom`
+7. Confirm a placeholder `Validate spans` button and placeholder feedback text are visible.
+8. Confirm there is no chip selection, no type assignment, no working validation, no scoring, no save/load, no backend, no LLM, no dialogue, no node graph, and no later-Act behaviour.
+
+### Play Mode Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm the word chips, entity-type palette/legend, placeholder Validate button, and feedback text remain visible.
+4. Confirm clicking the placeholder Validate button does not validate, score, or change puzzle state.
+5. Confirm no new Console errors appear.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is not added to Build Settings by M0-T16.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The builder wires `Act2EntityExtractionStaticPresenter` to its chip root, entity palette root, validation controls root, chip template, and entity type template.
