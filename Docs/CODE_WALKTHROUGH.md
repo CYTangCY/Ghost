@@ -1175,6 +1175,540 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## Act 3 Dialog Graph Core
+
+### Script Name
+
+DialogNodeType.cs
+
+### Purpose
+
+Defines the minimal Act 3 dialog node categories: `Start`, `IntentBranch`, `SlotCheck`, and `Response`.
+
+### Attached GameObject
+
+None. This is pure C# data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Used by dialog graph nodes, the simulator, validator, and sample data to keep the Act 3 node palette small and deterministic.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+No methods. This file contains the `DialogNodeType` enum only.
+
+### Input
+
+None.
+
+### Output
+
+Named node-type values for Act 3 graph logic.
+
+### Failure Cases
+
+None directly. Invalid per-type node configuration is checked by `DialogNode`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogNode.cs
+
+### Purpose
+
+Represents one immutable Act 3 dialog graph node with a non-empty id, a node type, and the required per-type configuration.
+
+### Attached GameObject
+
+None. This is pure C# puzzle data and should not be attached to a GameObject.
+
+### Runtime Role
+
+`DialogGraph` stores these nodes; `DialogGraphSimulator` reads their type/config to route a conversation turn.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Constructor-set properties:
+- `Id`
+- `Type`
+- `IntentId` for `IntentBranch`
+- `RequiredEntityType` for `SlotCheck`
+- `ResponseId` for `Response`
+
+### Important Methods
+
+- `DialogNode(...)`: validates the id and required config for the selected node type.
+
+### Input
+
+String ids and node type at construction.
+
+### Output
+
+An immutable node object.
+
+### Failure Cases
+
+- Empty node id throws an `ArgumentException`.
+- `IntentBranch` without an intent id throws an `ArgumentException`.
+- `SlotCheck` without a required entity type throws an `ArgumentException`.
+- `Response` without a response id throws an `ArgumentException`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogTransition.cs
+
+### Purpose
+
+Represents one directed edge between dialog graph nodes, with the minimal Act 3 conditions: `Always`, `SlotPresent`, and `SlotMissing`.
+
+### Attached GameObject
+
+None. This is pure C# puzzle data and should not be attached to a GameObject.
+
+### Runtime Role
+
+The simulator follows transitions to move from `Start` to an intent branch, from a branch onward, and from a slot check to the correct response path.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Constructor-set properties:
+- `FromNodeId`
+- `ToNodeId`
+- `Condition`
+
+### Important Methods
+
+- `DialogTransition(...)`: validates non-empty source and target node ids.
+
+### Input
+
+Source node id, target node id, and condition.
+
+### Output
+
+An immutable transition object.
+
+### Failure Cases
+
+Empty source or target node ids throw an `ArgumentException`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogGraph.cs
+
+### Purpose
+
+Stores an Act 3 dialog graph's nodes, transitions, start node id, and lookup helpers.
+
+### Attached GameObject
+
+None. This is pure C# puzzle logic/data and should not be attached to a GameObject.
+
+### Runtime Role
+
+`DialogGraphSimulator` and `DialogGraphValidator` use this as the authored graph under test.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- copied node array
+- copied transition array
+- node lookup by id
+- outgoing-transition lookup by source node id
+
+### Important Methods
+
+- `DialogGraph(...)`: copies nodes/transitions, rejects duplicate/null nodes, and rejects an unknown start node.
+- `GetNode(string nodeId)`: returns a node by id or null.
+- `ContainsNode(string nodeId)`: checks node existence.
+- `GetOutgoingTransitions(string nodeId)`: returns outgoing transitions for a node.
+
+### Input
+
+Start node id, node collection, and transition collection.
+
+### Output
+
+A graph object with deterministic lookups.
+
+### Failure Cases
+
+- Empty start node id throws an `ArgumentException`.
+- Null node/transition collections throw `ArgumentNullException`.
+- Null nodes/transitions, duplicate node ids, no nodes, or unknown start node throw `ArgumentException`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+ConversationTurn.cs
+
+### Purpose
+
+Represents one already-interpreted user turn for Act 3: a detected intent id plus detected entity values keyed by entity-type id.
+
+### Attached GameObject
+
+None. This is pure C# data and should not be attached to a GameObject.
+
+### Runtime Role
+
+The simulator consumes a `ConversationTurn` instead of re-running Act 1/Act 2 logic. Act 3 only manages the dialog flow.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- `IntentId`
+- copied `Entities` dictionary
+
+### Important Methods
+
+- `ConversationTurn(...)`: copies entity values and rejects an empty intent id.
+- `TryGetEntityValue(...)`: checks whether the current turn contains a value for an entity type.
+
+### Input
+
+Intent id and optional entity-value dictionary.
+
+### Output
+
+An immutable turn object.
+
+### Failure Cases
+
+- Empty intent id throws an `ArgumentException`.
+- Empty entity-type keys throw an `ArgumentException`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogContext.cs
+
+### Purpose
+
+Tracks mutable filled slots across Act 3 conversation turns.
+
+### Attached GameObject
+
+None. This is pure C# state and should not be attached to a GameObject.
+
+### Runtime Role
+
+The simulator updates context when a turn provides a required entity and can use existing context when a later turn omits that entity.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- filled slot dictionary (`entity type id -> value`)
+
+### Important Methods
+
+- `TryGetSlot(...)`: checks for a stored slot value.
+- `ContainsSlot(...)`: checks whether a slot has been filled.
+- `SetSlot(...)`: stores or updates a slot value.
+- `FilledSlots`: returns a snapshot of current slots.
+
+### Input
+
+Optional initial slot dictionary and simulator slot updates.
+
+### Output
+
+Mutable dialog context for simulator results.
+
+### Failure Cases
+
+Empty slot entity-type ids throw an `ArgumentException`.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogGraphSimulator.cs
+
+### Purpose
+
+Deterministically runs one conversation turn through an Act 3 dialog graph and returns the reached response id plus updated context.
+
+### Attached GameObject
+
+None. This is pure C# puzzle logic and should not be attached to a GameObject.
+
+### Runtime Role
+
+The validator uses the simulator for authored test cases. Later UI/session code can use it to preview graph behaviour, but M0-T21 remains scene-free.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Result properties:
+- `DialogSimulationResult.ResponseId`
+- `DialogSimulationResult.UpdatedContext`
+- `DialogSimulationResult.StepLimitReached`
+
+### Important Methods
+
+- `Simulate(DialogGraph graph, ConversationTurn turn, DialogContext context)`: walks from the start node, routes by intent branch, checks slot presence/missing, stores provided slots in context, stops at response nodes, and enforces a step cap.
+
+### Input
+
+A `DialogGraph`, one `ConversationTurn`, and a mutable `DialogContext`.
+
+### Output
+
+`DialogSimulationResult` with the reached response id or null if no response is reached.
+
+### Failure Cases
+
+- Null graph or turn throws `ArgumentNullException`.
+- Missing transitions or unknown targets produce a null response result.
+- Cycles stop via `StepLimitReached`.
+
+### Unity Test
+
+Run `Act3DialogGraphSimulatorTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+DialogGraphValidator.cs
+
+### Purpose
+
+Validates an Act 3 dialog graph through deterministic simulation test cases plus structural checks.
+
+### Attached GameObject
+
+None. This is pure C# puzzle logic and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future Act 3 session/UI code can call `DialogGraphValidator.Validate(...)` after the player assembles a graph. Correctness is based only on graph simulation and structural rules, never on an LLM.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Result/test-case types:
+- `DialogGraphResult.IsCorrect`
+- `DialogGraphResult.Errors`
+- `DialogGraphTestCase.Turn`
+- `DialogGraphTestCase.ExpectedResponseId`
+
+### Important Methods
+
+- `Validate(DialogGraph graph, IEnumerable<DialogGraphTestCase> testCases)`: checks start, transition endpoints, reachability, non-response dead ends, handled intents, and expected simulator responses.
+
+### Input
+
+An authored graph and a list of conversation-turn test cases with expected response ids.
+
+### Output
+
+`DialogGraphResult` with a boolean correctness flag and human-readable errors.
+
+### Failure Cases
+
+Returns incorrect with errors for null test cases, no test cases, unknown transition endpoints, unreachable nodes, dead ends, unhandled intents, wrong responses, and step-cap termination.
+
+### Unity Test
+
+Run `Act3DialogGraphValidatorTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act3DialogGraphSampleData.cs
+
+### Purpose
+
+Provides one minimal Act 3 sample level: vocabulary constants, the correct target graph, and test conversations for slot-present and slot-missing routing.
+
+### Attached GameObject
+
+None. This is pure C# sample data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Tests and future Act 3 UI/session code can create the target graph and test cases from this static factory class.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Constants include:
+- `FindObjectIntentId`
+- `RoomEntityTypeId`
+- `AnswerObjectLocationResponseId`
+- `AskForRoomResponseId`
+- node id constants for the sample graph
+
+### Important Methods
+
+- `CreateCorrectGraph()`: creates the target Start -> IntentBranch -> SlotCheck -> Response/Ask graph.
+- `CreateTestCases()`: returns a room-present case and a room-missing case.
+- `CreateFindObjectTurnWithRoom(...)`: creates a slot-present turn.
+- `CreateFindObjectTurnWithoutRoom()`: creates a slot-missing turn.
+
+### Input
+
+None, except the optional room value passed to `CreateFindObjectTurnWithRoom(...)`.
+
+### Output
+
+Fresh graph/test-case/turn objects for Act 3 core tests and future UI.
+
+### Failure Cases
+
+Factory methods should not fail unless constructor validation changes.
+
+### Unity Test
+
+Run the M0-T21 EditMode tests. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act3DialogGraphSimulatorTests.cs
+
+### Purpose
+
+Tests the deterministic Act 3 simulator routing and cycle safety.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- slot-present routing to the answer response and context slot storage
+- slot-missing routing to the ask-for-room response
+- context-filled slot routing
+- cycle termination through the simulator step cap
+
+### Input
+
+Sample graph data from `Act3DialogGraphSampleData` and a small cyclic test graph.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+Failed assertions indicate the simulator is no longer routing by intent/slot state or guarding cycles correctly.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act3DialogGraphValidatorTests.cs
+
+### Purpose
+
+Tests the Act 3 graph validator against the correct sample graph and several deliberately broken graphs.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- sample graph validates successfully
+- wrong-intent-wired graph validates incorrectly
+- missing slot-check graph validates incorrectly
+- wrong response id validates incorrectly
+- unreachable/dead-end graph validates incorrectly
+
+### Input
+
+Sample test cases from `Act3DialogGraphSampleData` plus local broken graph factories.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+Failed assertions indicate the validator is no longer catching simulation mismatches or structural graph problems.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
 ## Act 2 Static Span-Annotation UI Prototype
 
 ### Script Name

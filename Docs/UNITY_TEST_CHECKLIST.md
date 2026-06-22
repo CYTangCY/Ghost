@@ -688,3 +688,58 @@ M0-T19 updates the shell scene through the existing Unity editor builder, not by
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` to the title screen, hub screen, Lily dialogue frame, Start/Continue button, Start Act 1 button, Start Act 2 button, and Back to Title button. The runtime `ShellReturnToHubOverlay` adds `Return to Hub` in Act 1 and Act 2.
+
+---
+
+## M0-T21: Act 3 Node Graph Core
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogNodeType.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogNode.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogTransition.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogGraph.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/ConversationTurn.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogContext.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogGraphSimulator.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogGraphValidator.cs`
+   - `Assets/Scripts/Puzzles/DialogGraph/Act3DialogGraphSampleData.cs`
+   - `Assets/Tests/EditMode/Act3DialogGraphSimulatorTests.cs`
+   - `Assets/Tests/EditMode/Act3DialogGraphValidatorTests.cs`
+3. Confirm there are no Console compile errors.
+
+### Automated EditMode Tests
+
+1. Open `Window > General > Test Runner`.
+2. Select the `EditMode` tab.
+3. Confirm the `Ghost.EditModeTests` assembly appears.
+4. Run the EditMode tests.
+5. Expected M0-T21 tests:
+   - `Simulate_WhenSlotPresent_ReachesAnswerResponseAndStoresSlot`
+   - `Simulate_WhenSlotMissing_ReachesAskForRoomResponse`
+   - `Simulate_WhenSlotAlreadyExistsInContext_ReachesAnswerResponse`
+   - `Simulate_WhenGraphCycles_StopsAtStepCap`
+   - `Validate_WhenSampleGraphIsCorrect_ReturnsCorrect`
+   - `Validate_WhenIntentBranchIsWiredToWrongIntent_ReturnsIncorrect`
+   - `Validate_WhenSlotCheckIsMissing_ReturnsIncorrect`
+   - `Validate_WhenResponseIdIsWrong_ReturnsIncorrect`
+   - `Validate_WhenGraphHasUnreachableNodeAndDeadEnd_ReturnsIncorrect`
+
+### Expected Result
+
+All M0-T21 EditMode tests should pass after Unity imports the new runtime scripts and test files.
+
+### Play Mode Check
+
+No Play Mode behaviour, logic only.
+
+Optional Console sanity check:
+1. Open any existing scene.
+2. Enter Play Mode.
+3. Confirm no new Console errors appear from the M0-T21 scripts.
+
+### Inspector Setup
+
+No Inspector setup is required for M0-T21. The Act 3 dialog graph model, simulator, validator, sample data, and tests are pure C# logic and are not attached to GameObjects.

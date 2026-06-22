@@ -254,6 +254,18 @@ slices. Intent = branch triggers, entity = slots, context remembers; correctness
 never scores). The user confirmed the design ("確認"). No Unity code. Archive:
 `Docs/completed_tasks/M0-T20_act3_node_graph_design.md`. Next: M0-T21 (Act 3 core logic).
 
+### 2026-06-22 — M0-T21: Act 3 node-graph core — Completed
+Codex run 001 added the pure C# Act 3 core in `Ghost.Runtime` (`Ghost.Puzzles.DialogGraph`):
+`DialogNode`/`DialogTransition`/`DialogGraph` + `DialogNodeType` (Start/IntentBranch/SlotCheck/Response),
+`ConversationTurn`/`DialogContext`, a step-capped deterministic `DialogGraphSimulator`, a
+`DialogGraphValidator` (test-case + structural checks: start, endpoints, reachability, dead ends,
+intents handled), `Act3DialogGraphSampleData` (one level: slot-present answer + slot-missing ask), and
+EditMode tests. Intent routing realized as Start → per-intent IntentBranch (Always) matched by the
+branch's IntentId. Run log honest (dotnet build passed; Unity tests "Not run" in-session). The user ran
+the EditMode tests in the Editor and reported all passing ("全部都正確並測試成功"). Claude reviewed the
+simulator/validator/sample data + scope (clean). Archive:
+`Docs/completed_tasks/M0-T21_act3_node_graph_core.md`. Next: M0-T22 (Act 3 graph session/state).
+
 ---
 
 ## Entry Template
