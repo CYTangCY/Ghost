@@ -185,6 +185,19 @@ error message; `IsCorrect` unaffected). No asmdef / ProjectSettings / Packages /
 Act 1 / Shell / CURRENT_TASK changes. Archive:
 `Docs/completed_tasks/M0-T14_act2_entity_extraction_core.md`. Next: M0-T15 (Act 2 session/state layer).
 
+### 2026-06-22 — M0-T15: Act 2 entity-extraction session/state — Completed
+Codex run 001 added `EntityExtractionSession` (pure C#, `Ghost.Runtime`): tracks message text +
+expected spans + distinct current player spans, with AddSpan/RemoveSpan/CurrentSpans/
+ValidateCurrentState delegating correctness to `EntityExtractionValidator`; + 6 EditMode tests. Run
+002 fixed a failing test by asserting `session.CurrentSpans.Count` directly instead of NUnit
+`Has.Count` (same gotcha as M0-T05 run 002). Run logs honestly recorded Unity tests "Not run"
+in-session; the user ran the EditMode suite in the Editor and reported success ("測試成功"). Claude
+reviewed scope (clean), validator delegation, tests, docs, and run logs (minor cosmetic doc nit: a
+duplicated "Act 2 Entity Extraction EditMode Tests" header in CODE_WALKTHROUGH). No asmdef /
+ProjectSettings / Packages / scenes / CURRENT_TASK changes. Archive:
+`Docs/completed_tasks/M0-T15_act2_entity_extraction_session.md`. Next: M0-T16 (Act 2 static
+span-annotation UI).
+
 ---
 
 ## Entry Template

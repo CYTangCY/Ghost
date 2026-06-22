@@ -446,3 +446,46 @@ Optional Console sanity check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T14. The entity-extraction model, validator, sample data, and tests are pure C# logic and are not attached to GameObjects.
+
+---
+
+## M0-T15: Act 2 Entity Extraction Session State
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/EntityExtraction/EntityExtractionSession.cs`
+   - `Assets/Tests/EditMode/Act2EntityExtractionSessionTests.cs`
+3. Confirm there are no Console compile errors.
+
+### Automated EditMode Tests
+
+1. Open `Window > General > Test Runner`.
+2. Select the `EditMode` tab.
+3. Confirm the `Ghost.EditModeTests` assembly appears.
+4. Run the EditMode tests.
+5. Expected M0-T15 tests:
+   - `CreateFromSampleMessage_StartsWithNoCurrentSpansAndValidatesIncorrect`
+   - `ValidateCurrentState_WhenAllCorrectSpansAdded_ReturnsCorrect`
+   - `RemoveSpan_WhenSpanWasAdded_RemovesItAndStateBecomesIncorrect`
+   - `AddSpan_WhenSpanExtendsPastMessageBounds_Throws`
+   - `AddSpan_WhenExactDuplicateIsAdded_LeavesCurrentSpanCountUnchanged`
+   - `RemoveSpan_WhenSpanWasNeverAdded_ReturnsFalse`
+
+### Expected Result
+
+All M0-T15 EditMode tests should pass after Unity imports the new session script and test file.
+
+### Play Mode Check
+
+No Play Mode behaviour, logic only.
+
+Optional Console sanity check:
+1. Open any existing scene.
+2. Enter Play Mode.
+3. Confirm no new Console errors appear from the M0-T15 scripts.
+
+### Inspector Setup
+
+No Inspector setup is required for M0-T15. `EntityExtractionSession` is a pure C# state object and is not attached to a GameObject.

@@ -1168,6 +1168,118 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## Act 2 Entity Extraction Session State
+
+### Script Name
+
+EntityExtractionSession.cs
+
+### Purpose
+
+Tracks the player's current Act 2 entity-span annotations for one message. It owns only session state: message text, expected spans, and the distinct current submitted spans. It delegates correctness to `EntityExtractionValidator`.
+
+### Attached GameObject
+
+None. This is pure C# session state and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future Act 2 UI or puzzle controller code can create a session when a message starts, add or remove player-selected spans as the player annotates text, and validate the current state.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- message text
+- copied expected/correct span array
+- current player span list, kept distinct by `EntitySpan` value equality
+
+### Important Methods
+
+- `EntityExtractionSession(string messageText, IEnumerable<EntitySpan> expectedSpans)`: initializes a session from message text and correct spans; null message text becomes an empty string.
+- `CreateFromSampleMessage(...)`: initializes a session from `Act2EntityExtractionSampleData.SampleMessage`.
+- `AddSpan(EntitySpan span)`: adds a player span if it fits the message; exact duplicates are ignored.
+- `AddSpan(int start, int length, EntityType type)`: creates and adds a player span from boundary values and type.
+- `RemoveSpan(EntitySpan span)`: removes a current span and returns whether it was present; absent or null spans return false.
+- `CurrentSpans`: returns a snapshot of submitted spans.
+- `ValidateCurrentState()`: calls `EntityExtractionValidator.Validate(expectedSpans, CurrentSpans)`.
+
+### Input
+
+- Message text and expected spans at construction.
+- Player span additions/removals through method calls.
+
+### Output
+
+- Snapshot of current submitted spans.
+- `EntityExtractionResult` from the validator when validating current state.
+
+### Failure Cases
+
+- Null expected span collection throws an `ArgumentNullException`.
+- Null expected span elements throw an `ArgumentException`.
+- Null span passed to `AddSpan(...)` throws an `ArgumentNullException`.
+- Span boundaries that extend past `MessageText` throw an `ArgumentOutOfRangeException`.
+- Exact duplicate span additions are no-ops.
+- Removing a span that was never added returns false and leaves state unchanged.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act2EntityExtractionSessionTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act2EntityExtractionSessionTests.cs
+
+### Purpose
+
+Tests the pure Act 2 entity-extraction session/state layer.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- creating from a sample message starts with no current spans and validates incorrect
+- adding all correct spans validates correct
+- adding then removing a span clears it and validates incorrect again
+- adding a span outside the message bounds throws
+- adding an exact duplicate leaves the current span count unchanged
+- removing a never-added span returns false
+
+### Input
+
+Sample messages and entity spans from `Act2EntityExtractionSampleData`.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+- Failed assertions indicate the session is no longer preserving distinct current spans, rejecting out-of-range spans, or delegating validation correctly.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
+## Act 2 Entity Extraction EditMode Tests
+
 ### Script Name
 
 Act2EntityExtractionSampleDataTests.cs
