@@ -743,3 +743,45 @@ Optional Console sanity check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T21. The Act 3 dialog graph model, simulator, validator, sample data, and tests are pure C# logic and are not attached to GameObjects.
+
+---
+
+## M0-T22: Act 3 Graph Session State
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/DialogGraph/DialogGraphSession.cs`
+   - `Assets/Tests/EditMode/Act3DialogGraphSessionTests.cs`
+3. Confirm there are no Console compile errors.
+
+### Automated EditMode Tests
+
+1. Open `Window > General > Test Runner`.
+2. Select the `EditMode` tab.
+3. Confirm the `Ghost.EditModeTests` assembly appears.
+4. Run the EditMode tests.
+5. Expected M0-T22 tests:
+   - `ValidateCurrentState_WhenSessionIsEmpty_ReturnsIncorrectWithoutThrowing`
+   - `ValidateCurrentState_WhenCorrectGraphBuiltThroughSession_ReturnsCorrect`
+   - `ValidateCurrentState_WhenSlotMissingTransitionIsMissing_ReturnsIncorrect`
+   - `RemoveNode_WhenNodeHasTransitions_RemovesNodeAndReferencingTransitions`
+   - `AddTransitionAndRemoveTransition_AreReflectedInCurrentTransitions`
+
+### Expected Result
+
+All M0-T22 EditMode tests should pass after Unity imports the new session script and test file.
+
+### Play Mode Check
+
+No Play Mode behaviour, logic only.
+
+Optional Console sanity check:
+1. Open any existing scene.
+2. Enter Play Mode.
+3. Confirm no new Console errors appear from the M0-T22 scripts.
+
+### Inspector Setup
+
+No Inspector setup is required for M0-T22. `DialogGraphSession` is a pure C# state object and is not attached to a GameObject.

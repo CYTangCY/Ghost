@@ -2,57 +2,61 @@
 
 ## ID
 
-M0-T22
+M0-T23
 
 ## Goal
 
-Implement the Act 3 graph session/state layer as pure C#: the layer the player UI will use to build and
-edit a dialog graph (add/remove nodes, connect/disconnect transitions, set node config, set the start
-node) and validate the current state via `DialogGraphValidator`. Scene-free and UI-free, mirroring
-Act 2's `EntityExtractionSession` (M0-T15).
+Create the static Act 3 node-graph UI prototype scene (display-only): a node-type palette, an (empty)
+graph canvas region, a panel showing the level goal / test cases, and a placeholder Validate button +
+feedback, built via an Editor menu scene builder and backed by a `DialogGraphSession`. No node
+placement or connection interaction yet.
 
 ## Context
 
-ROADMAP Phase C = Act 3 (flagship). M0-T21 added the Act 3 core (model + `DialogGraphSimulator` +
-`DialogGraphValidator` + `Act3DialogGraphSampleData`), Editor-verified. This task adds the session/state
-layer so a later node-graph UI (M0-T23/M0-T24) can mutate the player's in-progress graph while this
-class owns the building state and delegates correctness to the validator. Correctness stays
-deterministic; the LLM is not involved.
+ROADMAP Phase C = Act 3 (flagship node graph). The Act 3 logic is done and Editor-verified: M0-T21 core
+(`DialogGraph`/simulator/validator/sample data) and M0-T22 session (`DialogGraphSession`). Act 1/2 built
+UI incrementally — static scene first, then interaction, then validation feedback — and that worked
+well. This is the Act 3 equivalent of M0-T16: a static, display-only scene built through an Editor menu
+builder (Codex batch mode cannot reliably generate `.unity`, so ship the builder + a manual run step).
+Confirmed mechanic (Docs/LEARNING_CONTENT.md, Act 3): node assembly.
 
 ## Scope
 
-- Create `DialogGraphSession` in `Ghost.Runtime` (`Ghost.Puzzles.DialogGraph`,
-  `Assets/Scripts/Puzzles/DialogGraph/`), no UnityEngine dependency:
-  - holds the player's in-progress graph (mutable building state) plus the level's test cases;
-  - a convenience to create the level from `Act3DialogGraphSampleData` (its test cases + the available
-    intent/entity/response/node vocabulary), starting from an empty graph (or a seed Start node);
-  - mutators: add a node (by type + the config it needs, returning its id) / remove a node;
-    add a transition (from, to, condition) / remove a transition; set the start node;
-  - a snapshot of the current `DialogGraph` and the level's test cases;
-  - `ValidateCurrentState()` → `DialogGraphValidator.Validate(currentGraph, testCases)` returning the
-    `DialogGraphResult`.
-- Keep mutations safe and documented (e.g. removing a node also removes its transitions; adding a
-  transition to/from unknown nodes is rejected or surfaced by validation — choose and document).
-- Reuse the M0-T21 types unchanged (do not modify them unless a small behaviour-preserving addition is
-  needed; note it in the run log).
-- EditMode tests (`Ghost.EditModeTests`): empty/partial graph validates incorrect; building the correct
-  graph validates correct; add/remove node and transition behave as documented; ValidateCurrentState
-  delegates to the validator.
+- Add an Act 3 presentation layer under `Assets/Presentation/Act3DialogGraph/` (runtime scripts compile
+  into the existing `Ghost.Presentation` assembly; a new Act 3 Editor asmdef for the scene builder is
+  allowed, mirroring the Act 2 Editor asmdef).
+- A presenter that, backed by a `DialogGraphSession` created from `Act3DialogGraphSampleData`, renders:
+  - a **node-type palette** listing the available node types (Start, IntentBranch, SlotCheck, Response)
+    and the level vocabulary (intents / entity types / response ids) for later placement;
+  - an **(empty) graph canvas** region where nodes/edges will later be placed;
+  - a **goal / test panel** summarising the level's target conversation(s) (the test cases: each
+    turn's intent + entities and the expected response) so the player knows what to build;
+  - a **placeholder Validate button + feedback text** (display only — wiring real validation is M0-T25).
+- An Editor menu scene builder (in `Assets/Presentation/Act3DialogGraph/Editor/` with its own Editor
+  asmdef) that generates `Assets/Scenes/Act3DialogGraphPrototype.unity` and creates a runtime
+  `EventSystem` if needed. Do NOT add the scene to Build Settings in this task.
+- Keep it display-only: no node placement, no edge drawing, no real validation; no scoring, save/load,
+  backend, LLM, dialogue, or final art.
 - Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md; create a Codex run log.
 
 ## Out of Scope
 
-- No scenes, UI, or node-graph interaction (M0-T23/M0-T24).
-- No Act 4–6 node types, backend, LLM, or Act 1/2 changes.
-- Do not edit asmdefs, ProjectSettings, Packages, `.meta` files, or `Docs/CURRENT_TASK.md`.
+- No node placement / connection interaction (M0-T24) or validation wiring (M0-T25).
+- No Act 4–6 node types, node graph for other Acts, backend, LLM, save/load.
+- Do not add the Act 3 scene to Build Settings, and do not change the Game Shell or its act list yet.
+- Do not edit ProjectSettings, Packages, `.meta` files, existing asmdefs, the Act 3 pure logic
+  (M0-T21/M0-T22), or Act 1 / Act 2 / Game Shell scripts. (Creating the one new Act 3 Editor asmdef for
+  the scene builder is allowed.)
 
 ## Acceptance Criteria
 
-- `DialogGraphSession` exists as pure C# (no UnityEngine), owning the player's in-progress graph and
-  delegating correctness to `DialogGraphValidator`.
-- The session can be created for the sample level (test cases + vocabulary) and supports
-  add/remove node, add/remove transition, and set start node, with documented edge behaviour.
-- An empty/partial graph validates incorrect; assembling the correct graph validates correct.
-- EditMode tests cover the above.
-- Code is scene-free and WebGL-safe; no scene or ProjectSettings files are modified; a Codex run log is
-  created.
+- A new scene `Assets/Scenes/Act3DialogGraphPrototype.unity` can be generated via a `Ghost > …` Editor
+  menu item.
+- The scene shows a node-type palette (Start/IntentBranch/SlotCheck/Response + level vocabulary), an
+  empty graph canvas region, a goal/test panel describing the target conversation(s), and a placeholder
+  Validate button + feedback.
+- The scene is display-only (no placement/connection/validation yet) and has no Console errors in Play
+  Mode.
+- The scene is NOT added to Build Settings; Act 1/2, the Game Shell, and the Act 3 pure logic are
+  unchanged.
+- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md are updated, and a Codex run log is created.

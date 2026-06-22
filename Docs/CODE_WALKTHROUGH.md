@@ -1175,6 +1175,114 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## Act 3 Dialog Graph Session State
+
+### Script Name
+
+DialogGraphSession.cs
+
+### Purpose
+
+Tracks the player's in-progress Act 3 dialog graph before UI exists. It owns mutable graph-building state and delegates correctness to `DialogGraphValidator`.
+
+### Attached GameObject
+
+None. This is pure C# session state and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future Act 3 UI/controller code can create a session, add configured nodes, connect or disconnect transitions, set the start node, and validate the current graph without constructing a `DialogGraph` until the state is complete enough.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- current node list
+- current transition list
+- current start node id
+- copied level `DialogGraphTestCase` array
+- generated node-id counter
+
+### Important Methods
+
+- `CreateFromSampleData()`: creates an empty building session using `Act3DialogGraphSampleData.CreateTestCases()`.
+- `AddNode(...)`: creates a `DialogNode` with a generated unique id and returns that id.
+- `RemoveNode(string nodeId)`: removes a node, removes all transitions that reference it, and clears the start node if needed.
+- `SetStartNode(string nodeId)`: sets the start node; unknown node ids throw `ArgumentException`.
+- `AddTransition(...)`: adds a transition between existing nodes; unknown node ids throw `ArgumentException`.
+- `RemoveTransition(...)`: removes the first exact matching transition and returns whether one was removed.
+- `ValidateCurrentState()`: returns incorrect `DialogGraphResult` errors for incomplete graphs; otherwise builds a `DialogGraph` snapshot and calls `DialogGraphValidator.Validate(...)`.
+
+### Input
+
+Dialog graph test cases at construction, then method calls from future UI/session tests.
+
+### Output
+
+Snapshots of current nodes/transitions/start id/test cases and a `DialogGraphResult` from current-state validation.
+
+### Failure Cases
+
+- Null test-case collections throw `ArgumentNullException`.
+- Null test cases throw `ArgumentException`.
+- `DialogNode` constructor validation still rejects missing required per-type config.
+- Unknown start node ids and transition endpoint ids throw `ArgumentException`.
+- Empty/incomplete graph state validates incorrect without throwing.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act3DialogGraphSessionTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act3DialogGraphSessionTests.cs
+
+### Purpose
+
+Tests the pure Act 3 graph session/state layer.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- empty sessions validate incorrect without throwing
+- building the sample-correct graph through the session API validates correct
+- a missing `SlotMissing` transition validates incorrect
+- removing a node removes every referencing transition and makes the state incorrect
+- adding/removing a transition is reflected in `CurrentTransitions`
+
+### Input
+
+Session state built from `Act3DialogGraphSampleData` constants and test cases.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+- Failed assertions indicate the session no longer safely owns incomplete state, cascades node removal incorrectly, or stops delegating validation to the graph validator.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
 ## Act 3 Dialog Graph Core
 
 ### Script Name
