@@ -221,6 +221,17 @@ Act 1 / Shell / asmdef / ProjectSettings / Build Settings edits), session routin
 Validate. Archive: `Docs/completed_tasks/M0-T17_act2_chip_selection_assignment.md`. Next: M0-T18 (Act 2
 validation feedback — wire the validator into the UI).
 
+### 2026-06-22 — M0-T18: Act 2 validation feedback — Completed
+Codex run 001 wired the Act 2 Validate button to the deterministic validator: the controller gained
+`ValidateCurrentState()` (calls `EntityExtractionSession.ValidateCurrentState()`, builds feedback from
+`IsCorrect`/`Errors.Count`, raises `FeedbackChanged`), and the presenter enabled Validate, routed the
+click through the controller, and renders green/red feedback. Correctness stays deterministic (no LLM).
+The user regenerated the Act 2 scene and verified correct/incorrect feedback in the Editor ("完成").
+Run log honest ("Not run" for Unity in-session). Claude reviewed scope (clean) + deterministic
+correctness. Archive: `Docs/completed_tasks/M0-T18_act2_validation_feedback.md`. Next: M0-T19 (integrate
+Act 2 into the Game Shell). With M0-T18, Act 2's core puzzle loop (core → session → static UI →
+selection/assignment → validation) is feature-complete; M0-T19 makes it reachable from the shell.
+
 ---
 
 ## Entry Template

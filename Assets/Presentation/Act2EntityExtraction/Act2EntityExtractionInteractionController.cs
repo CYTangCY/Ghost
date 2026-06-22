@@ -20,6 +20,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         public event Action StateChanged;
 
+        public event Action<string, bool> FeedbackChanged;
+
         public string MessageText => session.MessageText;
 
         public IReadOnlyList<EntitySpan> CurrentSpans => session.CurrentSpans;
@@ -125,6 +127,17 @@ namespace Ghost.Presentation.Act2EntityExtraction
             return string.Equals(SelectedChipKey, chipKey, StringComparison.Ordinal);
         }
 
+        public EntityExtractionResult ValidateCurrentState()
+        {
+            var result = session.ValidateCurrentState();
+            var feedbackMessage = result.IsCorrect
+                ? "All key details are tagged with the right entity types."
+                : CreateIncorrectFeedbackMessage(result.Errors.Count);
+
+            FeedbackChanged?.Invoke(feedbackMessage, result.IsCorrect);
+            return result;
+        }
+
         private void ClearSelectionIfNeeded()
         {
             if (!HasSelectedChip)
@@ -171,6 +184,21 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private void NotifyStateChanged()
         {
             StateChanged?.Invoke();
+        }
+
+        private static string CreateIncorrectFeedbackMessage(int issueCount)
+        {
+            if (issueCount <= 0)
+            {
+                return "Not yet. Ghost is still missing or mistagging a detail.";
+            }
+
+            if (issueCount == 1)
+            {
+                return "Not yet. Ghost is still missing or mistagging a detail. 1 issue found.";
+            }
+
+            return $"Not yet. Ghost is still missing or mistagging a detail. {issueCount} issues found.";
         }
     }
 }

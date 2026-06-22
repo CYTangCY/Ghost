@@ -15,10 +15,10 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private const string TitleText = "Act 2: Entity Extraction";
         private const string InstructionText =
-            "Select a word chip, then choose the entity type Ghost should notice.\n" +
-            "Click a tagged chip to untag it. Validate stays as a placeholder for a later task.";
+            "Select a word chip, choose the entity type Ghost should notice, then Validate.\n" +
+            "Click a tagged chip to untag it and re-check the details.";
         private const string PlaceholderFeedbackText =
-            "Validation placeholder only. Tagging is interactive, but correctness feedback is not wired yet.";
+            "Tag the important details, then press Validate spans.";
 
         private static readonly Color ChipColor = new Color(1f, 0.985f, 0.92f);
         private static readonly Color ChipOutlineColor = new Color(0.78f, 0.70f, 0.88f, 0.64f);
@@ -30,6 +30,9 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private static readonly Color SystemBadgeColor = new Color(0.18f, 0.45f, 0.70f, 0.95f);
         private static readonly Color CustomBadgeColor = new Color(0.22f, 0.54f, 0.30f, 0.95f);
         private static readonly Color ValidationPanelColor = new Color(1f, 0.99f, 0.94f, 0.92f);
+        private static readonly Color FeedbackNeutralColor = new Color(0.36f, 0.31f, 0.42f);
+        private static readonly Color FeedbackCorrectColor = new Color(0.14f, 0.46f, 0.24f);
+        private static readonly Color FeedbackIncorrectColor = new Color(0.72f, 0.24f, 0.18f);
 
         [SerializeField] private RectTransform messageChipRoot;
         [SerializeField] private RectTransform entityPaletteRoot;
@@ -96,10 +99,11 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
             controller = new Act2EntityExtractionInteractionController();
             controller.StateChanged += UpdateVisualState;
+            controller.FeedbackChanged += ApplyValidationFeedback;
 
             RenderMessageChips(controller.MessageText);
             RenderEntityPalette();
-            RenderValidationPlaceholder();
+            RenderValidationControls();
             UpdateVisualState();
 
             Canvas.ForceUpdateCanvases();
@@ -262,15 +266,36 @@ namespace Ghost.Presentation.Act2EntityExtraction
             ConfigureEntityTypeButton(view, entityType);
         }
 
-        private void RenderValidationPlaceholder()
+        private void RenderValidationControls()
         {
             ConfigureValidationContainer(validationControlsRoot.gameObject);
-            var validateButton = CreateValidatePlaceholderButton(validationControlsRoot);
+            var validateButton = CreateValidateButton(validationControlsRoot);
             validateButton.onClick.RemoveAllListeners();
-            validateButton.interactable = false;
+            validateButton.onClick.AddListener(() =>
+            {
+                if (controller == null)
+                {
+                    return;
+                }
+
+                controller.ValidateCurrentState();
+            });
+            validateButton.interactable = true;
 
             validationFeedbackText = CreateValidationFeedbackText(validationControlsRoot);
             validationFeedbackText.text = PlaceholderFeedbackText;
+            validationFeedbackText.color = FeedbackNeutralColor;
+        }
+
+        private void ApplyValidationFeedback(string message, bool isCorrect)
+        {
+            if (validationFeedbackText == null)
+            {
+                return;
+            }
+
+            validationFeedbackText.text = message ?? string.Empty;
+            validationFeedbackText.color = isCorrect ? FeedbackCorrectColor : FeedbackIncorrectColor;
         }
 
         private void EnsureInstructionText()
@@ -324,6 +349,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
 
             controller.StateChanged -= UpdateVisualState;
+            controller.FeedbackChanged -= ApplyValidationFeedback;
             controller = null;
         }
 
@@ -566,9 +592,9 @@ namespace Ghost.Presentation.Act2EntityExtraction
             layout.childForceExpandHeight = true;
         }
 
-        private static Button CreateValidatePlaceholderButton(Transform parent)
+        private static Button CreateValidateButton(Transform parent)
         {
-            var buttonRoot = new GameObject("Validate Placeholder Button", typeof(RectTransform));
+            var buttonRoot = new GameObject("Validate Button", typeof(RectTransform));
             buttonRoot.transform.SetParent(parent, false);
 
             var image = buttonRoot.AddComponent<Image>();

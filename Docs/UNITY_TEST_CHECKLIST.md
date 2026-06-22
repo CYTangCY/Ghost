@@ -587,3 +587,52 @@ M0-T17 should work at Play Mode startup because `Act2EntityExtractionStaticPrese
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The presenter attaches chip buttons, palette buttons, and chip badges at render time, and `Act2EntityExtractionInteractionController` is created in code rather than attached to a GameObject.
+
+---
+
+## M0-T18: Act 2 Validation Feedback
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionInteractionController.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Refresh Check
+
+M0-T18 should work at Play Mode startup because `Act2EntityExtractionStaticPresenter` rebuilds the validation controls when the scene starts. If the open scene preview looks stale:
+
+1. Select `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is refreshed.
+3. Do not add the scene to Build Settings during M0-T18.
+
+### Play Mode Interaction Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm the sample message word chips, entity-type palette, feedback text, and `Validate spans` button render.
+4. Confirm the `Validate spans` button is enabled.
+5. Click `Validate spans` before tagging anything.
+6. Confirm incorrect feedback appears.
+7. Tag only `lab` as `room`, then click `Validate spans`.
+8. Confirm incorrect feedback still appears because the answer is partial.
+9. Tag `9pm` as `time`, then click `Validate spans`.
+10. Confirm correct feedback appears.
+11. Untag one correct chip or tag an extra/wrong chip, then click `Validate spans`.
+12. Confirm incorrect feedback appears.
+13. Fix the tags back to the exact answer and click `Validate spans` again.
+14. Confirm the feedback updates back to correct.
+15. Confirm M0-T17 selection, assignment, untagging, and multi-tag behaviour still works.
+16. Confirm there is no scoring persistence, save/load, backend, LLM, dialogue, node graph, multi-chip spans, later-Act behaviour, or final art pass.
+17. Confirm no new Console errors appear.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is not added to Build Settings by M0-T18.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The presenter creates the enabled Validate button and feedback text at render time, and the controller validates through `EntityExtractionSession.ValidateCurrentState()`.
