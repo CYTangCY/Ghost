@@ -143,6 +143,48 @@ definition, also landed in the tree), 002 = this Game Shell. `CONFIRMED_PROJECT_
 reconciled to the 8-Act structure this round (resolving the open item above). Archive:
 `Docs/completed_tasks/M0-T13_game_shell_prototype.md`. Next: M0-T14 (Act 2 entity-extraction logic).
 
+### 2026-06-22 — Full-system direction sync (planning, no code)
+Synced the planning/workflow docs to the revised full-system direction: LLM, backend, and database
+are now recorded as **required** final-system components (previously framed as deferrable). Added the
+deterministic-correctness rule — validators / graph simulation / test cases / backend scoring decide
+puzzle correctness; the LLM may hint/explain/generate language but never decides scoring. ROADMAP
+restructured: inserted **Phase D — Full-System Foundation** (backend API, DB schema, progress,
+content, attempt logs, LLM orchestration); graph extensions → Phase E; NLP Lab + Capstone → Phase F;
+status refreshed (Phase A Game Shell done; **M0-T14 Act 2 is the active task**). ARCHITECTURE gained
+backend/database/LLM layers + the deterministic rule; LEARNING_CONTENT gained per-Act backend/DB/LLM
+interaction notes; DESIGN_RATIONALE gained the "why required / why LLM is not the correctness source /
+why skeleton first" rationale; REQUIREMENTS gained FR7/FR8/NFR5; CONFIRMED_PROJECT_CONTEXT §8/§12/§14
+reconciled (LLM now required; §14 item 13 resolved); AGENTS/CLAUDE gained the "plan full-system in
+ROADMAP/ARCHITECTURE before implementing" rule. **CURRENT_TASK.md left unchanged at M0-T14** — the
+original prompt's "revert M0-T13 to Game Shell" was based on a stale repo state (M0-T13 is already
+done/archived). Docs only; no Unity/Assets/ProjectSettings/Packages changes. Next: M0-T14
+(implementation, by Codex).
+
+### 2026-06-22 — Workflow transition: Claude becomes commander/reviewer (planning, no code)
+Established the two-agent workflow in `Docs/AI_COLLABORATION_PROTOCOL.md` (new canonical doc): Claude
+is now the repo-aware project commander and reviewer (plans, writes Codex prompts, reviews, archives,
+advances CURRENT_TASK after verification); Codex remains the implementation agent (active task only,
+run logs, and now returns a Claude review/closure prompt). ChatGPT is removed from the official
+workflow (ad-hoc strategy only). Repo docs — not chat memory — are the source of truth, with the user
+as final decision maker and manual Unity verifier. Both agents must include a Chinese STAR summary
+(S情境 / T任務 / A行動 / R結果). Recorded git-hygiene rules (check `git status --short` +
+`git diff --name-only` before commits; do not commit ProjectSettings side effects / unrelated scene
+rewrites). Updated AGENTS.md and CLAUDE.md to match. Docs only; no Unity/Assets/ProjectSettings/
+Packages changes. Next: M0-T14 (Act 2 entity-extraction logic, by Codex).
+
+### 2026-06-22 — M0-T14: Act 2 entity-extraction core — Completed
+Codex run 001 added the Act 2 logic core (pure C#, scene-free) in `Ghost.Runtime`: `EntityType`
+(System/Custom), `EntitySpan` (start+length+type), a deterministic `EntityExtractionValidator`
+(missing / wrong-type / wrong-boundary / extra / duplicate / null errors), and
+`Act2EntityExtractionSampleData` (system `time` + custom `room`/`object` + `lab`/`laboratory` synonym
+pair), plus EditMode tests for the validator and the sample data. The run log honestly recorded Unity
+tests as "Not run" in-session; the user then ran the EditMode tests in the Editor and reported all
+passing ("測試都通過"). Claude reviewed scope, deterministic correctness, learning coverage,
+docs, and the run log (one low-severity note: same-type spans in one message could misattribute an
+error message; `IsCorrect` unaffected). No asmdef / ProjectSettings / Packages / scenes / `.meta` /
+Act 1 / Shell / CURRENT_TASK changes. Archive:
+`Docs/completed_tasks/M0-T14_act2_entity_extraction_core.md`. Next: M0-T15 (Act 2 session/state layer).
+
 ---
 
 ## Entry Template

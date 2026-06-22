@@ -399,11 +399,20 @@ local pseudonymous profile for test session progress and attempt logs
 analytics: puzzle attempt logs and hint triggers
 ```
 
-Fallback rule:
+Full-system requirement (updated 2026-06-22):
 
 ```text
-If LLM integration is delayed, static hints can be used as a gameplay fallback.
-The LLM scaffolding evaluation should then be reported as a limitation or deferred component.
+LLM, backend, and database are REQUIRED final-system components (see Docs/ROADMAP.md Phase D and
+Docs/ARCHITECTURE.md). They are integrated after the gameplay skeleton (Game Shell + Acts 1–3) is
+stable.
+
+Deterministic correctness: puzzle correctness comes from deterministic validators, graph simulation,
+test cases, or backend scoring — never from the LLM. The LLM only hints, explains, and generates
+natural language.
+
+Graceful degradation (risk mitigation, not a reason to drop the component): if the LLM/backend are
+unavailable, the game falls back to static hints and local validation. If LLM integration slips, that
+should be reported as a limitation of that build, not as removal of a required component.
 ```
 
 Repository / actual implementation status:
@@ -529,6 +538,9 @@ These are the latest user corrections and override older report phrasing when th
 6. Lily should resemble a nerdy, timid, deferential, pretty/cute postdoctoral senior from the protagonist's lab.
 7. Lily should be likable because she is competent but not overconfident.
 8. Lily should not sound like a generic tutor or generic AI assistant.
+9. (2026-06-22) LLM, backend, and database are required final-system components, but deterministic
+   validators / graph simulation / test cases / backend scoring remain the source of truth for puzzle
+   correctness; the LLM must not decide scoring.
 ```
 
 ---
@@ -614,7 +626,8 @@ Do not invent these. Confirm before implementation.
 10. Which scripts, prefabs, and scenes already exist.
 11. Current status of DraggableNode.
 12. Current status of backend / Ollama / IBM Granite.
-13. Whether LLM integration remains required for final implementation or can be deferred.
+13. RESOLVED (2026-06-22): LLM integration is REQUIRED for the final system (see §8 and
+    Docs/ROADMAP.md Phase D). Static hints remain only a graceful-degradation fallback.
 14. Whether Act * should be implemented in the final prototype.
 15. Whether the final prototype target is still 8 levels or has been reduced.
 ```

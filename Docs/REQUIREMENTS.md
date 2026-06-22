@@ -46,6 +46,25 @@ Lily is the protagonist's postdoctoral senior from the lab. Her style must be ne
 
 Each implemented level must be playable in Unity and manually testable.
 
+### FR7: Full-System Components (added 2026-06-22)
+
+The final system must include, as required components (see `Docs/ROADMAP.md` Phase D and
+`Docs/ARCHITECTURE.md`):
+- a backend (content delivery, player progress, attempt logs, LLM orchestration, and optional
+  graph simulation/scoring);
+- a database (learning content, puzzle content, player progress, player attempts, and — if
+  appropriate — dialogue/hint logs);
+- an LLM layer (Lily hints, Ghost response generation, explanatory feedback, capstone chatbot
+  simulation, and optional natural-language variation).
+
+These are integrated after the gameplay skeleton (Game Shell + Acts 1–3) is stable.
+
+### FR8: Deterministic Correctness
+
+Puzzle correctness must be decided by deterministic logic — validators, graph simulation, authored
+test cases, or backend scoring. The LLM must not decide correctness or scoring; it may only hint,
+explain, or generate natural language.
+
 ## Non-Functional Requirements
 
 ### NFR1: Explainability
@@ -73,6 +92,15 @@ Every implemented system must update:
 - CODE_WALKTHROUGH.md
 - UNITY_TEST_CHECKLIST.md
 - HANDOFF_LOG.md
+
+LLM/backend/database plans must also be reflected in ROADMAP.md and ARCHITECTURE.md before those
+components are implemented.
+
+### NFR5: Graceful Degradation (added 2026-06-22)
+
+If the backend or LLM is unavailable, the game must keep working using local validation and static
+hints, without breaking puzzle play. NFR3 (WebGL compatibility) applies to the Unity client; the
+backend and LLM are server-side.
 
 ## Hard Constraints
 

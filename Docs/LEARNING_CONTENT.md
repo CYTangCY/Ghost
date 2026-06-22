@@ -16,11 +16,17 @@ Do not implement a level before its mapping is written here.
 
 ---
 
-## Intended Act Structure (revised roadmap — 2026-06-20)
+## Intended Act Structure (revised roadmap — 2026-06-20; full-system note 2026-06-22)
 
-This is the current working Act sequence (user-directed revision; see `Docs/ROADMAP.md`). It refines
-the structure in `Docs/CONFIRMED_PROJECT_CONTEXT.md` §5 (to be reconciled there). For each Act: what
-the player does → the chatbot/NLP concept it teaches → how it connects to earlier Acts.
+This is the current working Act sequence (user-directed revision; see `Docs/ROADMAP.md`). It matches
+the structure in `Docs/CONFIRMED_PROJECT_CONTEXT.md` §5 (reconciled to the 8-Act structure). For each
+Act: what the player does → the chatbot/NLP concept it teaches → how it connects to earlier Acts.
+
+Full-system note: backend, database, and LLM are required final-system components that later support
+hints, Ghost responses, progress, attempt logging, and the capstone simulation — but every Act's
+puzzle correctness stays deterministic (validators, graph simulation, test cases, or backend scoring),
+never decided by the LLM. The per-Act "Systems later" notes below say how each Act touches those
+systems.
 
 - **Act 1 — Intent Classification.** Player groups message cards by purpose. Teaches that different
   wording can share one intent. (Foundation.)
@@ -48,6 +54,30 @@ Fundamentals note: the former Act 0 (chatbot definition, rule-based vs AI-enable
 four challenges) is preserved — its concepts are introduced by Lily in the Game Shell, and its
 "Rebuild Ghost's Voice" pipeline mechanic becomes the Act 8 capstone. The detailed per-Act sections
 below still use the earlier numbering and are being migrated to this structure.
+
+### Per-Act Backend / Database / LLM Interaction (added 2026-06-22)
+
+High-level only; see `Docs/ARCHITECTURE.md` Phase D layers. In every Act the correctness check is
+deterministic; the LLM only adds hints/responses/explanations.
+
+- **Act 1 — Intent.** Correctness: deterministic intent validator. Later systems: backend logs
+  attempts; database stores progress; LLM provides Lily hints / Ghost responses.
+- **Act 2 — Entity.** Correctness: deterministic span/type validator. Later systems: same as Act 1;
+  LLM may also explain why a span/type was wrong.
+- **Act 3 — Dialog Node Graph.** Correctness: deterministic graph simulation. Later systems: backend
+  may host graph simulation/scoring; LLM generates natural-language responses for graph outputs.
+- **Act 4 — Confidence and Fallback.** Correctness: deterministic threshold/fallback checks on the
+  graph. Later systems: backend scoring; LLM explains threshold trade-offs.
+- **Act 5 — Testing and Debugging.** Correctness: deterministic authored test cases run through the
+  graph. Later systems: backend runs the test suite and returns pass/fail; LLM explains failures.
+- **Act 6 — Integration / Backend Action / Response Generation.** Correctness: deterministic checks
+  on expected backend-action results and response selection. Later systems: backend action nodes call
+  services; LLM does response generation around those deterministic results.
+- **Act 7 — NLP Pipeline Lab.** Correctness: deterministic per-step pipeline checks. Later systems:
+  LLM optional (illustrative outputs only).
+- **Act 8 — Capstone "Repair Ghost's Voice".** Correctness: deterministic end-to-end pipeline
+  validation. Later systems: backend orchestrates; LLM drives the chatbot simulation; database/logs
+  capture the capstone run.
 
 ---
 

@@ -93,10 +93,11 @@ Possible approach:
 
 ## Future-Facing Layers (roadmap, not yet implemented)
 
-> Forward-looking notes added with the 2026-06-20 roadmap revision (see `Docs/ROADMAP.md`). They are
+> Forward-looking notes added with the 2026-06-20 roadmap revision and extended on 2026-06-22 for the
+> full-system direction (backend, database, and LLM layers — see `Docs/ROADMAP.md` Phase D). They are
 > intentionally high-level; do not over-specify until each is the active task.
 
-### Game Shell Layer (Phase A — next)
+### Game Shell Layer (Phase A — implemented in M0-T13)
 
 Responsibility: frame the prototype as one Ghost game and route the player between screens.
 
@@ -125,3 +126,53 @@ Conceptual pieces:
 
 Notes: follow the Act 1 pattern that worked well — keep the graph rules in a pure, testable logic
 assembly (no UnityEngine dependency), with presentation and an interaction controller on top.
+
+### Backend Layer (Phase D — full-system foundation)
+
+Responsibility: a server-side boundary the Unity/WebGL client talks to for content, progress, logs,
+and (later) LLM orchestration. Required for the final system; built after the gameplay skeleton is
+stable. Prototype stack per `Docs/CONFIRMED_PROJECT_CONTEXT.md` §8 (Node.js + TypeScript REST).
+
+Conceptual services (high-level, do not over-specify yet):
+- API boundary — a thin REST surface the client calls; the client degrades gracefully if it is down.
+- Content service — serves learning content and puzzle data.
+- Progress service — reads/writes player progress.
+- Attempt/log service — records puzzle attempts and hint triggers for analytics.
+- Graph simulation / scoring service (if needed) — runs a conversation through a dialog graph and
+  returns a deterministic result, so heavier validation can live server-side.
+- LLM orchestration service — brokers prompts/responses to the LLM (see LLM Layer); never decides
+  puzzle correctness.
+
+### Database Layer (Phase D — full-system foundation)
+
+Responsibility: persist the system's content and player data. Prototype store is SQLite
+(`Docs/CONFIRMED_PROJECT_CONTEXT.md` §8).
+
+Conceptual data (high-level):
+- Learning content (per-Act concepts, Lily guidance text).
+- Puzzle content (per-level data: cards/spans/graphs and their correct answers).
+- Player progress (which Acts/levels are complete).
+- Player attempts (submissions and outcomes for analytics).
+- Dialogue/hint logs (if appropriate) — which hints fired and when.
+
+### LLM Layer (Phase D+ — required, but never the source of truth for scoring)
+
+Responsibility: natural-language support around the deterministic gameplay. Required for the final
+system (Lily scaffolding + the capstone simulation); the static-hint fallback is risk mitigation, not
+a reason to drop the component.
+
+Conceptual uses:
+- Lily hint generation — scaffolded hints in Lily's voice, without revealing the exact solution.
+- Ghost response generation — natural-language flavour for Ghost's reaction.
+- Explanatory feedback — explain *why* an answer was right/wrong after the validator decides.
+- Capstone chatbot simulation — drive the Act 8 "Repair Ghost's Voice" integration demo.
+- Optional natural-language variation of authored content.
+
+### Deterministic Correctness Rule (applies across all layers)
+
+Puzzle correctness is decided only by deterministic logic — validators (e.g.
+`IntentClassificationValidator`), graph simulators, authored test cases, or backend scoring. The LLM
+may hint, explain, or generate language, but is **never** the source of truth for scoring. This keeps
+puzzles reproducible and gradeable and supports explainability (NFR1): the same submission always
+yields the same result regardless of LLM availability or output. The WebGL client must keep working
+(local validation + static hints) when the backend/LLM are unavailable.

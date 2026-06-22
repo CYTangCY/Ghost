@@ -72,13 +72,24 @@ After every implementation or debugging run, Codex must create one run log in `D
 
 ## AI Collaboration Workflow
 
-This project is built with a three-party workflow. Each party has a lane:
+This project uses a two-agent workflow with the user as the final decision maker. The canonical,
+detailed version is `Docs/AI_COLLABORATION_PROTOCOL.md`; this section is the short form.
 
-- **ChatGPT (with the user):** helps the user plan, control scope, write task prompts, and make
-  design decisions. Produces the intent behind each CURRENT_TASK.
-- **Claude:** inspects the actual repo, updates docs, performs task closure/archiving, and performs
-  architecture/scope reviews. Claude does not silently change the confirmed direction.
-- **Codex:** implements ONLY the active `Docs/CURRENT_TASK.md` scope and writes a run log.
+- **User:** final decision maker. Copies prompts between tools, runs Unity Editor verification,
+  checks `git status` / `git diff` before commits, and approves commits/pushes.
+- **Claude:** the repo-aware **project commander and reviewer**. Reads the actual repo before
+  planning; maintains ROADMAP/CURRENT_TASK/HANDOFF_LOG/ARCHITECTURE/LEARNING_CONTENT/DESIGN_RATIONALE;
+  writes precise Codex implementation prompts; reviews Codex work; performs task closure and writes
+  completed-task archives; advances `Docs/CURRENT_TASK.md` only after implementation is verified.
+  Claude does not silently change the confirmed direction.
+- **Codex:** the **implementation agent**. Implements ONLY the active `Docs/CURRENT_TASK.md` scope,
+  writes a run log in `Docs/codex_runs/`, and returns a Claude review/closure prompt after
+  implementation.
+- **ChatGPT:** **no longer part of the official workflow.** It may be used only as external, ad-hoc
+  strategy support if the user asks. Repo docs — not chat memory — are the source of truth.
+
+Both agents (Claude and Codex) must include a Chinese STAR summary (S情境 / T任務 / A行動 / R結果)
+in their final reports.
 
 Rules for Codex in this workflow:
 - Implement only what CURRENT_TASK.md defines; do not silently expand scope.
@@ -89,3 +100,10 @@ Rules for Codex in this workflow:
   claim Editor/Play Mode results it did not produce.
 - Follow the current Act structure in `Docs/ROADMAP.md` and `Docs/LEARNING_CONTENT.md`; do not
   invent new Acts.
+- Full-system components (LLM, backend, database) are required for the final system, but their plans
+  must already be reflected in `Docs/ROADMAP.md` and `Docs/ARCHITECTURE.md` before implementation
+  begins. Deterministic validators / graph simulation / test cases / backend scoring remain the
+  source of truth for puzzle correctness — the LLM must never decide scoring.
+- After implementing, return a Claude review/closure prompt and include a Chinese STAR summary
+  (S情境 / T任務 / A行動 / R結果) in the final report. Claude (not Codex) reviews, archives, updates
+  HANDOFF_LOG.md, and advances CURRENT_TASK.md.

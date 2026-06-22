@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-Use Claude as planner, architecture reviewer, debugger, and explainability reviewer.
+Use Claude as the repo-aware project commander/reviewer, planner, architecture reviewer, debugger,
+and explainability reviewer. The canonical workflow is `Docs/AI_COLLABORATION_PROTOCOL.md`.
 
 Before planning, always read:
 - Docs/CONFIRMED_PROJECT_CONTEXT.md
@@ -64,6 +65,7 @@ When reviewing a task, check:
 - Does player action visibly change Ghost's response?
 - Does it avoid generic quiz design?
 - Is the code structure explainable?
+- For any LLM/backend work: is puzzle correctness still decided by deterministic validators / graph simulation / test cases / backend scoring (not the LLM)?
 - Did Codex create a run log in `Docs/codex_runs/` for this run, with real (not claimed) test results and no chain-of-thought?
 
 ## Task Archiving Convention
@@ -88,11 +90,23 @@ See `Docs/codex_runs/README.md` for the convention.
 
 ## AI Collaboration Workflow
 
-- ChatGPT (with the user) plans, controls scope, and drafts task prompts and design decisions.
-- Claude inspects the actual repo, updates docs, performs task closure/archiving, and runs
-  architecture/scope reviews — Claude follows `Docs/ROADMAP.md` + `Docs/LEARNING_CONTENT.md`, does
-  not invent new Acts, and does not silently change the confirmed direction.
-- Codex implements only the active CURRENT_TASK.md scope and writes a run log; it must not expand
-  scope or edit ProjectSettings/Packages/Build Settings/unrelated scenes.
+Canonical workflow: `Docs/AI_COLLABORATION_PROTOCOL.md`. Two agents plus the user as final decision
+maker; ChatGPT is no longer part of the official workflow (ad-hoc strategy support only if asked).
+
+- Claude is the repo-aware **project commander and reviewer**: reads the actual repo before planning;
+  maintains ROADMAP/CURRENT_TASK/HANDOFF_LOG/ARCHITECTURE/LEARNING_CONTENT/DESIGN_RATIONALE; writes
+  precise Codex prompts; reviews Codex work; performs closure and writes completed-task archives; and
+  advances `CURRENT_TASK.md` only after implementation is verified. Claude follows `Docs/ROADMAP.md`
+  + `Docs/LEARNING_CONTENT.md`, does not invent new Acts, and does not silently change the confirmed
+  direction.
+- Codex is the **implementation agent**: implements only the active CURRENT_TASK.md scope, writes a
+  run log, must not expand scope or edit ProjectSettings/Packages/Build Settings/unrelated scenes,
+  and returns a Claude review/closure prompt after implementation.
+- Both Claude and Codex must include a Chinese STAR summary (S情境 / T任務 / A行動 / R結果) in their
+  final reports. Repo docs — not chat memory — are the source of truth.
 - During review/closure, Claude records human Editor verification separately from Codex's in-session
   "Not run" status, and never rewrites a run log's honest "Not run" as if Codex ran tests.
+- Full-system components (LLM, backend, database) are required for the final system, but their plans
+  must be reflected in `Docs/ROADMAP.md` and `Docs/ARCHITECTURE.md` before implementation. Puzzle
+  correctness stays deterministic (validators / graph simulation / test cases / backend scoring); the
+  LLM must never decide scoring.

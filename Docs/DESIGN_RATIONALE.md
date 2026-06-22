@@ -76,3 +76,30 @@ Reusing one deepening system (the node graph) keeps the player learning a cohere
 many disconnected puzzle systems, and keeps the codebase smaller and more explainable (NFR1/NFR2).
 Where a concept genuinely does not fit the graph, a separate small mechanic is acceptable, but the
 graph is the default home.
+
+## Why LLM, Backend, and Database Are Required (Not Optional)
+
+The final artefact is a full AI-assisted educational game system, not only a Unity puzzle prototype.
+The LLM gives Lily her scaffolded hints and drives the Act 8 capstone chatbot simulation; the backend
+delivers content and orchestrates the LLM; the database holds learning/puzzle content, player
+progress, and attempt logs. These are part of the system being built and assessed, so they are
+required final-system components rather than optional extras. They are integrated after the gameplay
+skeleton is stable (see the next note), and the older "LLM can be deferred" wording is now treated as
+risk mitigation (graceful degradation to static hints), not permission to drop the component.
+
+## Why the LLM Must Not Decide Correctness
+
+Correctness must be reproducible, fair, and explainable (NFR1). LLM output is non-deterministic and
+can hallucinate, so if it decided scoring the same submission could pass once and fail the next time,
+and the result could not be justified to a marker. Therefore puzzle correctness comes only from
+deterministic logic — validators, graph simulation, authored test cases, or backend scoring — and the
+LLM is confined to hints, Ghost responses, explanatory feedback, and natural-language generation. This
+also lets the game keep working (local validation + static hints) when the LLM/backend are
+unavailable.
+
+## Why Build the Gameplay Skeleton Before the Full System
+
+Building the playable core first (Game Shell + Acts 1–3) de-risks the learning design — the part the
+project is really about — before adding infrastructure. The backend, database, and LLM then wrap a
+proven core instead of being built speculatively against gameplay that might still change. This keeps
+early work small and explainable and avoids rework if a mechanic is revised.

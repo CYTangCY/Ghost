@@ -396,3 +396,53 @@ M0-T13 creates the shell scene through a Unity editor builder, not by hand-editi
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter`, `LilyDialogueFrame`, the title screen, the act hub screen, and the shell buttons. The Act 1 return button is added at runtime by `ShellReturnToHubOverlay` when the Act 1 scene loads.
+
+---
+
+## M0-T14: Act 2 Entity Extraction Core
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/EntityExtraction/EntityType.cs`
+   - `Assets/Scripts/Puzzles/EntityExtraction/EntitySpan.cs`
+   - `Assets/Scripts/Puzzles/EntityExtraction/EntityExtractionValidator.cs`
+   - `Assets/Scripts/Puzzles/EntityExtraction/Act2EntityExtractionSampleData.cs`
+   - `Assets/Tests/EditMode/Act2EntityExtractionValidatorTests.cs`
+   - `Assets/Tests/EditMode/Act2EntityExtractionSampleDataTests.cs`
+3. Confirm there are no Console compile errors.
+
+### Automated EditMode Tests
+
+1. Open `Window > General > Test Runner`.
+2. Select the `EditMode` tab.
+3. Confirm the `Ghost.EditModeTests` assembly appears.
+4. Run the EditMode tests.
+5. Expected M0-T14 tests:
+   - `Validate_WhenSubmittedSpansExactlyMatch_ReturnsCorrect`
+   - `Validate_WhenExpectedSpanIsMissing_ReturnsIncorrect`
+   - `Validate_WhenBoundaryMatchesButTypeIsWrong_ReturnsIncorrect`
+   - `Validate_WhenTypeMatchesButBoundaryIsWrong_ReturnsIncorrect`
+   - `Validate_WhenSubmittedSpanIsExtra_ReturnsIncorrect`
+   - `Validate_WhenSubmittedSpanIsDuplicated_ReturnsIncorrect`
+   - `SampleData_WhenCorrectSpansSubmitted_ValidatesSuccessfully`
+   - `SampleData_ContainsSystemAndCustomEntityTypes`
+   - `SampleData_ContainsRoomSynonymPair`
+
+### Expected Result
+
+All M0-T14 EditMode tests should pass after Unity imports the new runtime scripts and test files.
+
+### Play Mode Check
+
+No Play Mode behaviour, logic only.
+
+Optional Console sanity check:
+1. Open any existing scene.
+2. Enter Play Mode.
+3. Confirm no new Console errors appear from the M0-T14 scripts.
+
+### Inspector Setup
+
+No Inspector setup is required for M0-T14. The entity-extraction model, validator, sample data, and tests are pure C# logic and are not attached to GameObjects.

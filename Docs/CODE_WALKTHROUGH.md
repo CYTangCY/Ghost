@@ -910,3 +910,304 @@ Manual Unity Editor menu actions:
 ### Unity Test
 
 Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, navigate to Act 1, then click `Return to Hub`.
+
+---
+
+## Act 2 Entity Extraction Runtime
+
+### Script Name
+
+EntityType.cs
+
+### Purpose
+
+Defines the value object for an Act 2 entity type. Each entity type has:
+- an `Id` used by validators and sample data
+- an `EntityCategory` showing whether the type is a built-in `System` entity or a game-specific `Custom` entity
+
+### Attached GameObject
+
+None. This is pure C# data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Created by sample data, tests, or future puzzle data before validation. It does not run by itself.
+
+### Important Fields
+
+No serialized Unity fields. The constructor receives `id` and `category`.
+
+### Important Methods
+
+- `EntityType(string id, EntityCategory category)`: creates an entity type and rejects empty ids.
+- `Equals(...)`, `GetHashCode()`, `==`, and `!=`: compare entity types by `Id` and `Category`.
+
+### Input
+
+Plain C# constructor values.
+
+### Output
+
+An immutable entity-type value object that can distinguish, for example, a system `time` entity from a custom game entity.
+
+### Failure Cases
+
+- Empty entity type id throws an `ArgumentException`.
+- Entity types with the same id but different categories are not equal.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act2EntityExtractionSampleDataTests.cs` and `Assets/Tests/EditMode/Act2EntityExtractionValidatorTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+EntitySpan.cs
+
+### Purpose
+
+Defines one Act 2 span annotation over a message. Each span stores:
+- `Start`: zero-based character index
+- `Length`: number of characters in the span
+- `Type`: the `EntityType` assigned to the span
+
+### Attached GameObject
+
+None. This is pure C# data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Created by sample data, tests, or future player-submission code before validation. It does not run by itself.
+
+### Important Fields
+
+No serialized Unity fields. The constructor receives `start`, `length`, and `type`.
+
+### Important Methods
+
+- `EntitySpan(int start, int length, EntityType type)`: creates a span and rejects invalid boundaries or null type.
+- `GetText(string message)`: returns the substring covered by the span.
+- `Equals(...)`, `GetHashCode()`, `==`, and `!=`: compare spans by start, length, and entity type.
+
+### Input
+
+Plain C# constructor values and, optionally, a message string for `GetText(...)`.
+
+### Output
+
+An immutable span annotation that the validator can compare against expected answers.
+
+### Failure Cases
+
+- Negative start throws an `ArgumentOutOfRangeException`.
+- Zero or negative length throws an `ArgumentOutOfRangeException`.
+- Null type throws an `ArgumentNullException`.
+- `GetText(...)` throws if the message is null or the span falls outside the message.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act2EntityExtractionSampleDataTests.cs` and `Assets/Tests/EditMode/Act2EntityExtractionValidatorTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+EntityExtractionValidator.cs
+
+### Purpose
+
+Validates whether submitted Act 2 entity spans exactly match the expected span/type answer key. This mirrors Act 1's deterministic validator pattern: correctness is decided by pure C# rules, not by UI, scene state, backend, or LLM output.
+
+### Attached GameObject
+
+None. This is pure C# puzzle logic and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future Act 2 UI or puzzle controller code can call `EntityExtractionValidator.Validate(...)` after the player highlights message spans and assigns entity types.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+- `Validate(IEnumerable<EntitySpan> expected, IEnumerable<EntitySpan> submitted)`: compares submitted annotations against the expected annotations.
+- `EntityExtractionResult.IsCorrect`: true only when submitted spans exactly match expected spans.
+- `EntityExtractionResult.Errors`: validation messages for missing spans, wrong type, wrong boundary, extra spans, duplicate submitted spans, and null spans.
+
+### Input
+
+- Expected `EntitySpan` values representing the authored answer key.
+- Submitted `EntitySpan` values representing the player's annotation attempt.
+
+### Output
+
+An `EntityExtractionResult` with a boolean correctness flag and error details for future UI feedback or tests.
+
+### Failure Cases
+
+The validator returns incorrect results with errors for:
+- missing expected spans
+- correct boundary but wrong entity type/category
+- correct entity type/category but wrong boundary
+- extra submitted spans
+- duplicate submitted spans
+- null spans inside either input list
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act2EntityExtractionValidatorTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act2EntityExtractionSampleData.cs
+
+### Purpose
+
+Provides reusable sample data for the Act 2 entity-extraction puzzle. The data demonstrates span annotation, system vs custom entities, and a synonym case where `lab` and `laboratory` are different surface words for the same custom `room` entity type.
+
+### Attached GameObject
+
+None. This is pure C# sample data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Future UI or puzzle controller code can call this class to get sample messages and their correct entity spans. The class does not run by itself.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Constants:
+- `TimeEntityTypeId`
+- `RoomEntityTypeId`
+- `ObjectEntityTypeId`
+
+### Important Methods
+
+- `CreateTimeEntityType()`: returns the system `time` entity type.
+- `CreateRoomEntityType()`: returns the custom `room` entity type.
+- `CreateObjectEntityType()`: returns the custom `object` entity type.
+- `CreateMessages()`: returns sample messages with correct spans.
+- `SampleMessage`: immutable message text plus correct span list.
+
+### Input
+
+None. The sample data is created by method calls.
+
+### Output
+
+Three short Ghost-themed messages:
+- one message with a custom room span and a system time span
+- one message with the synonym surface word `laboratory` mapped to the custom room entity type
+- one message with a custom object span
+
+### Failure Cases
+
+- If a sample surface phrase is edited and no longer appears in the message, sample creation throws an `InvalidOperationException`.
+- If sample ids or spans are changed later, the sample data tests should be updated to preserve the system/custom and synonym coverage.
+
+### Unity Test
+
+Run the EditMode tests under `Assets/Tests/EditMode/Act2EntityExtractionSampleDataTests.cs`. This script has no Play Mode behaviour.
+
+---
+
+## Act 2 Entity Extraction EditMode Tests
+
+### Script Name
+
+Act2EntityExtractionValidatorTests.cs
+
+### Purpose
+
+Tests the pure Act 2 entity-extraction validator.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- exact correct span/type submission
+- missing span
+- wrong type
+- wrong boundary
+- extra span
+- duplicate submitted span
+
+### Input
+
+Test-created `EntitySpan` and `EntityType` values.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+- Compile errors indicate the runtime model or validator signature changed.
+- Failed assertions indicate the validator no longer reports one of the required deterministic error categories.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
+### Script Name
+
+Act2EntityExtractionSampleDataTests.cs
+
+### Purpose
+
+Tests the Act 2 sample data against the validator and checks that the authored data includes required learning coverage.
+
+### Attached GameObject
+
+None. This is an EditMode test script and should not be attached to a GameObject.
+
+### Runtime Role
+
+Runs in Unity's EditMode Test Runner only.
+
+### Important Fields
+
+No serialized Unity fields.
+
+### Important Methods
+
+NUnit tests cover:
+- every sample message validates successfully with its correct spans
+- the sample set contains both system and custom entity types
+- the sample set contains the `lab` / `laboratory` synonym pair for the custom room entity type
+
+### Input
+
+Sample messages from `Act2EntityExtractionSampleData`.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+- Failed validation means a sample span boundary, length, or type no longer matches the message text.
+- Missing system/custom/synonym assertions mean the sample data no longer covers the Act 2 learning requirements.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
