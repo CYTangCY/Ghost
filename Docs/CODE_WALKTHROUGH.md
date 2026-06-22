@@ -1216,11 +1216,66 @@ After running `Ghost > Build Act 2 Entity Extraction Prototype Scene`, open the 
 
 ### Script Name
 
+Act2EntityExtractionInteractionController.cs
+
+### Purpose
+
+Owns the Act 2 prototype interaction state for chip selection and entity-type assignment. It coordinates one `EntityExtractionSession`, the currently selected chip key, and the assigned type for each tagged chip. It does not validate correctness or create UI objects.
+
+### Attached GameObject
+
+None. This is a plain C# presentation controller created by `Act2EntityExtractionStaticPresenter` at runtime.
+
+### Runtime Role
+
+When the presenter renders the sample Act 2 message, it creates one controller for that UI session. Chip clicks and palette clicks are forwarded into this controller, and the controller raises `StateChanged` when the presenter should refresh chip visuals.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal state:
+- one `EntityExtractionSession` created from `Act2EntityExtractionSampleData.CreateMessages()[0]`
+- selected chip key in `Start:Length` format
+- assigned entity type by chip key
+
+### Important Methods
+
+- `SelectChip(string chipKey)`: selects or deselects an untagged chip. Selecting a different untagged chip clears the previous selection.
+- `AssignSelectedChipToType(EntityType type)`: parses the selected chip key, creates the matching span through `EntityExtractionSession.AddSpan(...)`, records the assigned type, clears selection, and raises `StateChanged`.
+- `UntagChip(string chipKey)`: removes the assigned span through `EntityExtractionSession.RemoveSpan(...)`, clears the chip assignment, clears selection if needed, and raises `StateChanged`.
+- `GetAssignedType(string chipKey)`: exposes a chip's assigned type for rendering.
+- `IsSelected(string chipKey)`: exposes selected-chip state for rendering.
+- `CreateChipKey(int start, int length)`: creates the stable `Start:Length` key used by the presenter.
+
+### Input
+
+Plain C# method calls from the presenter in response to rendered chip and entity-palette clicks.
+
+### Output
+
+Updated presentation/session state plus a `StateChanged` callback. The controller mutates player spans only through `EntityExtractionSession`.
+
+### Failure Cases
+
+- Invalid chip keys throw an `ArgumentException`.
+- Null entity types passed to assignment throw an `ArgumentNullException`.
+- If no chip is selected, assigning a palette type is ignored.
+- Clicking an already tagged chip should route to `UntagChip(...)` from the presenter rather than selecting it.
+
+### Unity Test
+
+Manual Act 2 scene check. Select an untagged chip, click an entity type, confirm the chip shows a type badge and System/Custom color, click the tagged chip again to untag it, and confirm Validate remains a disabled placeholder.
+
+---
+
+### Script Name
+
 Act2EntityExtractionStaticPresenter.cs
 
 ### Purpose
 
-Renders the display-only Act 2 span-annotation prototype. It loads the first Act 2 sample message, creates an `EntityExtractionSession` from it, displays the message as word chips, displays the available entity types as a palette/legend, and creates placeholder Validate/feedback UI with no validation wiring.
+Renders the Act 2 span-annotation prototype and connects display-only UI objects to `Act2EntityExtractionInteractionController` for chip selection, entity-type assignment, and untagging. It still keeps the Validate button disabled and has no validation-feedback wiring.
 
 ### Attached GameObject
 
@@ -1228,7 +1283,7 @@ Attached to the root UI object created by `Act2EntityExtractionPrototypeSceneBui
 
 ### Runtime Role
 
-On `Start`, when `renderOnStart` is true, it rebuilds the display-only UI from sample data. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
+On `Start`, when `renderOnStart` is true, it rebuilds the prototype UI from sample data, creates an interaction controller, wires chip and entity-type clicks, and refreshes chip visuals from controller state. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
 
 ### Important Fields
 
@@ -1239,33 +1294,44 @@ On `Start`, when `renderOnStart` is true, it rebuilds the display-only UI from s
 - `entityTypeTemplate`: inactive template for entity-type legend rows.
 - `renderOnStart`: when true, rebuilds the display at Play Mode start.
 
+Internal runtime state:
+- rendered chip images, outlines, and badge labels by `Start:Length` chip key
+- one `Act2EntityExtractionInteractionController`
+
 ### Important Methods
 
 - `Configure(...)`: wires generated UI roots/templates without using reflection.
-- `RenderSampleData()`: clears prior rendered UI, loads sample message 0, creates a session, renders chips, renders entity types, and renders placeholder validation controls.
+- `RenderSampleData()`: clears prior rendered UI, creates a fresh interaction controller, renders chips, renders entity types, wires click handlers, and renders placeholder validation controls.
+- `ConfigureChipButton(...)`: forwards untagged chip clicks to selection and tagged chip clicks to untagging.
+- `ConfigureEntityTypeButton(...)`: forwards palette clicks to assignment through the selected chip.
+- `UpdateVisualState()`: reads controller state to apply selected-chip highlights, tagged-chip colors, and type badges.
+- `EnsureChipBadge(...)`: creates the small per-chip type label used when a chip is tagged.
 - `CreateWordTokens(...)`: splits message text into whitespace-delimited word chips and trims surrounding punctuation so chip offsets match word characters.
 - `EnsureEventSystem()`: creates an `EventSystem` plus `InputSystemUIInputModule` when one is missing.
 
 ### Input
 
-Sample data from `Act2EntityExtractionSampleData` and `EntityExtractionSession.CreateFromSampleMessage(...)`.
+Sample data from `Act2EntityExtractionSampleData`, plus pointer clicks on rendered word chips and entity-type palette items.
 
 ### Output
 
 UGUI objects showing:
 - one sample message rendered as word chips
 - entity types `time`, `room`, and `object` with System/Custom categories
+- selected-chip visual highlighting
+- tagged-chip System/Custom coloring and small type badges
 - a disabled placeholder Validate button and placeholder feedback text
 
 ### Failure Cases
 
 - Missing roots or templates cause `RenderSampleData()` to return without rendering.
 - If sample entity spans later become multi-word, the display will still render word chips but later interaction work may need phrase grouping.
-- The Validate button is intentionally disabled and has no validation callback in M0-T16.
+- If an older generated scene looks stale, rerun the Act 2 scene builder so the saved scene preview is refreshed. Play Mode startup also rebuilds the rendered chips from the current presenter.
+- The Validate button is intentionally disabled and has no validation callback in M0-T17.
 
 ### Unity Test
 
-Run `Ghost > Build Act 2 Entity Extraction Prototype Scene`, open `Assets/Scenes/Act2EntityExtractionPrototype.unity`, and enter Play Mode. Confirm the chips, entity type legend, placeholder Validate button, and feedback text render with no Console errors. Confirm no chip selection, type assignment, or real validation happens.
+Run `Ghost > Build Act 2 Entity Extraction Prototype Scene` if the saved scene looks stale, open `Assets/Scenes/Act2EntityExtractionPrototype.unity`, and enter Play Mode. Confirm chip selection, type assignment, untagging, multiple tagged chips, the disabled placeholder Validate button, and no Console errors.
 
 ---
 

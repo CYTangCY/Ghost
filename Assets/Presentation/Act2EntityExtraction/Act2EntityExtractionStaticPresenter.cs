@@ -15,16 +15,20 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private const string TitleText = "Act 2: Entity Extraction";
         private const string InstructionText =
-            "Display-only span annotation prototype.\n" +
-            "The message is split into word chips with stored character offsets for a later interaction task.";
+            "Select a word chip, then choose the entity type Ghost should notice.\n" +
+            "Click a tagged chip to untag it. Validate stays as a placeholder for a later task.";
         private const string PlaceholderFeedbackText =
-            "Validation placeholder only. Span selection and type assignment arrive in a later task.";
+            "Validation placeholder only. Tagging is interactive, but correctness feedback is not wired yet.";
 
         private static readonly Color ChipColor = new Color(1f, 0.985f, 0.92f);
         private static readonly Color ChipOutlineColor = new Color(0.78f, 0.70f, 0.88f, 0.64f);
+        private static readonly Color SelectedChipColor = new Color(1f, 0.93f, 0.68f);
+        private static readonly Color SelectedChipOutlineColor = new Color(0.95f, 0.55f, 0.18f, 0.95f);
         private static readonly Color SystemEntityColor = new Color(0.86f, 0.94f, 1f);
         private static readonly Color CustomEntityColor = new Color(0.90f, 1f, 0.92f);
         private static readonly Color EntityOutlineColor = new Color(0.56f, 0.66f, 0.82f, 0.78f);
+        private static readonly Color SystemBadgeColor = new Color(0.18f, 0.45f, 0.70f, 0.95f);
+        private static readonly Color CustomBadgeColor = new Color(0.22f, 0.54f, 0.30f, 0.95f);
         private static readonly Color ValidationPanelColor = new Color(1f, 0.99f, 0.94f, 0.92f);
 
         [SerializeField] private RectTransform messageChipRoot;
@@ -34,6 +38,12 @@ namespace Ghost.Presentation.Act2EntityExtraction
         [SerializeField] private GameObject entityTypeTemplate;
         [SerializeField] private bool renderOnStart = true;
 
+        private readonly Dictionary<string, Image> chipImagesByKey = new Dictionary<string, Image>();
+        private readonly Dictionary<string, Outline> chipOutlinesByKey = new Dictionary<string, Outline>();
+        private readonly Dictionary<string, Text> chipBadgeTextsByKey = new Dictionary<string, Text>();
+        private readonly Dictionary<string, Image> chipBadgeImagesByKey = new Dictionary<string, Image>();
+
+        private Act2EntityExtractionInteractionController controller;
         private Text validationFeedbackText;
 
         private void Start()
@@ -42,6 +52,11 @@ namespace Ghost.Presentation.Act2EntityExtraction
             {
                 RenderSampleData();
             }
+        }
+
+        private void OnDestroy()
+        {
+            DetachController();
         }
 
         public void Configure(
@@ -73,15 +88,19 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
             EnsureEventSystem();
             EnsureInstructionText();
+            DetachController();
             ClearChildren(messageChipRoot);
             ClearChildren(entityPaletteRoot);
             ClearChildren(validationControlsRoot);
+            ClearRenderedState();
 
-            var sampleMessage = Act2EntityExtractionSampleData.CreateMessages()[0];
-            var session = EntityExtractionSession.CreateFromSampleMessage(sampleMessage);
-            RenderMessageChips(session.MessageText);
+            controller = new Act2EntityExtractionInteractionController();
+            controller.StateChanged += UpdateVisualState;
+
+            RenderMessageChips(controller.MessageText);
             RenderEntityPalette();
             RenderValidationPlaceholder();
+            UpdateVisualState();
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(messageChipRoot);
@@ -97,8 +116,12 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 chip.name = $"Chip - {token.Text} [{token.Start},{token.Length}]";
                 chip.SetActive(true);
 
+                var chipKey = Act2EntityExtractionInteractionController.CreateChipKey(token.Start, token.Length);
                 ConfigureChipContainer(chip);
                 SetChildText(chip.transform, "ChipText", token.Text);
+                var badgeText = EnsureChipBadge(chip.transform);
+                RegisterChipVisuals(chipKey, chip, badgeText);
+                ConfigureChipButton(chip, chipKey);
 
                 var chipView = chip.GetComponent<Act2EntityChipView>();
                 if (chipView == null)
@@ -108,6 +131,116 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
                 chipView.Configure(token.Start, token.Length, token.Text);
             }
+        }
+
+        private void RegisterChipVisuals(string chipKey, GameObject chip, Text badgeText)
+        {
+            chipImagesByKey[chipKey] = chip.GetComponent<Image>();
+            chipOutlinesByKey[chipKey] = chip.GetComponent<Outline>();
+            chipBadgeTextsByKey[chipKey] = badgeText;
+            chipBadgeImagesByKey[chipKey] = badgeText.transform.parent.GetComponent<Image>();
+        }
+
+        private void ConfigureChipButton(GameObject chip, string chipKey)
+        {
+            var image = chip.GetComponent<Image>();
+            var button = chip.GetComponent<Button>();
+            if (button == null)
+            {
+                button = chip.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() =>
+            {
+                if (controller == null)
+                {
+                    return;
+                }
+
+                if (controller.GetAssignedType(chipKey) != null)
+                {
+                    controller.UntagChip(chipKey);
+                    return;
+                }
+
+                controller.SelectChip(chipKey);
+            });
+        }
+
+        private void ConfigureEntityTypeButton(GameObject view, EntityType entityType)
+        {
+            var image = view.GetComponent<Image>();
+            var button = view.GetComponent<Button>();
+            if (button == null)
+            {
+                button = view.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() =>
+            {
+                if (controller == null)
+                {
+                    return;
+                }
+
+                controller.AssignSelectedChipToType(entityType);
+            });
+        }
+
+        private void UpdateVisualState()
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            foreach (var pair in chipImagesByKey)
+            {
+                var chipKey = pair.Key;
+                var image = pair.Value;
+                var outline = chipOutlinesByKey[chipKey];
+                var badgeText = chipBadgeTextsByKey[chipKey];
+                var badgeImage = chipBadgeImagesByKey[chipKey];
+                var assignedType = controller.GetAssignedType(chipKey);
+                var isSelected = controller.IsSelected(chipKey);
+
+                if (assignedType != null)
+                {
+                    image.color = assignedType.Category == EntityCategory.System
+                        ? SystemEntityColor
+                        : CustomEntityColor;
+                    outline.effectColor = EntityOutlineColor;
+                    outline.effectDistance = new Vector2(2f, -2f);
+                    badgeText.text = assignedType.Id;
+                    badgeText.color = Color.white;
+                    badgeImage.color = assignedType.Category == EntityCategory.System
+                        ? SystemBadgeColor
+                        : CustomBadgeColor;
+                    badgeImage.gameObject.SetActive(true);
+                    continue;
+                }
+
+                badgeText.text = string.Empty;
+                badgeImage.gameObject.SetActive(false);
+
+                if (isSelected)
+                {
+                    image.color = SelectedChipColor;
+                    outline.effectColor = SelectedChipOutlineColor;
+                    outline.effectDistance = new Vector2(2.5f, -2.5f);
+                    continue;
+                }
+
+                image.color = ChipColor;
+                outline.effectColor = ChipOutlineColor;
+                outline.effectDistance = new Vector2(1.5f, -1.5f);
+            }
+
+            LayoutRebuilder.MarkLayoutForRebuild(messageChipRoot);
         }
 
         private void RenderEntityPalette()
@@ -126,6 +259,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             ConfigureEntityTypeContainer(view, entityType.Category);
             SetChildText(view.transform, "EntityTypeText", entityType.Id);
             SetChildText(view.transform, "EntityCategoryText", entityType.Category.ToString());
+            ConfigureEntityTypeButton(view, entityType);
         }
 
         private void RenderValidationPlaceholder()
@@ -180,6 +314,85 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 TextAnchor.MiddleLeft,
                 new Color(0.12f, 0.17f, 0.28f),
                 44f);
+        }
+
+        private void DetachController()
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.StateChanged -= UpdateVisualState;
+            controller = null;
+        }
+
+        private void ClearRenderedState()
+        {
+            chipImagesByKey.Clear();
+            chipOutlinesByKey.Clear();
+            chipBadgeTextsByKey.Clear();
+            chipBadgeImagesByKey.Clear();
+            validationFeedbackText = null;
+        }
+
+        private static Text EnsureChipBadge(Transform chipRoot)
+        {
+            var badgeTransform = chipRoot.Find("ChipTypeBadge");
+            if (badgeTransform == null)
+            {
+                var badgeObject = new GameObject("ChipTypeBadge", typeof(RectTransform));
+                badgeObject.transform.SetParent(chipRoot, false);
+                badgeTransform = badgeObject.transform;
+            }
+
+            var badgeImage = badgeTransform.GetComponent<Image>();
+            if (badgeImage == null)
+            {
+                badgeImage = badgeTransform.gameObject.AddComponent<Image>();
+            }
+
+            badgeImage.raycastTarget = false;
+
+            var badgeLayout = badgeTransform.GetComponent<LayoutElement>();
+            if (badgeLayout == null)
+            {
+                badgeLayout = badgeTransform.gameObject.AddComponent<LayoutElement>();
+            }
+
+            badgeLayout.minWidth = 46f;
+            badgeLayout.preferredWidth = 58f;
+            badgeLayout.minHeight = 28f;
+            badgeLayout.preferredHeight = 28f;
+
+            var labelTransform = badgeTransform.Find("Badge Text");
+            if (labelTransform == null)
+            {
+                var label = new GameObject("Badge Text", typeof(RectTransform)).GetComponent<RectTransform>();
+                label.SetParent(badgeTransform, false);
+                label.anchorMin = Vector2.zero;
+                label.anchorMax = Vector2.one;
+                label.offsetMin = Vector2.zero;
+                label.offsetMax = Vector2.zero;
+                labelTransform = label;
+            }
+
+            var text = labelTransform.GetComponent<Text>();
+            if (text == null)
+            {
+                text = labelTransform.gameObject.AddComponent<Text>();
+            }
+
+            text.font = GetBuiltinFont();
+            text.fontSize = 12;
+            text.fontStyle = FontStyle.Bold;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+
+            badgeImage.gameObject.SetActive(false);
+            return text;
         }
 
         private static IEnumerable<WordToken> CreateWordTokens(string messageText)
@@ -241,7 +454,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
 
             image.color = ChipColor;
-            image.raycastTarget = false;
+            image.raycastTarget = true;
 
             var outline = chip.GetComponent<Outline>();
             if (outline == null)
@@ -268,10 +481,11 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
 
             layout.padding = new RectOffset(16, 16, 8, 8);
+            layout.spacing = 8f;
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
         }
 
@@ -284,7 +498,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
 
             image.color = category == EntityCategory.System ? SystemEntityColor : CustomEntityColor;
-            image.raycastTarget = false;
+            image.raycastTarget = true;
 
             var outline = view.GetComponent<Outline>();
             if (outline == null)

@@ -41,6 +41,23 @@ Claude should not:
 - write Lily as a generic tutor
 - scan the whole repo unless needed
 
+## Claude Working Rules (git + token efficiency)
+
+Git: Claude provides the exact `git add` (scoped to the task's files, excluding shelved side-effects
+like the Act 1 / Game Shell scenes and ProjectSettings), `git commit`, and `git push` commands for
+the user to run. Claude does not execute commit/push itself.
+
+Token efficiency (must not lower quality):
+- Scope searches to `Assets/**` / `Docs/**`; never glob `Library/`, `Packages/`, or broad `**/*`
+  patterns that dump PackageCache.
+- Prefer targeted `Grep` and ranged reads (offset/limit) over whole large files; re-read only changed
+  files / risk points, not unchanged docs.
+- Inspect diffs with `git diff --stat` or path-scoped `Grep`, not full-diff dumps; append `2>/dev/null`
+  to Claude's own git queries to drop CRLF warning noise.
+- Keep responses concise; include the Chinese STAR summary only in task closure / implementation
+  reports, and keep it short.
+- Reviews still read new files and key risk points in full — efficiency must not skip real verification.
+
 ## Planning Output Format
 
 For each task, provide:

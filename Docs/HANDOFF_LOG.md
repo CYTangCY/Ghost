@@ -210,6 +210,17 @@ the Codex session). Claude reviewed scope (clean), display-only behaviour, and c
 Archive: `Docs/completed_tasks/M0-T16_act2_static_span_annotation_ui.md`. Next: M0-T17 (Act 2 chip
 selection + type assignment interaction).
 
+### 2026-06-22 — M0-T17: Act 2 chip selection + type assignment — Completed
+Codex run 001 added `Act2EntityExtractionInteractionController` (owns one `EntityExtractionSession` +
+selected chip + chipKey→type map; select / assign / untag route through `AddSpan`/`RemoveSpan`;
+`StateChanged` event; no validation) and wired the presenter: chips + palette clickable, selected
+highlight + System/Custom type badge, Validate left disabled/unwired. The user regenerated
+`Act2EntityExtractionPrototype.unity` via the builder and verified in the Editor ("功能測試正確").
+Run log honest ("Not run" for Unity in-session). Claude reviewed scope (clean — no Act 2 pure logic /
+Act 1 / Shell / asmdef / ProjectSettings / Build Settings edits), session routing, and the disabled
+Validate. Archive: `Docs/completed_tasks/M0-T17_act2_chip_selection_assignment.md`. Next: M0-T18 (Act 2
+validation feedback — wire the validator into the UI).
+
 ---
 
 ## Entry Template

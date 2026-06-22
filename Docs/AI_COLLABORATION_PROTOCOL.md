@@ -83,6 +83,9 @@ updates the docs.
 
 ## 4. Git hygiene rules
 
+Claude provides the exact `git add` (scoped to the task's files, excluding shelved side-effects),
+`git commit`, and `git push` commands for the user to run. Claude does not execute commit/push itself.
+
 Before every commit, run:
 
 ```bash

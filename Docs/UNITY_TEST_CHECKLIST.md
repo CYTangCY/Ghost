@@ -540,3 +540,50 @@ No Inspector setup is required for M0-T15. `EntityExtractionSession` is a pure C
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The builder wires `Act2EntityExtractionStaticPresenter` to its chip root, entity palette root, validation controls root, chip template, and entity type template.
+
+---
+
+## M0-T17: Act 2 Chip Selection and Entity Assignment
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionInteractionController.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Refresh Check
+
+M0-T17 should work at Play Mode startup because `Act2EntityExtractionStaticPresenter` rebuilds the chips and palette when the scene starts. If the open scene preview looks stale:
+
+1. Select `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is refreshed.
+3. Do not add the scene to Build Settings during M0-T17.
+
+### Play Mode Interaction Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+2. Enter Play Mode.
+3. Confirm the sample message word chips and entity-type palette render.
+4. Click an untagged chip and confirm it receives the selected highlight.
+5. Click a different untagged chip and confirm the selection moves.
+6. Click the selected chip again and confirm the selection clears.
+7. Select the `lab` chip, then click the `room` entity type.
+8. Confirm the `lab` chip becomes tagged with a small `room` badge and Custom-style color.
+9. Select the `9pm` chip, then click the `time` entity type.
+10. Confirm the `9pm` chip becomes tagged with a small `time` badge and System-style color while the `lab` tag remains.
+11. Click a tagged chip and confirm it untags and returns to the plain untagged visual state.
+12. Confirm multiple chips can be tagged one at a time.
+13. Confirm the `Validate spans` button remains disabled/placeholder and does not validate, score, or change feedback.
+14. Confirm there is no working validation feedback, save/load, backend, LLM, dialogue, node graph, later-Act behaviour, or final art pass.
+15. Confirm no new Console errors appear.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act2EntityExtractionPrototype.unity` is not added to Build Settings by M0-T17.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The presenter attaches chip buttons, palette buttons, and chip badges at render time, and `Act2EntityExtractionInteractionController` is created in code rather than attached to a GameObject.
