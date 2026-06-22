@@ -11,6 +11,7 @@ namespace Ghost.Presentation.Shell
         [SerializeField] private LilyDialogueFrame lilyDialogueFrame;
         [SerializeField] private Button startButton;
         [SerializeField] private Button act1Button;
+        [SerializeField] private Button act2Button;
         [SerializeField] private Button backToTitleButton;
 
         public void Configure(
@@ -19,6 +20,7 @@ namespace Ghost.Presentation.Shell
             LilyDialogueFrame dialogueFrame,
             Button start,
             Button act1,
+            Button act2,
             Button back)
         {
             titleScreen = title;
@@ -26,6 +28,7 @@ namespace Ghost.Presentation.Shell
             lilyDialogueFrame = dialogueFrame;
             startButton = start;
             act1Button = act1;
+            act2Button = act2;
             backToTitleButton = back;
         }
 
@@ -33,6 +36,7 @@ namespace Ghost.Presentation.Shell
         {
             WireButton(startButton, ShowActHub);
             WireButton(act1Button, StartAct1);
+            WireButton(act2Button, StartAct2);
             WireButton(backToTitleButton, ShowTitle);
             ShowTitle();
         }
@@ -54,6 +58,11 @@ namespace Ghost.Presentation.Shell
         public void StartAct1()
         {
             SceneManager.LoadScene(ShellSceneNames.Act1SceneName);
+        }
+
+        public void StartAct2()
+        {
+            SceneManager.LoadScene(ShellSceneNames.Act2SceneName);
         }
 
         private void ShowDialogue(string screenId)

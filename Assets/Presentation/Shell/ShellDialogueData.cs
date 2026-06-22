@@ -31,7 +31,7 @@ namespace Ghost.Presentation.Shell
                 case ActHubScreenId:
                     return new ShellDialogueLine(
                         "Lily",
-                        "Let's start small: in Act 1, sort messages by what the speaker wants, not by the exact words. I'll stay nearby if that helps.");
+                        "Let's start small: Act 1 is about what the speaker wants, and Act 2 is about the key details Ghost should notice. I'll stay nearby if that helps.");
                 default:
                     throw new ArgumentException("Unknown shell dialogue screen id.", nameof(screenId));
             }

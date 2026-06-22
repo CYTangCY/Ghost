@@ -598,7 +598,7 @@ ShellSceneNames.cs
 
 ### Purpose
 
-Stores the shared scene names and scene asset paths used by the Game Shell and Act 1 navigation.
+Stores the shared scene names and scene asset paths used by the Game Shell, Act 1 navigation, and Act 2 navigation.
 
 ### Attached GameObject
 
@@ -606,14 +606,16 @@ None. This is a static constants class.
 
 ### Runtime Role
 
-Used by shell navigation scripts when loading the shell scene or Act 1 scene with `SceneManager`.
+Used by shell navigation scripts when loading the shell scene, Act 1 scene, or Act 2 scene with `SceneManager`.
 
 ### Important Fields
 
 - `GameShellSceneName`: scene name used to load the shell.
 - `Act1SceneName`: scene name used to load the Act 1 prototype.
+- `Act2SceneName`: scene name used to load the Act 2 prototype.
 - `GameShellScenePath`: asset path used by the editor builder.
 - `Act1ScenePath`: asset path used by the editor builder and Build Settings registration.
+- `Act2ScenePath`: asset path used by the editor builder and Build Settings registration.
 
 ### Important Methods
 
@@ -633,7 +635,7 @@ If scene asset names are changed later, these constants must be updated to keep 
 
 ### Unity Test
 
-Run `Ghost > Build Game Shell Scene`, then confirm the generated shell can load Act 1 and the Act 1 return button can load the shell.
+Run `Ghost > Build Game Shell Scene`, then confirm the generated shell can load Act 1 and Act 2, and that each act's return button can load the shell.
 
 ---
 
@@ -643,7 +645,7 @@ ShellDialogueData.cs
 
 ### Purpose
 
-Provides small data-backed Lily dialogue lines for the shell title screen and act hub screen. The shell presenter asks this data class for text instead of hardcoding separate Lily lines inside each screen method.
+Provides small data-backed Lily dialogue lines for the shell title screen and act hub screen. The shell presenter asks this data class for text instead of hardcoding separate Lily lines inside each screen method. The hub line now acknowledges both Act 1 and Act 2.
 
 ### Attached GameObject
 
@@ -677,7 +679,7 @@ Unknown screen ids throw `ArgumentException`, which should make missing dialogue
 
 ### Unity Test
 
-Enter Play Mode in the shell scene, click `Start / Continue`, and confirm the Lily dialogue frame changes from the title line to the act hub line.
+Enter Play Mode in the shell scene, click `Start / Continue`, and confirm the Lily dialogue frame changes from the title line to the act hub line mentioning both Act 1 and Act 2.
 
 ---
 
@@ -731,7 +733,7 @@ GameShellPresenter.cs
 
 ### Purpose
 
-Controls the placeholder shell scene: title screen, act-select/hub screen, Lily dialogue-frame updates, and starting Act 1.
+Controls the placeholder shell scene: title screen, act-select/hub screen, Lily dialogue-frame updates, and starting Act 1 or Act 2.
 
 ### Attached GameObject
 
@@ -739,7 +741,7 @@ Attached to the `Game Shell Root` GameObject created by `GameShellSceneBuilder`.
 
 ### Runtime Role
 
-On `Start`, it wires the shell buttons, shows the title screen, and displays the title-screen Lily dialogue. It switches to the hub screen when the player clicks `Start / Continue`, and loads Act 1 when the player clicks `Start Act 1`.
+On `Start`, it wires the shell buttons, shows the title screen, and displays the title-screen Lily dialogue. It switches to the hub screen when the player clicks `Start / Continue`, loads Act 1 when the player clicks `Start Act 1`, and loads Act 2 when the player clicks `Start Act 2`.
 
 ### Important Fields
 
@@ -748,6 +750,7 @@ On `Start`, it wires the shell buttons, shows the title screen, and displays the
 - `lilyDialogueFrame`: reusable Lily dialogue UI.
 - `startButton`: title-screen button that opens the hub.
 - `act1Button`: hub button that loads Act 1.
+- `act2Button`: hub button that loads Act 2.
 - `backToTitleButton`: hub button that returns to the title screen.
 
 ### Important Methods
@@ -756,6 +759,7 @@ On `Start`, it wires the shell buttons, shows the title screen, and displays the
 - `ShowTitle()`: shows the title screen and title Lily line.
 - `ShowActHub()`: shows the act hub and hub Lily line.
 - `StartAct1()`: loads `Act1IntentClassificationPrototype` through `SceneManager`.
+- `StartAct2()`: loads `Act2EntityExtractionPrototype` through `SceneManager`.
 
 ### Input
 
@@ -763,17 +767,18 @@ Button clicks from the shell UI.
 
 ### Output
 
-Screen visibility changes, Lily dialogue-frame text changes, and SceneManager loading of Act 1.
+Screen visibility changes, Lily dialogue-frame text changes, and SceneManager loading of Act 1 or Act 2.
 
 ### Failure Cases
 
 - Missing screen references prevent that screen from being shown or hidden.
 - Missing button references mean that button will not be wired.
 - If Act 1 is not in Build Settings, `StartAct1()` can fail to load the scene.
+- If Act 2 is not in Build Settings, `StartAct2()` can fail to load the scene.
 
 ### Unity Test
 
-Open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, click `Start / Continue`, then click `Start Act 1` and confirm the Act 1 scene loads.
+Open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, click `Start / Continue`, then confirm `Start Act 1` loads Act 1 and `Start Act 2` loads Act 2.
 
 ---
 
@@ -826,15 +831,15 @@ ShellReturnToHubOverlay.cs
 
 ### Purpose
 
-Adds a lightweight return-to-hub UI overlay when the Act 1 prototype scene is loaded. This keeps Act 1 puzzle rules and pure logic unchanged while still providing shell navigation.
+Adds a lightweight return-to-hub UI overlay when the Act 1 or Act 2 prototype scene is loaded. This keeps act puzzle rules and pure logic unchanged while still providing shell navigation.
 
 ### Attached GameObject
 
-None in the scene. The static runtime hook creates a `Shell Return To Hub Overlay` button when the active scene is `Act1IntentClassificationPrototype`.
+None in the scene. The static runtime hook creates a `Shell Return To Hub Overlay` button when the active scene is `Act1IntentClassificationPrototype` or `Act2EntityExtractionPrototype`.
 
 ### Runtime Role
 
-After scene load, it checks the active scene name. If Act 1 is active and no return overlay exists, it finds or creates a Canvas/EventSystem and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`.
+After scene load, it checks the active scene name. If Act 1 or Act 2 is active and no return overlay exists, it finds or creates a Canvas/EventSystem and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`.
 
 ### Important Fields
 
@@ -843,7 +848,8 @@ No Inspector fields.
 ### Important Methods
 
 - `RegisterSceneHook()`: registers the scene-loaded callback.
-- `CreateForScene(...)`: creates the overlay only for the Act 1 scene.
+- `CreateForScene(...)`: creates the overlay only for supported act scenes.
+- `ShouldShowOverlay(...)`: returns true for Act 1 and Act 2 scene names.
 - `CreateReturnButton(...)`: builds the placeholder UGUI return button.
 
 ### Input
@@ -852,7 +858,7 @@ Unity scene-load events.
 
 ### Output
 
-A small `Return to Hub` button in Act 1 that loads `GameShellPrototype`.
+A small `Return to Hub` button in Act 1 and Act 2 that loads `GameShellPrototype`.
 
 ### Failure Cases
 
@@ -861,7 +867,7 @@ A small `Return to Hub` button in Act 1 that loads `GameShellPrototype`.
 
 ### Unity Test
 
-Start from the shell, enter Act 1, confirm the `Return to Hub` button appears, and click it to return to the shell.
+Start from the shell, enter Act 1 and Act 2, confirm the `Return to Hub` button appears in both scenes, and click it to return to the shell.
 
 ---
 
@@ -871,7 +877,7 @@ GameShellSceneBuilder.cs
 
 ### Purpose
 
-Editor-only helper that creates the placeholder Game Shell scene through Unity-supported scene serialization and registers the shell and Act 1 scenes in Build Settings.
+Editor-only helper that creates the placeholder Game Shell scene through Unity-supported scene serialization and registers the shell, Act 1, and Act 2 scenes in Build Settings.
 
 ### Attached GameObject
 
@@ -887,8 +893,9 @@ No Inspector fields.
 
 ### Important Methods
 
-- `BuildGameShellScene()`: creates `Assets/Scenes/GameShellPrototype.unity`, builds the placeholder UGUI title/hub/companion/dialogue layout, wires `GameShellPresenter`, and registers shell + Act 1 in Build Settings.
+- `BuildGameShellScene()`: creates `Assets/Scenes/GameShellPrototype.unity`, builds the placeholder UGUI title/hub/companion/dialogue layout, wires `GameShellPresenter`, and registers shell + Act 1 + Act 2 in Build Settings.
 - `RegisterGameShellBuildSettings()`: updates Build Settings without rebuilding the shell scene.
+- `CreateActCard(...)`: creates reusable act-select cards for Act 1 and Act 2.
 
 ### Input
 
@@ -899,7 +906,7 @@ Manual Unity Editor menu actions:
 ### Output
 
 - `Assets/Scenes/GameShellPrototype.unity`, when Unity can execute the builder successfully.
-- `ProjectSettings/EditorBuildSettings.asset` updated to include the shell and Act 1 scenes.
+- `ProjectSettings/EditorBuildSettings.asset` updated to include the shell, Act 1, and Act 2 scenes.
 
 ### Failure Cases
 
@@ -909,7 +916,7 @@ Manual Unity Editor menu actions:
 
 ### Unity Test
 
-Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, navigate to Act 1, then click `Return to Hub`.
+Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, confirm `Start Act 1` and `Start Act 2` are visible, launch both acts, and confirm `Return to Hub` works from each.
 
 ---
 

@@ -131,7 +131,7 @@ namespace Ghost.Presentation.Shell.Editor
             var presenceColumn = CreateColumnPanel("Presence Panel", body, 0.32f, new Color(0.92f, 0.97f, 1f));
 
             var titleScreen = CreateTitleScreen(screenColumn);
-            var hubScreen = CreateActHubScreen(screenColumn, out var act1Button, out var backToTitleButton);
+            var hubScreen = CreateActHubScreen(screenColumn, out var act1Button, out var act2Button, out var backToTitleButton);
             hubScreen.SetActive(false);
 
             CreatePresencePanel(presenceColumn);
@@ -144,6 +144,7 @@ namespace Ghost.Presentation.Shell.Editor
                 dialogueFrame,
                 startButton,
                 act1Button,
+                act2Button,
                 backToTitleButton);
 
             dialogueFrame.Show(ShellDialogueData.GetLine(ShellDialogueData.TitleScreenId));
@@ -179,7 +180,11 @@ namespace Ghost.Presentation.Shell.Editor
             return screen;
         }
 
-        private static GameObject CreateActHubScreen(Transform parent, out Button act1Button, out Button backToTitleButton)
+        private static GameObject CreateActHubScreen(
+            Transform parent,
+            out Button act1Button,
+            out Button act2Button,
+            out Button backToTitleButton)
         {
             var screen = CreatePanel(
                 "Act Hub Screen",
@@ -203,38 +208,23 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(0.25f, 0.30f, 0.40f),
                 62f);
 
-            var act1Card = CreatePanel(
-                "Act 1 Card",
+            act1Button = CreateActCard(
                 screen.transform,
-                Vector2.zero,
-                Vector2.one,
-                Vector2.zero,
-                Vector2.zero,
+                "Act 1 Card",
+                "Act 1: Intent Classification",
+                "Group different messages by the same purpose so Ghost reacts to what the speaker wants.",
+                "Start Act 1 Button",
+                "Start Act 1",
                 new Color(0.92f, 0.97f, 1f));
 
-            var cardLayoutElement = act1Card.gameObject.AddComponent<LayoutElement>();
-            cardLayoutElement.minHeight = 178f;
-            cardLayoutElement.preferredHeight = 178f;
-
-            var cardLayout = act1Card.gameObject.AddComponent<VerticalLayoutGroup>();
-            cardLayout.padding = new RectOffset(18, 18, 16, 16);
-            cardLayout.spacing = 10f;
-            cardLayout.childControlWidth = true;
-            cardLayout.childControlHeight = true;
-            cardLayout.childForceExpandWidth = true;
-            cardLayout.childForceExpandHeight = false;
-
-            CreateLabel("Act 1 Title", act1Card, "Act 1: Intent Classification", 26, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 36f);
-            CreateLabel(
-                "Act 1 Description",
-                act1Card,
-                "Group different messages by the same purpose so Ghost reacts to what the speaker wants.",
-                19,
-                FontStyle.Normal,
-                TextAnchor.UpperLeft,
-                new Color(0.25f, 0.31f, 0.40f),
-                54f);
-            act1Button = CreateButton("Start Act 1 Button", act1Card, "Start Act 1", 190f, 46f);
+            act2Button = CreateActCard(
+                screen.transform,
+                "Act 2 Card",
+                "Act 2: Entity Extraction",
+                "Tag the important details in a message so Ghost notices places, objects, and times.",
+                "Start Act 2 Button",
+                "Start Act 2",
+                new Color(0.93f, 1f, 0.96f));
 
             var futureCard = CreatePanel(
                 "Future Acts Placeholder",
@@ -257,7 +247,7 @@ namespace Ghost.Presentation.Shell.Editor
             CreateLabel(
                 "Future Acts Text",
                 futureCard,
-                "Act 2 and later: placeholder locks for future puzzle prototypes.",
+                "Act 3 and later: placeholder locks for future puzzle prototypes.",
                 19,
                 FontStyle.Italic,
                 TextAnchor.MiddleLeft,
@@ -266,6 +256,50 @@ namespace Ghost.Presentation.Shell.Editor
 
             backToTitleButton = CreateButton("Back To Title Button", screen.transform, "Back to Title", 190f, 46f);
             return screen;
+        }
+
+        private static Button CreateActCard(
+            Transform parent,
+            string cardName,
+            string title,
+            string description,
+            string buttonName,
+            string buttonText,
+            Color color)
+        {
+            var card = CreatePanel(
+                cardName,
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                color);
+
+            var cardLayoutElement = card.gameObject.AddComponent<LayoutElement>();
+            cardLayoutElement.minHeight = 158f;
+            cardLayoutElement.preferredHeight = 158f;
+
+            var cardLayout = card.gameObject.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(18, 18, 14, 14);
+            cardLayout.spacing = 8f;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+
+            CreateLabel(cardName + " Title", card, title, 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 34f);
+            CreateLabel(
+                cardName + " Description",
+                card,
+                description,
+                18,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.25f, 0.31f, 0.40f),
+                50f);
+
+            return CreateButton(buttonName, card, buttonText, 190f, 44f);
         }
 
         private static void CreatePresencePanel(Transform parent)
@@ -493,13 +527,15 @@ namespace Ghost.Presentation.Shell.Editor
             var scenes = new List<EditorBuildSettingsScene>
             {
                 new EditorBuildSettingsScene(ShellSceneNames.GameShellScenePath, true),
-                new EditorBuildSettingsScene(ShellSceneNames.Act1ScenePath, true)
+                new EditorBuildSettingsScene(ShellSceneNames.Act1ScenePath, true),
+                new EditorBuildSettingsScene(ShellSceneNames.Act2ScenePath, true)
             };
 
             foreach (var existingScene in EditorBuildSettings.scenes)
             {
                 if (existingScene.path == ShellSceneNames.GameShellScenePath ||
-                    existingScene.path == ShellSceneNames.Act1ScenePath)
+                    existingScene.path == ShellSceneNames.Act1ScenePath ||
+                    existingScene.path == ShellSceneNames.Act2ScenePath)
                 {
                     continue;
                 }

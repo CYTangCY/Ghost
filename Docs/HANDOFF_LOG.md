@@ -232,6 +232,18 @@ correctness. Archive: `Docs/completed_tasks/M0-T18_act2_validation_feedback.md`.
 Act 2 into the Game Shell). With M0-T18, Act 2's core puzzle loop (core → session → static UI →
 selection/assignment → validation) is feature-complete; M0-T19 makes it reachable from the shell.
 
+### 2026-06-22 — M0-T19: Act 2 Game Shell integration — Completed (Act 2 / Phase B done)
+Codex run 001 wired Act 2 into the shell: `ShellSceneNames` Act2 name/path; `GameShellPresenter`
+`act2Button` + `StartAct2()`; `ShellReturnToHubOverlay` now Act 1 or Act 2; `ShellDialogueData` hub
+line mentions both; `GameShellSceneBuilder` (refactored `CreateActCard`) builds the Act 2 hub card and
+registers shell + Act 1 + Act 2 in Build Settings. The user ran `Ghost > Build Game Shell Scene` and
+verified the full flow ("完成"). `EditorBuildSettings.asset` diff adds only the Act 2 entry (approved
+exception). Run log honest ("Not run" for Unity in-session). Claude reviewed scope (clean — no Act 2
+puzzle logic/UI or Act 1 mechanics changed). **This completes ROADMAP Phase B (Act 2): core → session
+→ static UI → selection/assignment → validation → shell integration.** Archive:
+`Docs/completed_tasks/M0-T19_act2_shell_integration.md`. Next: M0-T20 (Act 3 node-graph design +
+learning-content mapping, Phase C).
+
 ---
 
 ## Entry Template

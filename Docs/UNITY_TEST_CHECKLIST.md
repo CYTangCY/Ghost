@@ -636,3 +636,55 @@ M0-T18 should work at Play Mode startup because `Act2EntityExtractionStaticPrese
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Act 2 Entity Extraction Prototype Scene`, no manual Inspector setup should be required. The presenter creates the enabled Validate button and feedback text at render time, and the controller validates through `EntityExtractionSession.ValidateCurrentState()`.
+
+---
+
+## M0-T19: Act 2 Game Shell Integration
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Shell/ShellSceneNames.cs`
+   - `Assets/Presentation/Shell/ShellDialogueData.cs`
+   - `Assets/Presentation/Shell/GameShellPresenter.cs`
+   - `Assets/Presentation/Shell/ShellReturnToHubOverlay.cs`
+   - `Assets/Presentation/Shell/Editor/GameShellSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Build / Build Settings Check
+
+M0-T19 updates the shell scene through the existing Unity editor builder, not by hand-editing scene YAML.
+
+1. Select `Ghost > Build Game Shell Scene`.
+2. Confirm `Assets/Scenes/GameShellPrototype.unity` is refreshed.
+3. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+4. Confirm all three scenes are enabled in Build Settings:
+   - `Assets/Scenes/GameShellPrototype.unity`
+   - `Assets/Scenes/Act1IntentClassificationPrototype.unity`
+   - `Assets/Scenes/Act2EntityExtractionPrototype.unity`
+5. Confirm no other ProjectSettings files were intentionally changed.
+
+### Play Mode Shell Check
+
+1. Open `Assets/Scenes/GameShellPrototype.unity`.
+2. Enter Play Mode.
+3. Click `Start / Continue`.
+4. Confirm the act hub shows both `Start Act 1` and `Start Act 2`.
+5. Confirm Lily's hub dialogue mentions Act 1 and Act 2.
+6. Click `Start Act 2`.
+7. Confirm Unity loads `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+8. Confirm the Act 2 puzzle UI still works: tag chips, validate correct/incorrect feedback, and no new Act 2 puzzle behaviour changed.
+9. Confirm a `Return to Hub` button appears in Act 2.
+10. Click `Return to Hub`.
+11. Confirm Unity loads `Assets/Scenes/GameShellPrototype.unity`.
+12. From the hub, click `Start Act 1`.
+13. Confirm Unity loads `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+14. Confirm existing Act 1 mechanics still work and a `Return to Hub` button still appears.
+15. Click `Return to Hub` from Act 1 and confirm the shell loads.
+16. Confirm there is no node graph, backend, LLM, save/load, full visual-novel dialogue, scoring persistence, final art pass, or Act 2 puzzle-rule change added by M0-T19.
+17. Confirm no new Console errors appear.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` to the title screen, hub screen, Lily dialogue frame, Start/Continue button, Start Act 1 button, Start Act 2 button, and Back to Title button. The runtime `ShellReturnToHubOverlay` adds `Return to Hub` in Act 1 and Act 2.

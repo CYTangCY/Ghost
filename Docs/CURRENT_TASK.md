@@ -2,56 +2,52 @@
 
 ## ID
 
-M0-T19
+M0-T20
 
 ## Goal
 
-Finish Act 2 by integrating it into the Game Shell: add an act-select entry that starts the Act 2
-scene, add a Return-to-Hub overlay for the Act 2 scene, and register the Act 2 scene in Build Settings
-— mirroring how Act 1 is wired so Act 2 is reachable from the shell home.
+Design Act 3 (Dialog Management via Node Graph, the flagship mechanic) BEFORE any implementation:
+complete the Act 3 learning-content mapping and define a concrete, minimal, deterministic node-graph
+data model + simulation/validation approach, plus a logic-first implementation breakdown. Planning
+task — Claude-led, no Unity code.
 
 ## Context
 
-ROADMAP Phase A built the Game Shell (title → act-select/hub → start Act 1 → Return to Hub). Phase B
-built Act 2's full puzzle loop: M0-T14 core, M0-T15 session, M0-T16 static UI, M0-T17
-selection/assignment, M0-T18 validation feedback — all Editor-verified. Act 2 currently has no entry
-point from the shell. This task connects it the same way Act 1 is connected, so the prototype reads as
-one Ghost game. The shell scripts (`ShellSceneNames`, `GameShellPresenter`, `ShellReturnToHubOverlay`,
-`GameShellSceneBuilder`, optionally `ShellDialogueData`) are in scope for this task. Registering the
-Act 2 scene in Build Settings is the approved exception (the same exception used in M0-T13 for the
-shell + Act 1), applied by the user running the shell scene builder.
+ROADMAP Phase B (Act 2) is complete and shell-integrated (M0-T14 … M0-T19). Phase C is Act 3 — the
+flagship node-graph mechanic, reused/extended by Acts 4–6. Per `Docs/CONFIRMED_PROJECT_CONTEXT.md` §17,
+the learning-content mapping must be drafted before Unity implementation, and Act 3's mapping is
+currently TBD in `Docs/LEARNING_CONTENT.md`. The node graph should benefit from intent (Act 1) and
+entity (Act 2) acting as triggers/slots inside dialog nodes, and correctness must stay deterministic
+(graph simulation / test cases), never decided by the LLM.
 
 ## Scope
 
-- `ShellSceneNames`: add the Act 2 scene name + asset path constants.
-- `GameShellPresenter`: add a "Start Act 2" act-select button + `StartAct2()` that loads the Act 2
-  scene via `SceneManager`, wired in `Configure`/`Start` like the Act 1 button.
-- `ShellReturnToHubOverlay`: also create the runtime "Return to Hub" button when the Act 2 scene is
-  active (generalise the current Act-1-only check to Act 1 or Act 2), without touching Act 2 puzzle
-  rules.
-- `GameShellSceneBuilder` (Editor): add the Act 2 act-select button to the hub UI and register the
-  Act 2 scene in Build Settings alongside the shell + Act 1.
-- Optionally extend `ShellDialogueData` so the hub Lily line acknowledges both acts.
-- Keep Act 2's puzzle behaviour and Act 1 unchanged.
-- Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md; create a Codex run log. The user re-runs
-  `Ghost > Build Game Shell Scene` to regenerate the shell and apply Build Settings.
+- Complete the Act 3 section of `Docs/LEARNING_CONTENT.md`: learning objective, cute Ghost
+  communication problem, mechanic specifics (nodes, branching, slots, response types, context
+  variables), player action, success consequence, failure consequence, Lily hint style, and the
+  connection to Acts 1–2.
+- Define, in `Docs/ARCHITECTURE.md` and/or `Docs/DESIGN_RATIONALE.md`, a concrete MINIMAL node-graph
+  design: the graph data model (node types, edges/transitions, triggers/conditions, slots), the
+  deterministic simulation (run a message/conversation through the graph → a checkable result), how
+  intents/entities feed triggers/slots, and how correctness stays deterministic.
+- Produce a logic-first Act 3 sub-task breakdown (e.g. model → simulation/validator → sample data →
+  EditMode tests → static UI → interaction → validation feedback → shell integration), mirroring
+  Acts 1–2.
+- Keep the scope minimal and explainable (NFR1/NFR2); do not over-design.
 
 ## Out of Scope
 
-- Do not change Act 2 puzzle logic/UI behaviour (M0-T14–M0-T18) or Act 1 mechanics.
-- Do not implement a full visual-novel dialogue system, save/load, the node graph, Act 3+, backend,
-  LLM, or final art.
-- Do not edit ProjectSettings beyond the approved Build Settings registration of the Act 2 scene; do
-  not edit Packages or `.meta` files; do not hand-write scene YAML (use the builder).
+- Do not write any Unity C#, scenes, or asmdefs (this is a design/planning task).
+- Do not implement the node graph or any Act 3 code yet.
+- Do not invent a new Act structure or change Acts 1–2.
+- Do not design backend/LLM specifics beyond noting where they later attach (per ROADMAP Phase D).
 
 ## Acceptance Criteria
 
-- From the shell hub, both "Start Act 1" and "Start Act 2" are available; clicking "Start Act 2" loads
-  the Act 2 scene.
-- The Act 2 scene shows a "Return to Hub" button that loads the shell scene.
-- Act 2's puzzle (tag + Validate) still works after launching from the shell; Act 1 still launches and
-  returns.
-- Both `Act1IntentClassificationPrototype.unity` and `Act2EntityExtractionPrototype.unity` are enabled
-  in Build Settings (the approved exception); no other ProjectSettings changes are intended.
-- No Console errors in Play Mode; Act 2 puzzle logic and Act 1 are unchanged.
-- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md are updated; a Codex run log is created.
+- The Act 3 section of `Docs/LEARNING_CONTENT.md` is fully drafted (no TBDs for objective, Ghost
+  problem, mechanic, player action, success/failure, Lily hint, connection to Acts 1–2).
+- `Docs/ARCHITECTURE.md`/`Docs/DESIGN_RATIONALE.md` contain a concrete minimal node-graph data model +
+  deterministic simulation/validation design.
+- An Act 3 logic-first sub-task breakdown exists (ready to become the next CURRENT_TASK).
+- Deterministic-correctness is preserved (graph simulation/test cases decide correctness; never the
+  LLM). No Unity files are modified.

@@ -25,7 +25,7 @@ namespace Ghost.Presentation.Shell
 
         private static void CreateForScene(Scene scene)
         {
-            if (scene.name != ShellSceneNames.Act1SceneName)
+            if (!ShouldShowOverlay(scene.name))
             {
                 return;
             }
@@ -43,6 +43,12 @@ namespace Ghost.Presentation.Shell
 
             EnsureEventSystem();
             CreateReturnButton(canvas.transform);
+        }
+
+        private static bool ShouldShowOverlay(string sceneName)
+        {
+            return sceneName == ShellSceneNames.Act1SceneName ||
+                sceneName == ShellSceneNames.Act2SceneName;
         }
 
         private static Canvas CreateCanvas()
