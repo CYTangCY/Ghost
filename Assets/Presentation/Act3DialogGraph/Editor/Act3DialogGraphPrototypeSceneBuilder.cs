@@ -84,7 +84,7 @@ namespace Ghost.Presentation.Act3.Editor
             CreateLabel(
                 "Title",
                 root,
-                "Act 3: Dialog Graph",
+                "Act 3: Ghost's Reply Map",
                 44,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
@@ -94,7 +94,7 @@ namespace Ghost.Presentation.Act3.Editor
             CreateLabel(
                 "Subtitle",
                 root,
-                "Display-only prototype: node palette, empty graph canvas, test goals, and placeholder validation.",
+                "Add simple cards, move them around, then connect them so Ghost knows when to answer or ask for the room.",
                 20,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
@@ -117,21 +117,21 @@ namespace Ghost.Presentation.Act3.Editor
             bodyLayout.spacing = 24f;
             bodyLayout.childControlWidth = true;
             bodyLayout.childControlHeight = true;
-            bodyLayout.childForceExpandWidth = true;
+            bodyLayout.childForceExpandWidth = false;
             bodyLayout.childForceExpandHeight = true;
 
-            var palettePanel = CreateColumnPanel("Node Palette Panel", body, 0.28f, new Color(0.93f, 0.98f, 1f));
-            var graphPanel = CreateColumnPanel("Graph Canvas Panel", body, 0.46f, new Color(0.98f, 0.98f, 1f));
-            var goalPanel = CreateColumnPanel("Goal Test Panel", body, 0.26f, new Color(1f, 0.985f, 0.94f));
+            var palettePanel = CreateColumnPanel("Node Palette Panel", body, 125f, 125f, 0f, 8, new Color(0.93f, 0.98f, 1f));
+            var graphPanel = CreateColumnPanel("Graph Canvas Panel", body, 900f, 1120f, 1f, 18, new Color(0.98f, 0.98f, 1f));
+            var goalPanel = CreateColumnPanel("Goal Test Panel", body, 290f, 290f, 0f, 18, new Color(1f, 0.985f, 0.94f));
 
             CreateLabel("Palette Panel Title", palettePanel, "Palette", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.17f, 0.28f), 42f);
             var paletteRoot = CreateListRoot("Node Palette List", palettePanel, 6f);
 
-            CreateLabel("Graph Panel Title", graphPanel, "Graph Canvas", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.15f, 0.12f, 0.22f), 42f);
+            CreateLabel("Graph Panel Title", graphPanel, "Reply Map", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.15f, 0.12f, 0.22f), 42f);
             var graphCanvasRoot = CreateGraphCanvasRoot(graphPanel);
             var validationRoot = CreateValidationRoot(graphPanel);
 
-            CreateLabel("Goal Panel Title", goalPanel, "Goal / Tests", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.13f, 0.22f), 42f);
+            CreateLabel("Goal Panel Title", goalPanel, "Guide", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.13f, 0.22f), 42f);
             var goalRoot = CreateListRoot("Goal Test List", goalPanel, 8f);
 
             var templates = new GameObject("Templates", typeof(RectTransform));
@@ -154,7 +154,14 @@ namespace Ghost.Presentation.Act3.Editor
             EditorUtility.SetDirty(presenter);
         }
 
-        private static RectTransform CreateColumnPanel(string name, Transform parent, float flexibleWidth, Color color)
+        private static RectTransform CreateColumnPanel(
+            string name,
+            Transform parent,
+            float minWidth,
+            float preferredWidth,
+            float flexibleWidth,
+            int horizontalPadding,
+            Color color)
         {
             var panel = CreatePanel(
                 name,
@@ -170,12 +177,14 @@ namespace Ghost.Presentation.Act3.Editor
             outline.effectDistance = new Vector2(2f, -2f);
 
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minWidth = minWidth;
+            layoutElement.preferredWidth = preferredWidth;
             layoutElement.flexibleWidth = flexibleWidth;
             layoutElement.flexibleHeight = 1f;
 
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(20, 20, 18, 18);
-            layout.spacing = 14f;
+            layout.padding = new RectOffset(horizontalPadding, horizontalPadding, 12, 12);
+            layout.spacing = 8f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -217,8 +226,8 @@ namespace Ghost.Presentation.Act3.Editor
             layoutElement.flexibleHeight = 1f;
 
             var layout = root.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(24, 24, 120, 24);
-            layout.spacing = 12f;
+            layout.padding = new RectOffset(14, 14, 10, 14);
+            layout.spacing = 6f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -239,12 +248,13 @@ namespace Ghost.Presentation.Act3.Editor
                 new Color(1f, 0.99f, 0.94f));
 
             var layoutElement = root.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 86f;
-            layoutElement.preferredHeight = 86f;
+            layoutElement.minHeight = 28f;
+            layoutElement.preferredHeight = 28f;
+            layoutElement.flexibleHeight = 0f;
 
             var layout = root.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(12, 12, 10, 10);
-            layout.spacing = 12f;
+            layout.padding = new RectOffset(4, 4, 3, 3);
+            layout.spacing = 6f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;

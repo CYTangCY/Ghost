@@ -1175,7 +1175,63 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
-## Act 3 Dialog Graph Static UI Prototype
+## Act 3 Dialog Graph UI Prototype
+
+### Script Name
+
+Act3DialogGraphInteractionController.cs
+
+### Purpose
+
+Presentation-layer controller for Act 3 node placement, port-to-port connection editing, node/wire removal, and deterministic validation feedback. It wraps one `DialogGraphSession` and keeps UI state out of the pure graph logic.
+
+### Attached GameObject
+
+None. `Act3DialogGraphStaticPresenter` creates and owns the controller at runtime.
+
+### Runtime Role
+
+Receives UI requests from the presenter, routes graph edits through `DialogGraphSession`, raises `StateChanged` so the presenter can refresh node cards/wires, and raises `FeedbackChanged` after validation.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Internal runtime state:
+- one `DialogGraphSession` from `DialogGraphSession.CreateFromSampleData()`
+- `SelectedNodeId`
+- per-node normalized presentation positions for free movement on the graph board
+
+### Important Methods
+
+- `PlaceNode(...)`: calls `DialogGraphSession.AddNode(...)`, auto-sets newly placed Start nodes as the graph start, selects the new node, and raises `StateChanged`.
+- `GetNodePosition(...)` / `SetNodePosition(...)`: keep draggable node-card positions in presentation state without modifying `DialogGraphSession`.
+- `SelectNode(...)`: toggles/replaces selected-node state and raises `StateChanged`.
+- `ClearSelection()`: clears selected-node state when the presenter switches selection to a wire.
+- `SetSelectedAsStart()` / `SetStartNode(...)`: routes start-node changes through `DialogGraphSession.SetStartNode(...)`.
+- `ConnectNodes(...)`: rejects self-loops, duplicate exact edges, unknown endpoints, Response-node sources, and source-node/condition mismatches before routing transition creation through `DialogGraphSession.AddTransition(...)`; when the same output dot is rewired to a new target, it removes the previous transition first.
+- `RemoveNode(...)`: routes node removal through `DialogGraphSession.RemoveNode(...)`; the session cascades referenced transitions.
+- `RemoveTransition(...)`: routes transition removal through `DialogGraphSession.RemoveTransition(...)`.
+- `ValidateCurrentState()`: calls `DialogGraphSession.ValidateCurrentState()`, builds player-facing feedback from `DialogGraphResult.IsCorrect` / `Errors.Count`, and raises `FeedbackChanged` with the validator errors for presentation-only Ghost reaction text.
+
+### Input
+
+Node placement, node movement, selection, port-to-port connection, removal, and validation requests from the Act 3 presenter.
+
+### Output
+
+Snapshots of current nodes, transitions, start node id, selected node id, node positions, level test cases for rendering, and validation feedback messages.
+
+### Failure Cases
+
+- Unknown node ids passed directly to session methods can throw from `DialogGraphSession`; `ConnectNodes(...)` guards UI-originated connection attempts before they reach the session.
+- Validation correctness is not reimplemented here. The controller only reads `DialogGraphResult` from the session/validator.
+
+### Unity Test
+
+Use the Act 3 prototype scene in Play Mode. Place nodes, drag node cards freely, drag wires from output ports to input ports, remove nodes/wires, validate correct/incorrect graphs, and confirm the UI refreshes after every action.
+
+---
 
 ### Script Name
 
@@ -1183,7 +1239,7 @@ Act3DialogGraphStaticPresenter.cs
 
 ### Purpose
 
-Renders the display-only Act 3 node-graph prototype UI from `DialogGraphSession.CreateFromSampleData()`.
+Renders the Act 3 node-graph prototype UI and wires node placement, drag-a-wire connection, removal, and deterministic validation feedback through `Act3DialogGraphInteractionController`.
 
 ### Attached GameObject
 
@@ -1191,47 +1247,224 @@ Attached to the root UI object created by `Act3DialogGraphPrototypeSceneBuilder`
 
 ### Runtime Role
 
-On `Start`, when `renderOnStart` is true, it rebuilds the static UI for the Act 3 sample level: node-type palette, level vocabulary, empty graph canvas placeholder, goal/test panel, and disabled placeholder Validate controls. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
+On `Start`, when `renderOnStart` is true, it creates an `Act3DialogGraphInteractionController`, renders categorized placement palette entries with player-facing names, a clear objective, draggable graph node cards with coloured edge ports, straight-line wires, a readable side guide/legend, a compact bottom validation strip with a trash drop zone, and Ghost reaction text. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
 
 ### Important Fields
 
-- `nodePaletteRoot`: parent `RectTransform` for node types and level vocabulary; rows are intentionally compact so the fixed M0-T23 sample vocabulary fits inside the Palette panel.
-- `graphCanvasRoot`: placeholder graph-canvas region.
-- `goalTestRoot`: parent `RectTransform` for target conversation/test-case summaries; rows are kept compact for the fixed M0-T23 sample test cases.
-- `validationControlsRoot`: parent `RectTransform` for disabled Validate controls.
+- `nodePaletteRoot`: parent `RectTransform` for fully configured placement rows.
+- `graphCanvasRoot`: graph editing region containing the objective, node board, node cards, straight-line wires, and transition rows.
+- `goalTestRoot`: parent `RectTransform` for the compact guide, port legend, target checks, and Ghost reaction panel.
+- `validationControlsRoot`: parent `RectTransform` for enabled Validate controls.
 - `paletteItemTemplate`: inactive template for palette/vocabulary rows.
 - `testCaseTemplate`: inactive template for test-case rows.
 - `renderOnStart`: when true, rebuilds the display at Play Mode start.
 
 Internal runtime state:
-- one `DialogGraphSession` created from `Act3DialogGraphSampleData`.
+- one `Act3DialogGraphInteractionController`
+- rendered input/output port lookups used for line drawing
+- an active temporary wire while dragging from an output port
+- validation feedback text subscribed to `FeedbackChanged`
+- selected wire endpoint/condition state for Delete/Backspace removal
+- bottom-bar trash drop-zone state and highlight image while dragging cards over the trash target
+- player-facing label helpers that translate internal ids such as `find_object` into readable UI text
 
 ### Important Methods
 
 - `Configure(...)`: wires generated UI roots/templates from the builder.
-- `RenderSampleData()`: clears prior display children, creates the sample session, renders palette, graph canvas placeholder, goal/test cases, and disabled validation controls.
-- `RenderNodePalette()`: renders `Start`, `IntentBranch`, `SlotCheck`, `Response`, and the sample intent/entity/response ids.
-- `RenderGoalTestCases()`: formats each `DialogGraphTestCase` as `intent + entities -> expectedResponseId`.
-- `RenderValidationControls()`: creates a disabled Validate button and placeholder feedback text.
+- `RenderSampleData()`: clears prior display children, creates the controller, renders palette, graph editor, goal/test cases, and enabled validation controls.
+- `RenderNodePalette()`: renders categorized clickable and draggable placement rows: Flow (`Start here`, `Recognize request`), Check (`Check room`), and Reply (`Answer location`, `Ask which room`).
+- `TryPlacePaletteNodeAtPointer(...)`: places a dragged palette card onto the graph board at the drop position.
+- `ConfigureGeneratedColumnLayout()`: reapplies the intended palette/graph/guide column widths at render time and disables the parent body's forced width expansion, so old generated scenes do not stretch fixed-width columns unpredictably.
+- `RefreshGraphCanvas()`: redraws the objective panel, graph board, placed nodes, coloured edge-dot ports, and straight-line wires after controller state changes.
+- `MoveNodeToPointer(...)`: lets `Act3DialogGraphNodeDragView` move a placed card freely on the graph board, including slightly outside the board so cards can be dragged onto the bottom trash zone, and redraws straight-line wires against the new port positions.
+- `CompleteNodeDrag(...)`: removes a node through the controller when the player drops the card on, overlaps it with, or has already highlighted the bottom-bar trash zone.
+- `RemoveSelectedGraphItem()`: removes a selected wire first, otherwise removes the selected node, when the player presses Delete/Backspace.
+- `BeginWireDrag(...)` / `UpdateWireDrag(...)` / `EndWireDrag(...)`: manage the temporary straight-line wire during output-port drag.
+- `CompleteWireDrop(...)`: asks the controller to connect the dragged output port to the dropped input port.
+- `RenderSidePanel()`: formats the how-to-play copy, port legend, compact target checks, and Ghost reaction text.
+- `RenderValidationControls()`: creates a short enabled Validate bar with feedback text plus the right-side trash drop zone.
+- `ApplyValidationFeedback(...)`: colours validation feedback green/red and updates Ghost reaction text from validator errors plus the current player wiring, so different wrong routes produce different Ghost outcomes.
 - `EnsureEventSystem()`: creates an `EventSystem` with `InputSystemUIInputModule` if missing.
 
 ### Input
 
-Sample data from `Act3DialogGraphSampleData` through `DialogGraphSession.CreateFromSampleData()`.
+Sample vocabulary/test data from `Act3DialogGraphSampleData`, with all graph edits routed through `DialogGraphSession` via the interaction controller.
 
 ### Output
 
-UGUI objects showing the static Act 3 palette, empty graph area, test goals, and disabled validation placeholder.
+UGUI objects showing categorized narrow palette rows, objective text, draggable placed node cards with coloured edge-dot ports, straight-line graph wires, a bottom-bar trash drop zone, readable guide/legend/target checks, and validation/Ghost reaction feedback.
 
 ### Failure Cases
 
 - Missing roots/templates cause `RenderSampleData()` to return without rendering.
-- The presenter does not place nodes, draw edges, mutate the session, or call validation in M0-T23.
-- If an older generated scene looks stale, rerun the Act 3 scene builder.
+- Invalid drops, duplicate exact wires, self-loops, Response-node output attempts, and source-node/condition mismatches are ignored by the controller.
+- Wire removal requires selecting a wire and pressing Delete/Backspace; node removal can also use selected-node Delete/Backspace.
+- Rewiring the same source dot replaces its previous edge.
+- Trash deletion checks both pointer-over-trash and card-overlaps-trash, and it also uses the cached highlight state at drop time so a highlighted trash zone always accepts the card.
+- If the guide or palette column width appears to drift, verify the generated scene has the body `HorizontalLayoutGroup.childForceExpandWidth` disabled; the presenter also reapplies this at render time for stale scenes.
+- Start nodes intentionally have no input port because they are only conversation entry points.
+- Straight-line wires depend on refreshed port positions; rerun the scene builder if an older generated scene looks stale.
 
 ### Unity Test
 
-Run `Ghost > Build Act 3 Dialog Graph Prototype Scene`, open `Assets/Scenes/Act3DialogGraphPrototype.unity`, and enter Play Mode. Confirm palette, vocabulary, empty canvas, goal/test panel, disabled Validate button, placeholder feedback, and no Console errors. This script has no working interaction yet.
+Run `Ghost > Build Act 3 Dialog Graph Prototype Scene` if the saved scene looks stale, open `Assets/Scenes/Act3DialogGraphPrototype.unity`, and enter Play Mode. Confirm the palette is categorized and draggable, raw ids are hidden from player-facing text, cards can be dropped onto the board, node cards can be dragged freely and slightly outside the board toward the trash zone, Start nodes auto-mark the start and have no input port, edge dots sit on card borders, dragging coloured output dots to top input dots creates straight wires, rewiring replaces old wires from the same dot, selected wires and selected nodes delete with Delete/Backspace, dragging a card over the bottom-bar trash zone highlights it and removes the node on drop, `Test Ghost's map` shows correct/incorrect feedback plus route-specific Ghost reaction text, and no Console errors appear.
+
+---
+
+### Script Name
+
+Act3DialogGraphNodeDragView.cs
+
+### Purpose
+
+Presentation-only drag handlers for moving an already placed Act 3 node card around the graph board and for dragging palette cards onto the board.
+
+### Attached GameObject
+
+`Act3DialogGraphNodeDragView` is attached at runtime to each rendered node card. `Act3DialogGraphPaletteItemDragView` is attached at runtime to each palette item.
+
+### Runtime Role
+
+`Act3DialogGraphNodeDragView` asks the presenter to convert the pointer position into a normalized board position, store that position in the interaction controller, move the card, redraw straight-line wires, and remove the node if the card is dropped on or overlaps the trash zone. `Act3DialogGraphPaletteItemDragView` lets a palette card be dragged onto the board and asks the presenter to place a configured node at that drop point.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Runtime state:
+- presenter reference
+- node id
+- cached `RectTransform`
+- palette node configuration (`DialogNodeType`, intent id, required entity type, response id) for palette drags
+- temporary `CanvasGroup` alpha/raycast state while dragging palette items
+
+### Important Methods
+
+- `Act3DialogGraphNodeDragView.Initialize(...)`: stores the presenter, node id, and cached rect.
+- `Act3DialogGraphNodeDragView.OnBeginDrag(...)`: immediately moves the card toward the pointer without triggering a full graph refresh.
+- `Act3DialogGraphNodeDragView.OnDrag(...)`: keeps moving the card while the pointer moves.
+- `Act3DialogGraphNodeDragView.OnEndDrag(...)`: completes the drag and lets the presenter remove the node when dropped on the trash zone.
+- `Act3DialogGraphPaletteItemDragView.Initialize(...)`: stores the presenter and configured node data for a palette item.
+- `Act3DialogGraphPaletteItemDragView.OnBeginDrag(...)` / `OnEndDrag(...)`: dims the palette card while dragging and places a configured node when released over the board.
+
+### Input
+
+Pointer drag events from Unity's EventSystem.
+
+### Output
+
+Presenter movement/placement calls. This script does not mutate puzzle graph structure or validation state directly.
+
+### Failure Cases
+
+- If no presenter is assigned, drag events do nothing.
+- Node positions are presentation-only and are not persisted outside the current scene/session.
+- Palette drops outside the board are ignored.
+
+### Unity Test
+
+In the Act 3 prototype scene, drag palette cards onto the board, drag placed node cards around the board, drag a card to the trash zone, and confirm wires stay attached to their ports until the node is removed.
+
+---
+
+### Script Name
+
+Act3DialogGraphOutputPortView.cs
+
+### Purpose
+
+Presentation-only drag source for an Act 3 node output port.
+
+### Attached GameObject
+
+Attached at runtime to each rendered output port on a node card.
+
+### Runtime Role
+
+Implements Unity pointer drag callbacks. It asks the presenter to begin a temporary wire, update that wire while dragging, and end the drag when released.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Runtime state:
+- presenter reference
+- source node id
+- implied `DialogTransitionCondition`
+- cached `RectTransform`
+
+### Important Methods
+
+- `Initialize(...)`: stores the presenter, node id, condition, and cached rect.
+- `OnBeginDrag(...)`: lets pointer raycasts pass through the output port and starts the presenter's temporary wire.
+- `OnDrag(...)`: updates the presenter's temporary wire to the cursor.
+- `OnEndDrag(...)`: restores raycasts and asks the presenter to clear the temporary wire when no valid drop consumed it.
+
+### Input
+
+Pointer drag events from Unity's EventSystem.
+
+### Output
+
+Presenter drag lifecycle calls. This script does not create transitions directly.
+
+### Failure Cases
+
+- If no presenter is assigned, drag events do nothing.
+- Drops are validated by the presenter/controller/input port path, not by this component.
+
+### Unity Test
+
+In the Act 3 prototype scene, drag from each output port and confirm a temporary straight wire follows the cursor.
+
+---
+
+### Script Name
+
+Act3DialogGraphInputPortView.cs
+
+### Purpose
+
+Presentation-only drop target for an Act 3 node input port.
+
+### Attached GameObject
+
+Attached at runtime to each rendered input port on a node card.
+
+### Runtime Role
+
+Implements Unity drop callbacks. When a dragged output port is dropped on this input port, it asks the presenter to complete the wire drop.
+
+### Important Fields
+
+No serialized Unity fields.
+
+Runtime state:
+- presenter reference
+- target node id
+- cached `RectTransform`
+
+### Important Methods
+
+- `Initialize(...)`: stores the presenter, node id, and cached rect.
+- `OnDrop(...)`: extracts the dragged `Act3DialogGraphOutputPortView` and calls `Act3DialogGraphStaticPresenter.CompleteWireDrop(...)`.
+
+### Input
+
+Pointer drop events from Unity's EventSystem.
+
+### Output
+
+Presenter drop-completion calls. This script does not create transitions directly.
+
+### Failure Cases
+
+- Non-output-port drops are ignored.
+- Self-loops, duplicates, invalid endpoints, and Response-source attempts are rejected by the controller after the drop reaches the presenter.
+
+### Unity Test
+
+In the Act 3 prototype scene, drop an output port onto another node's input port and confirm a committed straight wire appears when the controller accepts the transition.
 
 ---
 
@@ -1241,7 +1474,7 @@ Act3DialogGraphPrototypeSceneBuilder.cs
 
 ### Purpose
 
-Editor-only helper that creates the display-only Act 3 node-graph prototype scene through Unity-supported scene serialization. It avoids hand-writing `.unity` YAML.
+Editor-only helper that creates the Act 3 node-graph prototype scene through Unity-supported scene serialization. It avoids hand-writing `.unity` YAML.
 
 ### Attached GameObject
 
@@ -1257,7 +1490,7 @@ No Inspector fields.
 
 ### Important Methods
 
-- `BuildAct3DialogGraphPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, adds an EventSystem, wires `Act3DialogGraphStaticPresenter`, renders sample data, and saves `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+- `BuildAct3DialogGraphPrototypeScene()`: creates a new scene, builds a UGUI canvas with a half-width palette column, a readable fixed-width guide column, a flexible large graph board, and a half-height bottom validation/trash strip; disables forced width expansion on the body layout so only the graph column receives spare width; adds an EventSystem, wires `Act3DialogGraphStaticPresenter`, renders sample data/interactions, and saves `Assets/Scenes/Act3DialogGraphPrototype.unity`.
 - `CreateListRoot(...)`: creates compact vertical list regions for palette/vocabulary and goal/test content.
 
 ### Input
@@ -1273,12 +1506,12 @@ Manual Unity Editor menu action:
 
 - If Unity has compile errors, the menu item may not be available until they are fixed.
 - Codex does not generate the `.unity` scene automatically in this task.
-- If palette or goal/test content appears clipped or empty in an older scene, rerun the builder so the compact list roots and row templates are regenerated.
-- M0-T23 intentionally does not add the generated scene to Build Settings.
+- If palette, guide, graph-board, bottom validation, or trash content appears clipped or uses older proportions, rerun the builder so the fixed-width columns, compact validation strip, and row templates are regenerated.
+- The builder intentionally does not add the generated scene to Build Settings.
 
 ### Unity Test
 
-Run the menu builder in Unity, open the generated Act 3 scene, enter Play Mode, and confirm there are no Console errors. Confirm the scene remains display-only.
+Run the menu builder in Unity, open the generated Act 3 scene, enter Play Mode, and confirm there are no Console errors. Confirm the M0-T30 objective, half-width palette, large middle graph board, readable right guide, compact bottom `Test Ghost's map` strip with right-side trash, node placement, edge-port drag/drop wires, selected-node/selected-wire removal, trash highlight, and enabled deterministic validation feedback render correctly.
 
 ---
 

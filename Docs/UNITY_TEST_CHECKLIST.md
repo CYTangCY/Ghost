@@ -845,3 +845,136 @@ M0-T23 ships the builder and does not hand-write scene YAML.
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Act 3 Dialog Graph Prototype Scene`, no manual Inspector setup should be required. The builder wires `Act3DialogGraphStaticPresenter` to its palette root, graph canvas root, goal/test root, validation controls root, palette item template, and test-case template.
+
+---
+
+## M0-T24: Act 3 Node Placement and Connection Interaction
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphInteractionController.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphStaticPresenter.cs`
+   - `Assets/Presentation/Act3DialogGraph/Editor/Act3DialogGraphPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Generation Check
+
+M0-T24 reuses the existing Act 3 builder and does not hand-write scene YAML.
+
+1. If the saved scene looks stale, select `Ghost > Build Act 3 Dialog Graph Prototype Scene`.
+2. Open `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+3. Do not add the scene to Build Settings during M0-T24.
+
+### Play Mode Interaction Check
+
+1. Enter Play Mode in `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+2. Click each placement row and confirm a configured node card appears:
+   - `Start`
+   - `IntentBranch` with `find_object`
+   - `SlotCheck` with `room`
+   - `Response` with `answer_object_location`
+   - `Response` with `ask_for_room`
+3. Click node cards and confirm selection highlight toggles/replaces correctly.
+4. Select the Start node and click `Set Start`; confirm the card is marked `[Start]`.
+5. Build the full intended graph:
+   - `Start -> IntentBranch(find_object)` with `Always`
+   - `IntentBranch(find_object) -> SlotCheck(room)` with `Always`
+   - `SlotCheck(room) -> Response(answer_object_location)` with `SlotPresent`
+   - `SlotCheck(room) -> Response(ask_for_room)` with `SlotMissing`
+6. Confirm each transition appears in the transition list with its condition.
+7. Remove one transition with its `Remove` button and confirm it disappears.
+8. Remove a node that has transitions and confirm referenced transitions disappear with it.
+9. Confirm the `Validate graph` button remains present, disabled, and not wired to validation feedback.
+10. Confirm there are no new Console errors.
+11. Confirm there is no scoring, save/load, backend, LLM, dialogue, Act 4-6 node type, Game Shell integration, or Build Settings change added by M0-T24.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act3DialogGraphPrototype.unity` is not added to Build Settings by M0-T24.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 3 Dialog Graph Prototype Scene`, no manual Inspector setup should be required. The builder wires the presenter roots/templates; the presenter creates the interaction controller and runtime node/transition controls.
+
+---
+
+## M0-T30: Act 3 Node Graph UX Redesign and Validation Feedback
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphInteractionController.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphStaticPresenter.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphNodeDragView.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphOutputPortView.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphInputPortView.cs`
+   - `Assets/Presentation/Act3DialogGraph/Editor/Act3DialogGraphPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Generation Check
+
+M0-T30 reuses the existing Act 3 builder and does not hand-write scene YAML.
+
+1. Select `Ghost > Build Act 3 Dialog Graph Prototype Scene` to refresh the generated scene.
+2. Open `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+3. Confirm the scene is not added to Build Settings.
+
+### Play Mode Interaction Check
+
+1. Enter Play Mode in `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+2. Confirm the title and objective use player-facing language, not raw ids like `find_object`, `answer_object_location`, or `ask_for_room`.
+3. Confirm the palette is roughly half its previous width, the middle reply-map board receives the reclaimed space, the right guide keeps a readable width/text size, and the bottom `Test Ghost's map` strip is roughly half its earlier height.
+   - Re-enter Play Mode or rerun the builder once and confirm the palette/guide widths stay stable instead of expanding unpredictably.
+4. Confirm the palette is categorized:
+   - Flow: `Start here`, `Recognize request`
+   - Check: `Check room`
+   - Reply: `Answer location`, `Ask which room`
+5. Drag each palette card into the reply-map board and confirm it creates a configured node at the drop position.
+6. Click a palette card and confirm click-to-place still works as a fallback.
+7. Confirm each card has a short, readable purpose and uses small coloured ports placed on the card edges instead of text boxes labelled IN/OUT.
+8. Confirm the right guide explains the port colours in readable text:
+   - blue = next step
+   - green = room is known
+   - orange = room is missing
+   - top dot = wire drop target
+9. Drag placed node cards freely around the graph board and slightly outside the board toward the bottom trash zone; confirm they stay where dropped during the current session unless dropped on trash.
+10. Confirm placing a Start node automatically marks it as the start node.
+11. Confirm `Start here` has no top input dot and only has its bottom blue output dot.
+12. Drag from `Start here`'s blue output dot to the `Recognize request` top input dot and confirm a straight wire appears.
+13. Drag from `Recognize request`'s blue output dot to the `Check room` top input dot and confirm a straight wire appears.
+14. Drag from `Check room`'s green output dot to the `Answer location` input dot and confirm a straight wire appears.
+15. Drag from `Check room`'s orange output dot to the `Ask which room` input dot and confirm a straight wire appears.
+16. Confirm dragging a new wire from the same output dot to another input replaces the previous wire from that dot.
+17. Click a wire, press Delete or Backspace, and confirm the wire disappears.
+18. Click a node card, press Delete or Backspace, and confirm the selected node disappears.
+19. Confirm self-loop drops are rejected/ignored.
+20. Confirm duplicate exact wire drops are rejected/ignored.
+21. Confirm drops outside valid input dots are rejected/ignored.
+22. Confirm reply cards have no output dots and cannot create outgoing wires.
+23. Move a connected card and confirm existing straight wires stay attached to the moved dots.
+24. Drag a node card over the bottom-bar `X drop card` trash zone to the right of `Test Ghost's map`; confirm the trash zone highlights while hovering.
+25. Drop the node whenever the trash zone is highlighted and confirm the node disappears; there should be no state where the trash highlights but the card survives the drop.
+26. Confirm removing a node that has wires also removes referenced wires.
+27. Press `Test Ghost's map` on a partial/wrong graph and confirm incorrect red feedback appears with an issue count plus a Ghost reaction describing the bad route.
+28. Confirm different wrong routes produce different Ghost reactions, for example:
+   - no start/first step -> Ghost cannot begin
+   - request skips the room check -> Ghost jumps to a reply too early
+   - green room-known dot goes to `Ask which room` -> Ghost asks despite knowing the room
+   - orange room-missing dot goes to `Answer location` -> Ghost guesses instead of asking
+29. Rebuild the correct graph and press `Test Ghost's map`; confirm correct green feedback appears plus a Ghost reaction describing the successful route.
+30. Re-validate after fixing a wrong graph and confirm the feedback updates.
+31. Confirm there are no new Console errors.
+32. Confirm there is no backend, LLM, save/load, scoring persistence, Act 3 Shell integration, Act 4-6 node graph, or Build Settings change added by M0-T30.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act3DialogGraphPrototype.unity` is not added to Build Settings by M0-T30.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 3 Dialog Graph Prototype Scene`, no manual Inspector setup should be required. The builder wires the presenter roots/templates; the presenter creates the interaction controller plus runtime palette/node drag views, input/output dot views, wire objects, and the trash drop zone.

@@ -288,6 +288,41 @@ in-session); all three retained. Claude reviewed scope (clean — no Build Setti
 Act 1 / Act 2 / Shell edits). Archive: `Docs/completed_tasks/M0-T23_act3_static_node_graph_ui.md`.
 Next: M0-T24 (Act 3 node placement + connection interaction).
 
+### 2026-06-22 — M0-T24: Act 3 node placement + connection — Completed (functional; UX debt) + direction pivot
+Codex run 001 added `Act3DialogGraphInteractionController` (wraps `DialogGraphSession`) and made the
+presenter interactive: place configured palette nodes, select a node card, set start, connect via
+From/To + condition buttons, transitions list with remove, remove node — all routed through
+`DialogGraphSession`; Validate left as a placeholder. The user confirmed it works (screenshot) but
+flagged the design: not fun, objective unclear, connection UX fiddly and allowing self-loops
+(`slotcheck_2 → slotcheck_2`). Closed as a functional prototype with an **Act 3 node-graph UX redesign
+deferred**. **Direction pivot (user-set):** Acts 1–3 prototypes are in place; the next milestone is a
+vertical slice / cohesive build — full-system foundation (backend/DB/LLM, Phase D) + narrative
+integration into Acts 1–3 + the Act 3 UX redesign — to reach a certain completeness before resuming
+Acts 4–8 (recorded in ROADMAP Current Status). Archive:
+`Docs/completed_tasks/M0-T24_act3_node_placement_connection.md`. Next: pivot task (sequencing being
+decided with the user).
+
+### 2026-06-22 — M0-T25: Vertical-slice blueprint — Completed (planning)
+Claude-led blueprint (`Docs/VERTICAL_SLICE_PLAN.md`): narrative frame for Acts 1–3, full-system
+architecture + data contracts (Node/TS REST + SQLite + LLM; deterministic correctness preserved), Act 3
+node-graph UX redesign direction, and a task breakdown. User decisions: LLM static-hints-first (LLM
+deferred to M0-T29); start execution with the Act 3 UX redesign (M0-T30). Narrative
+setting/protagonist/title + backend host remain open (settle at M0-T26). Archive:
+`Docs/completed_tasks/M0-T25_vertical_slice_blueprint.md`. Next: M0-T30 (Act 3 node-graph UX redesign +
+wire Validate to the validator).
+
+### 2026-06-23 — M0-T30: Act 3 node-graph UX redesign — Completed
+Codex runs 001–007 redesigned the Act 3 interaction: drag-a-wire port connecting (new input/output port
+views + node drag), a clear in-story objective, an X/trash drop zone to delete nodes, stable column
+layout (run 007 fixed body `HorizontalLayoutGroup.childForceExpandWidth` stretching fixed columns; trash
+drop now keyed on cached highlight state), and wired the Validate button to
+`DialogGraphSession.ValidateCurrentState()` (deterministic, no LLM). M0-T21 core + M0-T22 session
+unchanged. Run logs honest ("Not run" for Unity in-session); all seven retained. The user verified
+across iterations ("經過多版本修復現在完成了"). Claude reviewed scope (clean — no Act 3 pure logic /
+Act 1/2 / Shell / ProjectSettings edits) and the deterministic Validate wiring. Archive:
+`Docs/completed_tasks/M0-T30_act3_node_graph_ux_redesign.md`. Next: M0-T31 (Act 3 Game Shell
+integration).
+
 ---
 
 ## Entry Template

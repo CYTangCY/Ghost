@@ -2,60 +2,53 @@
 
 ## ID
 
-M0-T24
+M0-T31
 
 ## Goal
 
-Add node placement + connection interaction to the Act 3 node-graph scene: the player places nodes from
-the palette, configures each node's field (intent / entity-slot / response), connects nodes with a
-transition condition, and sets the start node — all routed through `DialogGraphSession`. No validation
-feedback wiring yet.
+Integrate Act 3 into the Game Shell so it is launchable from the hub and can return to the hub —
+mirroring Act 2's M0-T19. Adds a "Start Act 3" hub entry + `StartAct3()`, a Return-to-Hub overlay for
+the Act 3 scene, and registers the Act 3 scene in Build Settings.
 
 ## Context
 
-ROADMAP Phase C = Act 3 (flagship). M0-T21 core, M0-T22 session, and M0-T23 static UI are done and
-Editor-verified. Act 1/2 added interaction incrementally (placement/assignment, then validation
-feedback). This is the Act 3 equivalent of M0-T17: wire the graph-editing interaction through
-`DialogGraphSession` (M0-T22). Validation feedback is the next task (M0-T25); Validate stays a
-placeholder here.
+Vertical-slice milestone (Docs/VERTICAL_SLICE_PLAN.md). Act 3's playable loop is done: M0-T21 core,
+M0-T22 session, M0-T23 static UI, M0-T30 redesigned interaction + wired Validate. Act 3 currently has no
+entry point from the shell. This connects it the same way Act 1 and Act 2 are connected (M0-T13 / M0-T19),
+so all three acts are reachable from one place. Shell scripts (`ShellSceneNames`, `GameShellPresenter`,
+`ShellReturnToHubOverlay`, `GameShellSceneBuilder`, optionally `ShellDialogueData`) are in scope.
+Registering the Act 3 scene in Build Settings is the approved exception (same as M0-T13/M0-T19), applied
+by the user running the shell scene builder.
 
 ## Scope
 
-- Add an Act 3 interaction controller in `Assets/Presentation/Act3DialogGraph/` (mirror Act 2's
-  interaction controller), wrapping a `DialogGraphSession`, exposing the current nodes/transitions/start
-  for rendering and a `StateChanged` event.
-- Extend `Act3DialogGraphStaticPresenter` (or a new interactive presenter) so the player can:
-  - place a node by choosing a palette node type (Start/IntentBranch/SlotCheck/Response) → `AddNode`;
-    for typed nodes, set the required field from the level vocabulary (IntentBranch→intent id,
-    SlotCheck→entity-type id, Response→response id);
-  - select a node and mark it as the start node → `SetStartNode`;
-  - connect two placed nodes with a chosen condition (Always / SlotPresent / SlotMissing) → `AddTransition`;
-  - remove a node (cascades transitions) and remove a transition.
-- Render the placed nodes and the existing transitions readably. A robust minimal presentation is
-  acceptable: nodes as placed cards/rows and transitions as a clear list (e.g. "start → intent_find_object
-  [Always]") and/or simple connector visuals — do NOT over-engineer bezier edge drawing.
-- All placement/config/connection/removal MUST route through `DialogGraphSession`; correctness stays in
-  the validator (wired in M0-T25). Keep the M0-T23 palette/goal/canvas layout; ensure an `EventSystem`.
-- Regenerate the scene via the menu builder if needed (do NOT add it to Build Settings).
-- Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md; create a Codex run log.
+- `ShellSceneNames`: add the Act 3 scene name + asset path (`Act3DialogGraphPrototype`).
+- `GameShellPresenter`: add an `act3Button` + `StartAct3()` (loads the Act 3 scene via `SceneManager`),
+  wired in `Configure`/`Start` like the Act 1/Act 2 buttons.
+- `ShellReturnToHubOverlay`: also show the runtime Return-to-Hub button when the Act 3 scene is active
+  (Act 1 or Act 2 or Act 3), without touching Act 3 puzzle rules.
+- `GameShellSceneBuilder`: add the Act 3 act-select card to the hub and register the Act 3 scene in
+  Build Settings alongside shell + Act 1 + Act 2.
+- Optionally extend `ShellDialogueData` so the hub Lily line acknowledges Act 3.
+- Keep Act 3's puzzle behaviour and Acts 1/2 unchanged.
+- Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md; create a Codex run log. The user re-runs
+  `Ghost > Build Game Shell Scene` to regenerate the shell and apply Build Settings.
 
 ## Out of Scope
 
-- Do not wire the Validate button / show correct-incorrect feedback yet (M0-T25); it stays a placeholder.
-- No Act 4–6 node types, backend, LLM, save/load, scoring, or final art; no Game Shell change.
-- Do not add the scene to Build Settings.
-- Do not edit ProjectSettings, Packages, `.meta`, existing non-Act-3 asmdefs, the Act 3 pure logic
-  (M0-T21/M0-T22), or Act 1 / Act 2 / Game Shell scripts.
+- Do not change Act 3 puzzle logic/UI (M0-T21/M0-T22/M0-T30) or Act 1/2 mechanics.
+- No full visual-novel dialogue, save/load, node graph for other acts, backend, LLM, or final art (the
+  narrative pass is M0-T26).
+- Do not edit ProjectSettings beyond the approved Build Settings registration of the Act 3 scene; do not
+  edit Packages or `.meta`; do not hand-write scene YAML (use the builder).
 
 ## Acceptance Criteria
 
-- The player can place each node type from the palette and set its field from the level vocabulary; the
-  node appears in the canvas.
-- The player can mark a start node and connect two nodes with a chosen condition; placed nodes and
-  transitions are visible/readable.
-- A node can be removed (its transitions go with it) and a transition can be removed.
-- All edits route through `DialogGraphSession` (the Act 3 pure logic is unchanged); the Validate button
-  remains a placeholder.
-- No Console errors in Play Mode; the scene is not in Build Settings; Act 1/2 and the Game Shell are
-  unchanged.
-- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md are updated; a Codex run log is created.
+- From the shell hub, Start Act 1 / Act 2 / Act 3 are all available; clicking Start Act 3 loads the Act 3
+  scene.
+- The Act 3 scene shows a Return-to-Hub button that loads the shell.
+- Act 3's puzzle still works after launching from the shell; Acts 1/2 still launch and return.
+- Shell + Act 1 + Act 2 + Act 3 scenes are enabled in Build Settings (the approved exception); no other
+  ProjectSettings changes are intended.
+- No Console errors in Play Mode; Act 3 puzzle logic and Acts 1/2 are unchanged.
+- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md updated; a Codex run log created.
