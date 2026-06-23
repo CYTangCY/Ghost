@@ -785,3 +785,63 @@ Optional Console sanity check:
 ### Inspector Setup
 
 No Inspector setup is required for M0-T22. `DialogGraphSession` is a pure C# state object and is not attached to a GameObject.
+
+---
+
+## M0-T23: Display-Only Act 3 Node Graph UI Prototype
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphStaticPresenter.cs`
+   - `Assets/Presentation/Act3DialogGraph/Editor/Ghost.Presentation.Act3.Editor.asmdef`
+   - `Assets/Presentation/Act3DialogGraph/Editor/Act3DialogGraphPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Generation Check
+
+M0-T23 ships the builder and does not hand-write scene YAML.
+
+1. Select `Ghost > Build Act 3 Dialog Graph Prototype Scene`.
+2. Confirm `Assets/Scenes/Act3DialogGraphPrototype.unity` is created or refreshed.
+3. Do not add the scene to Build Settings during M0-T23.
+
+### Static Scene Check
+
+1. Open `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+2. Confirm the node-type palette renders:
+   - `Start`
+   - `IntentBranch`
+   - `SlotCheck`
+   - `Response`
+3. Confirm the level vocabulary renders:
+   - `find_object`
+   - `room`
+   - `answer_object_location`
+   - `ask_for_room`
+4. Confirm the palette/vocabulary content is visible and stays inside the Palette panel without clipping past the bottom edge.
+5. Confirm an empty graph canvas region renders.
+6. Confirm the goal/test panel shows the sample conversations:
+   - `find_object + room=lab -> answer_object_location`
+   - `find_object (no room) -> ask_for_room`
+7. Confirm the goal/test content is visible and stays inside its panel without clipping past the bottom edge.
+8. Confirm the `Validate graph` button is present, disabled, and not wired to validation.
+9. Confirm placeholder feedback text renders.
+10. Confirm there is no node placement, edge drawing, scoring, save/load, backend, LLM, dialogue, Act 4-6 node type, or Game Shell integration added by M0-T23.
+
+### Play Mode Check
+
+1. Enter Play Mode in `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+2. Confirm the palette, empty canvas, goal/test panel, disabled Validate button, and placeholder feedback still render.
+3. Confirm there are no new Console errors.
+4. Confirm there is no gameplay interaction beyond the disabled placeholder controls.
+
+### Build Settings Check
+
+1. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+2. Confirm `Assets/Scenes/Act3DialogGraphPrototype.unity` is not added to Build Settings by M0-T23.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Act 3 Dialog Graph Prototype Scene`, no manual Inspector setup should be required. The builder wires `Act3DialogGraphStaticPresenter` to its palette root, graph canvas root, goal/test root, validation controls root, palette item template, and test-case template.

@@ -1175,6 +1175,113 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## Act 3 Dialog Graph Static UI Prototype
+
+### Script Name
+
+Act3DialogGraphStaticPresenter.cs
+
+### Purpose
+
+Renders the display-only Act 3 node-graph prototype UI from `DialogGraphSession.CreateFromSampleData()`.
+
+### Attached GameObject
+
+Attached to the root UI object created by `Act3DialogGraphPrototypeSceneBuilder`.
+
+### Runtime Role
+
+On `Start`, when `renderOnStart` is true, it rebuilds the static UI for the Act 3 sample level: node-type palette, level vocabulary, empty graph canvas placeholder, goal/test panel, and disabled placeholder Validate controls. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
+
+### Important Fields
+
+- `nodePaletteRoot`: parent `RectTransform` for node types and level vocabulary; rows are intentionally compact so the fixed M0-T23 sample vocabulary fits inside the Palette panel.
+- `graphCanvasRoot`: placeholder graph-canvas region.
+- `goalTestRoot`: parent `RectTransform` for target conversation/test-case summaries; rows are kept compact for the fixed M0-T23 sample test cases.
+- `validationControlsRoot`: parent `RectTransform` for disabled Validate controls.
+- `paletteItemTemplate`: inactive template for palette/vocabulary rows.
+- `testCaseTemplate`: inactive template for test-case rows.
+- `renderOnStart`: when true, rebuilds the display at Play Mode start.
+
+Internal runtime state:
+- one `DialogGraphSession` created from `Act3DialogGraphSampleData`.
+
+### Important Methods
+
+- `Configure(...)`: wires generated UI roots/templates from the builder.
+- `RenderSampleData()`: clears prior display children, creates the sample session, renders palette, graph canvas placeholder, goal/test cases, and disabled validation controls.
+- `RenderNodePalette()`: renders `Start`, `IntentBranch`, `SlotCheck`, `Response`, and the sample intent/entity/response ids.
+- `RenderGoalTestCases()`: formats each `DialogGraphTestCase` as `intent + entities -> expectedResponseId`.
+- `RenderValidationControls()`: creates a disabled Validate button and placeholder feedback text.
+- `EnsureEventSystem()`: creates an `EventSystem` with `InputSystemUIInputModule` if missing.
+
+### Input
+
+Sample data from `Act3DialogGraphSampleData` through `DialogGraphSession.CreateFromSampleData()`.
+
+### Output
+
+UGUI objects showing the static Act 3 palette, empty graph area, test goals, and disabled validation placeholder.
+
+### Failure Cases
+
+- Missing roots/templates cause `RenderSampleData()` to return without rendering.
+- The presenter does not place nodes, draw edges, mutate the session, or call validation in M0-T23.
+- If an older generated scene looks stale, rerun the Act 3 scene builder.
+
+### Unity Test
+
+Run `Ghost > Build Act 3 Dialog Graph Prototype Scene`, open `Assets/Scenes/Act3DialogGraphPrototype.unity`, and enter Play Mode. Confirm palette, vocabulary, empty canvas, goal/test panel, disabled Validate button, placeholder feedback, and no Console errors. This script has no working interaction yet.
+
+---
+
+### Script Name
+
+Act3DialogGraphPrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor-only helper that creates the display-only Act 3 node-graph prototype scene through Unity-supported scene serialization. It avoids hand-writing `.unity` YAML.
+
+### Attached GameObject
+
+None. This script lives under an `Editor` folder and runs from a Unity Editor menu item.
+
+### Runtime Role
+
+No runtime role. It is excluded from player builds by the Act 3 editor asmdef and the `Editor` folder.
+
+### Important Fields
+
+No Inspector fields.
+
+### Important Methods
+
+- `BuildAct3DialogGraphPrototypeScene()`: creates a new scene, builds a placeholder UGUI canvas, adds an EventSystem, wires `Act3DialogGraphStaticPresenter`, renders sample data, and saves `Assets/Scenes/Act3DialogGraphPrototype.unity`.
+- `CreateListRoot(...)`: creates compact vertical list regions for palette/vocabulary and goal/test content.
+
+### Input
+
+Manual Unity Editor menu action:
+`Ghost > Build Act 3 Dialog Graph Prototype Scene`
+
+### Output
+
+`Assets/Scenes/Act3DialogGraphPrototype.unity`, when the user runs the menu builder in Unity.
+
+### Failure Cases
+
+- If Unity has compile errors, the menu item may not be available until they are fixed.
+- Codex does not generate the `.unity` scene automatically in this task.
+- If palette or goal/test content appears clipped or empty in an older scene, rerun the builder so the compact list roots and row templates are regenerated.
+- M0-T23 intentionally does not add the generated scene to Build Settings.
+
+### Unity Test
+
+Run the menu builder in Unity, open the generated Act 3 scene, enter Play Mode, and confirm there are no Console errors. Confirm the scene remains display-only.
+
+---
+
 ## Act 3 Dialog Graph Session State
 
 ### Script Name

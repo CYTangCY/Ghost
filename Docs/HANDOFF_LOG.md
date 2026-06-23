@@ -277,6 +277,17 @@ and reported success ("測試成功"). Claude reviewed the incomplete-graph safe
 scope (clean). Archive: `Docs/completed_tasks/M0-T22_act3_graph_session.md`. Next: M0-T23 (Act 3 static
 node-graph UI scene).
 
+### 2026-06-22 — M0-T23: Act 3 static node-graph UI — Completed
+Codex runs 001–003 (001 initial; 002 layout fix; 003 ScrollRect→compact static lists so palette/goal
+content stays visible) added the display-only Act 3 scene: `Act3DialogGraphStaticPresenter` (backed by
+`DialogGraphSession.CreateFromSampleData()`) renders a node-type palette + level vocabulary, an empty
+graph canvas, a Goal/Tests panel, and a disabled placeholder Validate; plus an Editor scene builder
+(menu `Ghost > Build Act 3 Dialog Graph Prototype Scene`) + a new Act 3 Editor asmdef. The user
+generated the scene and verified rendering (screenshot). Run logs honest ("Not run" for Unity
+in-session); all three retained. Claude reviewed scope (clean — no Build Settings, no Act 3 logic /
+Act 1 / Act 2 / Shell edits). Archive: `Docs/completed_tasks/M0-T23_act3_static_node_graph_ui.md`.
+Next: M0-T24 (Act 3 node placement + connection interaction).
+
 ---
 
 ## Entry Template
