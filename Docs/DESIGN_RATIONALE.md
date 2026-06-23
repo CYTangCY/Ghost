@@ -103,3 +103,36 @@ Building the playable core first (Game Shell + Acts 1–3) de-risks the learning
 project is really about — before adding infrastructure. The backend, database, and LLM then wrap a
 proven core instead of being built speculatively against gameplay that might still change. This keeps
 early work small and explainable and avoids rework if a mechanic is revised.
+
+## Why a Vertical Slice Before More Acts (2026-06-22)
+
+Once three act prototypes existed, continuing to add new acts would have produced more thin,
+disconnected screens. Instead the project pivots to a vertical slice (see `Docs/VERTICAL_SLICE_PLAN.md`):
+weave narrative/characters into Acts 1–3, stand up the backend/database/LLM foundation, and redesign the
+Act 3 node graph — so one coherent, reasonably complete slice exists before the remaining acts are
+filled in. A cohesive slice is easier to demo, evaluate, and reason about than eight half-built acts.
+
+## Why the Act 3 Node-Graph UX Is Being Redesigned
+
+The first Act 3 interaction (M0-T24) worked mechanically but was not fun: connecting nodes via separate
+From/To selection + condition buttons felt clerical, allowed nonsense self-loops, and the level gave no
+in-story reason to build the graph. The redesign uses drag-a-wire port connecting with a clear in-story
+objective, and finally wires the deterministic Validate — so the flagship mechanic feels like assembling
+a conversation. Correctness stays deterministic (the validator/session are unchanged).
+
+## Why a Vertical Slice of Acts 1–3 Before More Acts (2026-06-22)
+
+Once the Act 1–3 prototypes existed, the priority shifted from adding acts to making the first three
+cohere as a game: weaving narrative (story, characters, Lily, scene transitions) through them, standing
+up the full-system foundation (backend/database/LLM), and redesigning the Act 3 node-graph UX. Reaching
+a certain completeness on a vertical slice de-risks the design and yields a demonstrable whole before
+Acts 4–8 are built out. The LLM is integrated static-hints-first (deterministic validators stay
+authoritative), so the slice is fully playable without it. See `Docs/VERTICAL_SLICE_PLAN.md`.
+
+## Why Redesign the Act 3 Node-Graph UX
+
+The first Act 3 interaction (M0-T24) worked mechanically but was not fun: the connect flow (select
+From/To + a condition button) was fiddly, allowed nonsense self-loops, and the level gave no in-story
+reason to build the graph. The redesign — drag-a-wire between node ports, a clear story objective, and a
+working Validate — makes the flagship mechanic enjoyable and legible. This matters most for Act 3
+specifically because the node graph is reused and extended by Acts 4–6.

@@ -8,6 +8,19 @@
 
 ## Current Status
 
+> **Latest direction (2026-06-22, post Act 3 prototype):** Acts 1–3 prototypes are in place (intent,
+> entity, dialog node graph — all deterministic, Editor-verified). Per the user, the next milestone is
+> a **vertical slice / cohesive build**, not more new acts:
+> 1. **Full-system foundation** — backend + database + LLM (ROADMAP Phase D), wrapping the existing acts.
+> 2. **Narrative integration** — weave story, characters, Lily, and scene transitions into Acts 1–3.
+> 3. **Act 3 node-graph UX redesign** — make it fun with a clear objective and free-form connecting
+>    (the M0-T24 build is functional but mechanical: fiddly From/To selection, allows self-loops,
+>    unclear goal).
+>
+> Acts 4–8 (graph extensions / NLP lab / capstone) resume only AFTER this vertical slice reaches a
+> certain completeness ("整個成形"). See `Docs/completed_tasks/M0-T24_act3_node_placement_connection.md`
+> for the Act 3 UX debt.
+
 Act 1 core gameplay is complete enough to be the first playable prototype milestone:
 
 - click-to-assign
@@ -21,12 +34,15 @@ Act 1 core gameplay is complete enough to be the first playable prototype milest
 Decision: do not keep polishing Act 1 now. The next major step is to make the project feel like a
 game (a Ghost educational game), not only a mechanics demo.
 
-Progress since the 2026-06-20 revision:
-- Phase A (Game Shell / Lily / Act Select) is **complete** — M0-T13 shipped the title screen,
-  act-select/hub, reusable Lily dialogue frame, Ghost placeholder, and shell↔Act 1 navigation
-  (Editor-verified; see `Docs/completed_tasks/M0-T13_game_shell_prototype.md`).
-- **Active task: M0-T14 — Act 2 entity-extraction core (pure C# logic + sample data + EditMode
-  tests), the first slice of Phase B.**
+Progress (as of 2026-06-22):
+- Phase A — Game Shell: complete (M0-T13).
+- Phase B — Act 2 (Entity Extraction): complete and shell-integrated (M0-T14…M0-T19).
+- Phase C — Act 3 (Dialog Node Graph): prototype complete (M0-T20 design, M0-T21 core, M0-T22 session,
+  M0-T23 static UI, M0-T24 placement/connection [functional, UX debt]). Deterministic throughout.
+- **Active: the vertical-slice milestone (see note above). Next task: M0-T30 — Act 3 node-graph UX
+  redesign + wire Validate.** Then narrative (M0-T26), backend+DB (M0-T27), client integration
+  (M0-T28), LLM (M0-T29, static-hints-first). Acts 4–8 resume after the slice. See
+  `Docs/VERTICAL_SLICE_PLAN.md`.
 
 ## Phase A — Game Shell / Lily / Act Select  ✓ DONE (M0-T13)
 
@@ -51,6 +67,16 @@ Progress since the 2026-06-20 revision:
 - The node graph is the project's flagship mechanic and is reused/extended in later Acts.
 - Sequencing: the node graph comes AFTER Act 2 on purpose — it benefits from both intent (Act 1)
   and entity (Act 2), which become triggers/slots/conditions inside dialog nodes.
+
+## Vertical Slice (current milestone, 2026-06-22)
+
+After the Acts 1–3 prototypes, the active milestone is a cohesive **vertical slice** rather than new
+acts — see `Docs/VERTICAL_SLICE_PLAN.md`. It bundles three workstreams: the Act 3 node-graph UX
+redesign, narrative integration into Acts 1–3, and the Phase D full-system foundation (backend / DB /
+LLM). Decisions (2026-06-22): the LLM is **static-hints-first** (LLM deferred within the slice);
+execution order is **M0-T30** Act 3 UX redesign → **M0-T26** narrative → **M0-T27** backend+DB →
+**M0-T28** client↔backend → **M0-T29** LLM. Acts 4–8 (the phases below) resume after the slice reaches a
+certain completeness. Deterministic-correctness still holds throughout.
 
 ## Phase D — Full-System Foundation (backend + database + LLM)
 
