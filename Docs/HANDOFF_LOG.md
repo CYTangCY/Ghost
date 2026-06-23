@@ -323,6 +323,17 @@ Act 1/2 / Shell / ProjectSettings edits) and the deterministic Validate wiring. 
 `Docs/completed_tasks/M0-T30_act3_node_graph_ux_redesign.md`. Next: M0-T31 (Act 3 Game Shell
 integration).
 
+### 2026-06-23 — M0-T31: Act 3 Game Shell integration — Completed (Acts 1–3 all shell-linked)
+Codex runs 001 + 002 (002 = Return-to-Hub overlay canvas fix) wired Act 3 into the shell:
+`ShellSceneNames` Act3 name/path; `GameShellPresenter` `act3Button` + `StartAct3()`;
+`ShellReturnToHubOverlay` now Act 1/2/3; `GameShellSceneBuilder` Act 3 hub card + Build Settings
+(shell + Act 1 + Act 2 + Act 3); hub Lily line acknowledges Act 3. The `EditorBuildSettings` diff adds
+only the Act 3 entry (approved exception). Act 3 puzzle + Acts 1/2 unchanged. The user ran the builder
+and verified hub→Act 3 + return ("完成"). Run logs honest. Claude reviewed scope (clean). All three
+prototype acts are now launchable from the hub. Archive:
+`Docs/completed_tasks/M0-T31_act3_shell_integration.md`. Next: M0-T26 (narrative integration into
+Acts 1–3).
+
 ---
 
 ## Entry Template

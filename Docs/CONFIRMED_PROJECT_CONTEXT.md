@@ -614,9 +614,9 @@ Write her character voice as a human lab senior, not generic tutor.
 Do not invent these. Confirm before implementation.
 
 ```text
-1. Final game title.
-2. Exact player character identity.
-3. Exact setting: lab, haunted lab, smart home, cute haunted interface, or another setting.
+1. RESOLVED (2026-06-23): working title "Ghost" (kept for now; final still open). See Docs/NARRATIVE.md.
+2. RESOLVED (2026-06-23): protagonist = a junior lab member (Lily's kōhai); the player enters their own name.
+3. RESOLVED (2026-06-23): setting = a lightly haunted research lab (cozy/cute, not horror).
 4. Exact cute ghost art style.
 5. Exact Act 0 prototype level.
 6. Exact representative level for each Act.

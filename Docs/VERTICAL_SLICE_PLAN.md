@@ -83,6 +83,9 @@ Decided (user):
   **M0-T31** Act 3 Game Shell integration → narrative (M0-T26) → backend+DB (M0-T27) → client
   integration (M0-T28) → LLM (M0-T29).
 
-Still open (settle when the narrative task M0-T26 starts):
-- Narrative setting (lab vs lightly haunted lab), protagonist identity/name, and the game title.
+Narrative decided (2026-06-23, see `Docs/NARRATIVE.md`): setting = a lightly haunted research lab
+(cute, not horror); protagonist = a **player-named** junior lab member (Lily's kōhai); working title
+"Ghost".
+
+Still open:
 - Backend runtime/host for the prototype (local Node assumed).

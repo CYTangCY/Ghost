@@ -131,7 +131,7 @@ namespace Ghost.Presentation.Shell.Editor
             var presenceColumn = CreateColumnPanel("Presence Panel", body, 0.32f, new Color(0.92f, 0.97f, 1f));
 
             var titleScreen = CreateTitleScreen(screenColumn);
-            var hubScreen = CreateActHubScreen(screenColumn, out var act1Button, out var act2Button, out var backToTitleButton);
+            var hubScreen = CreateActHubScreen(screenColumn, out var act1Button, out var act2Button, out var act3Button, out var backToTitleButton);
             hubScreen.SetActive(false);
 
             CreatePresencePanel(presenceColumn);
@@ -145,6 +145,7 @@ namespace Ghost.Presentation.Shell.Editor
                 startButton,
                 act1Button,
                 act2Button,
+                act3Button,
                 backToTitleButton);
 
             dialogueFrame.Show(ShellDialogueData.GetLine(ShellDialogueData.TitleScreenId));
@@ -184,6 +185,7 @@ namespace Ghost.Presentation.Shell.Editor
             Transform parent,
             out Button act1Button,
             out Button act2Button,
+            out Button act3Button,
             out Button backToTitleButton)
         {
             var screen = CreatePanel(
@@ -195,7 +197,7 @@ namespace Ghost.Presentation.Shell.Editor
                 Vector2.zero,
                 new Color(0.98f, 0.99f, 1f)).gameObject;
 
-            ConfigureScreenLayout(screen, 18f);
+            ConfigureScreenLayout(screen, 12f);
 
             CreateLabel("Hub Heading", screen.transform, "Act Select", 40, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.17f, 0.28f), 58f);
             CreateLabel(
@@ -226,33 +228,14 @@ namespace Ghost.Presentation.Shell.Editor
                 "Start Act 2",
                 new Color(0.93f, 1f, 0.96f));
 
-            var futureCard = CreatePanel(
-                "Future Acts Placeholder",
+            act3Button = CreateActCard(
                 screen.transform,
-                Vector2.zero,
-                Vector2.one,
-                Vector2.zero,
-                Vector2.zero,
-                new Color(0.95f, 0.95f, 0.98f));
-
-            var futureLayoutElement = futureCard.gameObject.AddComponent<LayoutElement>();
-            futureLayoutElement.minHeight = 88f;
-            futureLayoutElement.preferredHeight = 88f;
-
-            var futureLayout = futureCard.gameObject.AddComponent<VerticalLayoutGroup>();
-            futureLayout.padding = new RectOffset(18, 18, 12, 12);
-            futureLayout.childControlWidth = true;
-            futureLayout.childControlHeight = true;
-
-            CreateLabel(
-                "Future Acts Text",
-                futureCard,
-                "Act 3 and later: placeholder locks for future puzzle prototypes.",
-                19,
-                FontStyle.Italic,
-                TextAnchor.MiddleLeft,
-                new Color(0.42f, 0.42f, 0.50f),
-                54f);
+                "Act 3 Card",
+                "Act 3: Dialog Graph",
+                "Build Ghost's reply map so it answers when details are known and asks when they are missing.",
+                "Start Act 3 Button",
+                "Start Act 3",
+                new Color(1f, 0.965f, 0.88f));
 
             backToTitleButton = CreateButton("Back To Title Button", screen.transform, "Back to Title", 190f, 46f);
             return screen;
@@ -277,29 +260,29 @@ namespace Ghost.Presentation.Shell.Editor
                 color);
 
             var cardLayoutElement = card.gameObject.AddComponent<LayoutElement>();
-            cardLayoutElement.minHeight = 158f;
-            cardLayoutElement.preferredHeight = 158f;
+            cardLayoutElement.minHeight = 138f;
+            cardLayoutElement.preferredHeight = 138f;
 
             var cardLayout = card.gameObject.AddComponent<VerticalLayoutGroup>();
-            cardLayout.padding = new RectOffset(18, 18, 14, 14);
-            cardLayout.spacing = 8f;
+            cardLayout.padding = new RectOffset(16, 16, 10, 10);
+            cardLayout.spacing = 5f;
             cardLayout.childControlWidth = true;
             cardLayout.childControlHeight = true;
             cardLayout.childForceExpandWidth = true;
             cardLayout.childForceExpandHeight = false;
 
-            CreateLabel(cardName + " Title", card, title, 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 34f);
+            CreateLabel(cardName + " Title", card, title, 23, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 30f);
             CreateLabel(
                 cardName + " Description",
                 card,
                 description,
-                18,
+                16,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.31f, 0.40f),
-                50f);
+                34f);
 
-            return CreateButton(buttonName, card, buttonText, 190f, 44f);
+            return CreateButton(buttonName, card, buttonText, 180f, 38f);
         }
 
         private static void CreatePresencePanel(Transform parent)
@@ -528,14 +511,16 @@ namespace Ghost.Presentation.Shell.Editor
             {
                 new EditorBuildSettingsScene(ShellSceneNames.GameShellScenePath, true),
                 new EditorBuildSettingsScene(ShellSceneNames.Act1ScenePath, true),
-                new EditorBuildSettingsScene(ShellSceneNames.Act2ScenePath, true)
+                new EditorBuildSettingsScene(ShellSceneNames.Act2ScenePath, true),
+                new EditorBuildSettingsScene(ShellSceneNames.Act3ScenePath, true)
             };
 
             foreach (var existingScene in EditorBuildSettings.scenes)
             {
                 if (existingScene.path == ShellSceneNames.GameShellScenePath ||
                     existingScene.path == ShellSceneNames.Act1ScenePath ||
-                    existingScene.path == ShellSceneNames.Act2ScenePath)
+                    existingScene.path == ShellSceneNames.Act2ScenePath ||
+                    existingScene.path == ShellSceneNames.Act3ScenePath)
                 {
                     continue;
                 }

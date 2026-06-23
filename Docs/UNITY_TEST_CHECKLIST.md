@@ -978,3 +978,52 @@ M0-T30 reuses the existing Act 3 builder and does not hand-write scene YAML.
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Act 3 Dialog Graph Prototype Scene`, no manual Inspector setup should be required. The builder wires the presenter roots/templates; the presenter creates the interaction controller plus runtime palette/node drag views, input/output dot views, wire objects, and the trash drop zone.
+
+---
+
+## M0-T31: Act 3 Game Shell Integration
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Shell/ShellSceneNames.cs`
+   - `Assets/Presentation/Shell/GameShellPresenter.cs`
+   - `Assets/Presentation/Shell/ShellReturnToHubOverlay.cs`
+   - `Assets/Presentation/Shell/ShellDialogueData.cs`
+   - `Assets/Presentation/Shell/Editor/GameShellSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Generation / Build Settings Check
+
+M0-T31 uses the Game Shell builder and does not hand-write scene YAML.
+
+1. Select `Ghost > Build Game Shell Scene`.
+2. Open `Assets/Scenes/GameShellPrototype.unity`.
+3. Open `File > Build Profiles` or the Unity 6 Build Settings view.
+4. Confirm these scenes are enabled in Build Settings:
+   - `Assets/Scenes/GameShellPrototype.unity`
+   - `Assets/Scenes/Act1IntentClassificationPrototype.unity`
+   - `Assets/Scenes/Act2EntityExtractionPrototype.unity`
+   - `Assets/Scenes/Act3DialogGraphPrototype.unity`
+
+### Play Mode Navigation Check
+
+1. Enter Play Mode in `Assets/Scenes/GameShellPrototype.unity`.
+2. Click `Start / Continue` to open the hub.
+3. Confirm the hub shows:
+   - `Start Act 1`
+   - `Start Act 2`
+   - `Start Act 3`
+4. Click `Start Act 1`, confirm Act 1 loads, then click `Return to Hub` and confirm the shell loads again.
+5. Click `Start Act 2`, confirm Act 2 loads, then click `Return to Hub` and confirm the shell loads again.
+6. Click `Start Act 3`, confirm `Assets/Scenes/Act3DialogGraphPrototype.unity` loads.
+7. Confirm the `Return to Hub` overlay appears in Act 3 above the Act 3 UI and loads the shell when clicked.
+8. If the Act 3 return button is absent, inspect the scene hierarchy for `Shell Return To Hub Overlay Canvas`.
+9. Confirm the Act 3 puzzle still renders and its M0-T30 interaction is not changed by shell integration.
+10. Confirm there are no new Console errors.
+11. Confirm no backend, LLM, save/load, full visual-novel dialogue, final art, or non-shell Act 3 puzzle changes were added by M0-T31.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` with the title screen, hub screen, Lily dialogue frame, Start button, Act 1 button, Act 2 button, Act 3 button, and Back-to-title button.

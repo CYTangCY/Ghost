@@ -2,53 +2,44 @@
 
 ## ID
 
-M0-T31
+M0-T26
 
 ## Goal
 
-Integrate Act 3 into the Game Shell so it is launchable from the hub and can return to the hub —
-mirroring Act 2's M0-T19. Adds a "Start Act 3" hub entry + `StartAct3()`, a Return-to-Hub overlay for
-the Act 3 scene, and registers the Act 3 scene in Build Settings.
+Weave narrative into Acts 1–3 so the three acts read as one cohesive story: a story premise, characters,
+short Lily/Ghost beats (intro before each act + debrief after), and scene transitions — frontend-only
+and data-driven, reusing `LilyDialogueFrame` + a small narrative state. Two parts: (1) Claude drafts the
+narrative content/beats (design), then (2) Codex implements the data + shell beats + act ordering.
 
 ## Context
 
-Vertical-slice milestone (Docs/VERTICAL_SLICE_PLAN.md). Act 3's playable loop is done: M0-T21 core,
-M0-T22 session, M0-T23 static UI, M0-T30 redesigned interaction + wired Validate. Act 3 currently has no
-entry point from the shell. This connects it the same way Act 1 and Act 2 are connected (M0-T13 / M0-T19),
-so all three acts are reachable from one place. Shell scripts (`ShellSceneNames`, `GameShellPresenter`,
-`ShellReturnToHubOverlay`, `GameShellSceneBuilder`, optionally `ShellDialogueData`) are in scope.
-Registering the Act 3 scene in Build Settings is the approved exception (same as M0-T13/M0-T19), applied
-by the user running the shell scene builder.
+Vertical-slice milestone (Docs/VERTICAL_SLICE_PLAN.md §A), next phase after Acts 1–3 became playable and
+shell-linked (M0-T31). The puzzles stay deterministic and unchanged; this task only adds story framing
+around them. Gated by the open narrative decisions (setting / protagonist / title) — to be confirmed
+before Claude drafts the content.
 
 ## Scope
 
-- `ShellSceneNames`: add the Act 3 scene name + asset path (`Act3DialogGraphPrototype`).
-- `GameShellPresenter`: add an `act3Button` + `StartAct3()` (loads the Act 3 scene via `SceneManager`),
-  wired in `Configure`/`Start` like the Act 1/Act 2 buttons.
-- `ShellReturnToHubOverlay`: also show the runtime Return-to-Hub button when the Act 3 scene is active
-  (Act 1 or Act 2 or Act 3), without touching Act 3 puzzle rules.
-- `GameShellSceneBuilder`: add the Act 3 act-select card to the hub and register the Act 3 scene in
-  Build Settings alongside shell + Act 1 + Act 2.
-- Optionally extend `ShellDialogueData` so the hub Lily line acknowledges Act 3.
-- Keep Act 3's puzzle behaviour and Acts 1/2 unchanged.
-- Update CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md; create a Codex run log. The user re-runs
-  `Ghost > Build Game Shell Scene` to regenerate the shell and apply Build Settings.
+- Narrative content (Claude-drafted): a short premise; per-act Lily intro + debrief beats and Ghost
+  reactions that tie Act 1 (intent) → Act 2 (entity) → Act 3 (dialog graph) into one through-line
+  (Ghost gradually becomes clearer; Lily warms up).
+- A small **narrative state** (which acts are done) to order/gate the beats from the shell hub.
+- Implementation (Codex): extend `ShellDialogueData` / the shell so intro/debrief beats play around each
+  act via `LilyDialogueFrame`; data-driven (not hardcoded per screen). Frontend-only, static text (no
+  LLM yet — that is M0-T29).
+- Keep all puzzle rules and Act 1/2/3 mechanics unchanged. Update CODE_WALKTHROUGH.md +
+  UNITY_TEST_CHECKLIST.md; create a Codex run log.
 
 ## Out of Scope
 
-- Do not change Act 3 puzzle logic/UI (M0-T21/M0-T22/M0-T30) or Act 1/2 mechanics.
-- No full visual-novel dialogue, save/load, node graph for other acts, backend, LLM, or final art (the
-  narrative pass is M0-T26).
-- Do not edit ProjectSettings beyond the approved Build Settings registration of the Act 3 scene; do not
-  edit Packages or `.meta`; do not hand-write scene YAML (use the builder).
+- No backend / database / LLM (static text only); no full visual-novel dialogue system; no save/load.
+- No changes to puzzle logic/validators or the node graph; no final art.
+- Do not edit ProjectSettings/Packages/.meta beyond what the shell builder already does.
 
 ## Acceptance Criteria
 
-- From the shell hub, Start Act 1 / Act 2 / Act 3 are all available; clicking Start Act 3 loads the Act 3
-  scene.
-- The Act 3 scene shows a Return-to-Hub button that loads the shell.
-- Act 3's puzzle still works after launching from the shell; Acts 1/2 still launch and return.
-- Shell + Act 1 + Act 2 + Act 3 scenes are enabled in Build Settings (the approved exception); no other
-  ProjectSettings changes are intended.
-- No Console errors in Play Mode; Act 3 puzzle logic and Acts 1/2 are unchanged.
-- CODE_WALKTHROUGH.md and UNITY_TEST_CHECKLIST.md updated; a Codex run log created.
+- Decisions confirmed (setting / protagonist / title) and recorded.
+- The shell plays a short Lily intro before each act and a debrief after, ordered by narrative state; the
+  beats tie the three acts into one story (data-driven, not hardcoded per screen).
+- Puzzle behaviour for Acts 1/2/3 is unchanged; no Console errors.
+- CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md updated; a Codex run log created.

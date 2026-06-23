@@ -8,7 +8,9 @@ namespace Ghost.Presentation.Shell
 {
     public static class ShellReturnToHubOverlay
     {
-        private const string OverlayName = "Shell Return To Hub Overlay";
+        private const string OverlayCanvasName = "Shell Return To Hub Overlay Canvas";
+        private const string OverlayButtonName = "Shell Return To Hub Overlay";
+        private const int OverlaySortingOrder = 32767;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void RegisterSceneHook()
@@ -30,32 +32,40 @@ namespace Ghost.Presentation.Shell
                 return;
             }
 
-            if (GameObject.Find(OverlayName) != null)
+            if (GameObject.Find(OverlayButtonName) != null)
             {
                 return;
             }
 
-            var canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                canvas = CreateCanvas();
-            }
-
             EnsureEventSystem();
+            var canvas = CreateOverlayCanvas();
             CreateReturnButton(canvas.transform);
         }
 
         private static bool ShouldShowOverlay(string sceneName)
         {
             return sceneName == ShellSceneNames.Act1SceneName ||
-                sceneName == ShellSceneNames.Act2SceneName;
+                sceneName == ShellSceneNames.Act2SceneName ||
+                sceneName == ShellSceneNames.Act3SceneName;
         }
 
-        private static Canvas CreateCanvas()
+        private static Canvas CreateOverlayCanvas()
         {
-            var canvasObject = new GameObject("Canvas", typeof(RectTransform));
+            var existingCanvasObject = GameObject.Find(OverlayCanvasName);
+            if (existingCanvasObject != null)
+            {
+                var existingCanvas = existingCanvasObject.GetComponent<Canvas>();
+                if (existingCanvas != null)
+                {
+                    return existingCanvas;
+                }
+            }
+
+            var canvasObject = new GameObject(OverlayCanvasName, typeof(RectTransform));
             var canvas = canvasObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = OverlaySortingOrder;
 
             var scaler = canvasObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -80,7 +90,7 @@ namespace Ghost.Presentation.Shell
 
         private static void CreateReturnButton(Transform parent)
         {
-            var buttonRoot = new GameObject(OverlayName, typeof(RectTransform));
+            var buttonRoot = new GameObject(OverlayButtonName, typeof(RectTransform));
             buttonRoot.transform.SetParent(parent, false);
 
             var rect = buttonRoot.GetComponent<RectTransform>();
