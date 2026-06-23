@@ -131,7 +131,15 @@ namespace Ghost.Presentation.Shell.Editor
             var presenceColumn = CreateColumnPanel("Presence Panel", body, 0.32f, new Color(0.92f, 0.97f, 1f));
 
             var titleScreen = CreateTitleScreen(screenColumn);
-            var hubScreen = CreateActHubScreen(screenColumn, out var act1Button, out var act2Button, out var act3Button, out var backToTitleButton);
+            var nameEntryScreen = CreateNameEntryScreen(screenColumn, out var playerNameInput, out var confirmNameButton);
+            var hubScreen = CreateActHubScreen(
+                screenColumn,
+                out var act1Button,
+                out var act2Button,
+                out var act3Button,
+                out var narrativeContinueButton,
+                out var backToTitleButton);
+            nameEntryScreen.SetActive(false);
             hubScreen.SetActive(false);
 
             CreatePresencePanel(presenceColumn);
@@ -140,12 +148,16 @@ namespace Ghost.Presentation.Shell.Editor
 
             presenter.Configure(
                 titleScreen,
+                nameEntryScreen,
                 hubScreen,
                 dialogueFrame,
                 startButton,
+                playerNameInput,
+                confirmNameButton,
                 act1Button,
                 act2Button,
                 act3Button,
+                narrativeContinueButton,
                 backToTitleButton);
 
             dialogueFrame.Show(ShellDialogueData.GetLine(ShellDialogueData.TitleScreenId));
@@ -181,11 +193,44 @@ namespace Ghost.Presentation.Shell.Editor
             return screen;
         }
 
+        private static GameObject CreateNameEntryScreen(
+            Transform parent,
+            out InputField playerNameInput,
+            out Button confirmNameButton)
+        {
+            var screen = CreatePanel(
+                "Name Entry Screen",
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(1f, 0.99f, 0.96f)).gameObject;
+
+            ConfigureScreenLayout(screen, 18f);
+
+            CreateLabel("Name Entry Heading", screen.transform, "What should Ghost call you?", 38, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.17f, 0.11f, 0.25f), 58f);
+            CreateLabel(
+                "Name Entry Copy",
+                screen.transform,
+                "Lily writes your name on a slightly haunted lab clipboard. Leave it blank to use Junior.",
+                22,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.22f, 0.36f),
+                76f);
+
+            playerNameInput = CreateInputField("Player Name Input", screen.transform, "Junior", 380f, 56f);
+            confirmNameButton = CreateButton("Confirm Name Button", screen.transform, "Help Ghost", 210f, 54f);
+            return screen;
+        }
+
         private static GameObject CreateActHubScreen(
             Transform parent,
             out Button act1Button,
             out Button act2Button,
             out Button act3Button,
+            out Button narrativeContinueButton,
             out Button backToTitleButton)
         {
             var screen = CreatePanel(
@@ -210,8 +255,10 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(0.25f, 0.30f, 0.40f),
                 62f);
 
+            var actCardRow = CreateActCardRow(screen.transform);
+
             act1Button = CreateActCard(
-                screen.transform,
+                actCardRow,
                 "Act 1 Card",
                 "Act 1: Intent Classification",
                 "Group different messages by the same purpose so Ghost reacts to what the speaker wants.",
@@ -220,7 +267,7 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(0.92f, 0.97f, 1f));
 
             act2Button = CreateActCard(
-                screen.transform,
+                actCardRow,
                 "Act 2 Card",
                 "Act 2: Entity Extraction",
                 "Tag the important details in a message so Ghost notices places, objects, and times.",
@@ -229,7 +276,7 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(0.93f, 1f, 0.96f));
 
             act3Button = CreateActCard(
-                screen.transform,
+                actCardRow,
                 "Act 3 Card",
                 "Act 3: Dialog Graph",
                 "Build Ghost's reply map so it answers when details are known and asks when they are missing.",
@@ -237,8 +284,30 @@ namespace Ghost.Presentation.Shell.Editor
                 "Start Act 3",
                 new Color(1f, 0.965f, 0.88f));
 
+            narrativeContinueButton = CreateButton("Narrative Continue Button", screen.transform, "Continue to Act", 220f, 44f);
+            narrativeContinueButton.gameObject.SetActive(false);
+
             backToTitleButton = CreateButton("Back To Title Button", screen.transform, "Back to Title", 190f, 46f);
             return screen;
+        }
+
+        private static Transform CreateActCardRow(Transform parent)
+        {
+            var row = new GameObject("Act Card Row", typeof(RectTransform)).transform;
+            row.SetParent(parent, false);
+
+            var layoutElement = row.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = 168f;
+            layoutElement.preferredHeight = 168f;
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            return row;
         }
 
         private static Button CreateActCard(
@@ -260,8 +329,9 @@ namespace Ghost.Presentation.Shell.Editor
                 color);
 
             var cardLayoutElement = card.gameObject.AddComponent<LayoutElement>();
-            cardLayoutElement.minHeight = 138f;
-            cardLayoutElement.preferredHeight = 138f;
+            cardLayoutElement.minHeight = 168f;
+            cardLayoutElement.preferredHeight = 168f;
+            cardLayoutElement.flexibleWidth = 1f;
 
             var cardLayout = card.gameObject.AddComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(16, 16, 10, 10);
@@ -338,22 +408,66 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(1f, 0.98f, 0.91f));
 
             var layoutElement = frame.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 172f;
-            layoutElement.preferredHeight = 172f;
+            layoutElement.minHeight = 178f;
+            layoutElement.preferredHeight = 178f;
 
-            var layout = frame.gameObject.AddComponent<VerticalLayoutGroup>();
+            var layout = frame.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.padding = new RectOffset(24, 24, 18, 18);
-            layout.spacing = 8f;
+            layout.spacing = 16f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
-            var speaker = CreateLabel("Lily Speaker Name", frame, "Lily", 24, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.20f, 0.13f, 0.28f), 34f);
-            var dialogue = CreateLabel("Lily Dialogue Text", frame, string.Empty, 22, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.22f, 0.36f), 86f);
+            var portrait = CreatePanel(
+                "Speaker Portrait Frame",
+                frame,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(1f, 0.96f, 0.88f));
+
+            var portraitLayoutElement = portrait.gameObject.AddComponent<LayoutElement>();
+            portraitLayoutElement.minWidth = 118f;
+            portraitLayoutElement.preferredWidth = 118f;
+            portraitLayoutElement.minHeight = 118f;
+            portraitLayoutElement.preferredHeight = 118f;
+
+            var portraitOutline = portrait.gameObject.AddComponent<Outline>();
+            portraitOutline.effectColor = new Color(0.66f, 0.58f, 0.78f, 0.7f);
+            portraitOutline.effectDistance = new Vector2(2f, -2f);
+
+            var portraitPlaceholder = CreateFillText(
+                "Portrait Placeholder",
+                portrait,
+                "Lily",
+                20,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                new Color(0.24f, 0.16f, 0.30f));
+            portraitPlaceholder.rectTransform.offsetMin = Vector2.zero;
+            portraitPlaceholder.rectTransform.offsetMax = Vector2.zero;
+
+            var textColumn = new GameObject("Dialogue Text Column", typeof(RectTransform)).GetComponent<RectTransform>();
+            textColumn.SetParent(frame, false);
+
+            var textColumnLayoutElement = textColumn.gameObject.AddComponent<LayoutElement>();
+            textColumnLayoutElement.flexibleWidth = 1f;
+            textColumnLayoutElement.minHeight = 118f;
+
+            var textColumnLayout = textColumn.gameObject.AddComponent<VerticalLayoutGroup>();
+            textColumnLayout.spacing = 8f;
+            textColumnLayout.childControlWidth = true;
+            textColumnLayout.childControlHeight = true;
+            textColumnLayout.childForceExpandWidth = true;
+            textColumnLayout.childForceExpandHeight = false;
+
+            var speaker = CreateLabel("Lily Speaker Name", textColumn, "Lily", 24, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.20f, 0.13f, 0.28f), 34f);
+            var dialogue = CreateLabel("Lily Dialogue Text", textColumn, string.Empty, 22, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.22f, 0.36f), 86f);
 
             var dialogueFrame = frame.gameObject.AddComponent<LilyDialogueFrame>();
-            dialogueFrame.Configure(speaker, dialogue);
+            dialogueFrame.Configure(speaker, dialogue, portrait.GetComponent<Image>(), portraitPlaceholder);
             return dialogueFrame;
         }
 
@@ -395,6 +509,58 @@ namespace Ghost.Presentation.Shell.Editor
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+        }
+
+        private static InputField CreateInputField(string name, Transform parent, string placeholder, float width, float height)
+        {
+            var inputTransform = CreatePanel(
+                name,
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(1f, 1f, 1f));
+
+            var image = inputTransform.GetComponent<Image>();
+            image.raycastTarget = true;
+
+            var outline = inputTransform.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.48f, 0.54f, 0.76f, 0.78f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            var layoutElement = inputTransform.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minWidth = width;
+            layoutElement.preferredWidth = width;
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
+
+            var placeholderText = CreateFillText(
+                "Placeholder",
+                inputTransform,
+                placeholder,
+                20,
+                FontStyle.Italic,
+                TextAnchor.MiddleLeft,
+                new Color(0.48f, 0.45f, 0.56f));
+
+            var inputText = CreateFillText(
+                "Text",
+                inputTransform,
+                string.Empty,
+                22,
+                FontStyle.Normal,
+                TextAnchor.MiddleLeft,
+                new Color(0.15f, 0.12f, 0.22f));
+
+            var input = inputTransform.gameObject.AddComponent<InputField>();
+            input.targetGraphic = image;
+            input.textComponent = inputText;
+            input.placeholder = placeholderText;
+            input.characterLimit = 24;
+            input.lineType = InputField.LineType.SingleLine;
+
+            return input;
         }
 
         private static Button CreateButton(string name, Transform parent, string label, float width, float height)
@@ -441,6 +607,36 @@ namespace Ghost.Presentation.Shell.Editor
             text.raycastTarget = false;
 
             return button;
+        }
+
+        private static Text CreateFillText(
+            string name,
+            Transform parent,
+            string text,
+            int fontSize,
+            FontStyle fontStyle,
+            TextAnchor alignment,
+            Color color)
+        {
+            var textTransform = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+            textTransform.SetParent(parent, false);
+            textTransform.anchorMin = Vector2.zero;
+            textTransform.anchorMax = Vector2.one;
+            textTransform.offsetMin = new Vector2(18f, 0f);
+            textTransform.offsetMax = new Vector2(-18f, 0f);
+
+            var label = textTransform.gameObject.AddComponent<Text>();
+            label.text = text;
+            label.font = GetBuiltinFont();
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.alignment = alignment;
+            label.color = color;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.raycastTarget = false;
+
+            return label;
         }
 
         private static RectTransform CreatePanel(

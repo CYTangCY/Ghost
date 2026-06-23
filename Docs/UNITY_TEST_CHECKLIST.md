@@ -1027,3 +1027,59 @@ M0-T31 uses the Game Shell builder and does not hand-write scene YAML.
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` with the title screen, hub screen, Lily dialogue frame, Start button, Act 1 button, Act 2 button, Act 3 button, and Back-to-title button.
+
+---
+
+## M0-T26: Acts 1-3 Narrative Shell Integration
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Shell/GhostNarrativeState.cs`
+   - `Assets/Presentation/Shell/ShellDialogueData.cs`
+   - `Assets/Presentation/Shell/LilyDialogueFrame.cs`
+   - `Assets/Presentation/Shell/GameShellPresenter.cs`
+   - `Assets/Presentation/Shell/ShellReturnToHubOverlay.cs`
+   - `Assets/Presentation/Shell/Editor/GameShellSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Generation Check
+
+M0-T26 uses the Game Shell builder and does not hand-write scene YAML.
+
+1. Select `Ghost > Build Game Shell Scene`.
+2. Open `Assets/Scenes/GameShellPrototype.unity`.
+3. Confirm the generated shell has:
+   - a title screen;
+   - a name-entry screen with an input field and confirm button;
+   - a hub screen with Act 1, Act 2, and Act 3 cards;
+   - a dialogue frame with a speaker portrait placeholder slot;
+   - a narrative continue button that is hidden until an intro or queued closing beat needs it.
+
+### Play Mode Narrative Flow Check
+
+1. Enter Play Mode in `Assets/Scenes/GameShellPrototype.unity`.
+2. Confirm the title screen shows `Ghost` and a Lily dialogue line.
+3. Click `Start / Continue`.
+4. Confirm the name-entry screen appears and Lily asks what Ghost should call the player.
+5. Enter a test name, then click `Help Ghost`.
+6. Confirm the hub opens and Lily's line includes the entered name.
+7. Confirm the three act cards are laid out in a row and the Lily dialogue frame remains fully inside the viewport.
+8. Click `Start Act 1`.
+9. Confirm Act 1 does not load immediately; Lily's Act 1 intro beat appears first.
+10. Click `Continue to Act 1`; confirm Act 1 loads.
+11. Click `Return to Hub`; confirm the shell opens and Lily's Act 1 debrief appears.
+12. Repeat the intro/load/return/debrief flow for Act 2.
+13. Repeat the intro/load/return/debrief flow for Act 3.
+14. After the Act 3 debrief, click `Continue`.
+15. Confirm the speaker switches to Ghost and the closing line appears.
+16. Confirm the portrait placeholder switches between Lily and Ghost when the speaker changes.
+17. Confirm leaving the name blank uses the fallback name `Junior`.
+18. Confirm Acts 1, 2, and 3 puzzle mechanics are unchanged.
+19. Confirm there are no new Console errors.
+20. Confirm no backend, LLM, save/load, scoring, database, or puzzle-validator changes were added by M0-T26.
+
+### Inspector Setup
+
+If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` with the title screen, name-entry screen, hub screen, Lily dialogue frame, Start button, name input, name confirmation button, Act 1/2/3 buttons, narrative continue button, and Back-to-title button. The builder wires `LilyDialogueFrame` with speaker text, dialogue text, portrait Image, and portrait placeholder Text; Lily/Ghost portrait Sprite fields can remain empty.

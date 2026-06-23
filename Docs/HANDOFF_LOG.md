@@ -334,6 +334,16 @@ prototype acts are now launchable from the hub. Archive:
 `Docs/completed_tasks/M0-T31_act3_shell_integration.md`. Next: M0-T26 (narrative integration into
 Acts 1–3).
 
+### 2026-06-24 — M0-T26: Narrative integration into Acts 1–3 — Completed
+Codex runs 001 (narrative) + 002 (hub layout fix). Added `GhostNarrativeState` (in-memory player name +
+acts done across scene loads), a name-entry step, act-aware `ShellDialogueData` (intro/debrief + speaker
++ `{playerName}`), a `LilyDialogueFrame` portrait frame (empty Sprite placeholders), the shell narrative
+flow (title → name → hub greeting → act intro → puzzle → debrief → Act 3 Ghost closing), and
+return-overlay pending-debrief; run 002 put the three hub act cards in one row so Lily's box stays in
+the viewport. Puzzles unchanged. Run logs honest; the user verified ("功能完成"). Claude reviewed scope
+(clean; the Act 2 scene showing modified is an unrelated Editor side-effect, left unstaged). Archive:
+`Docs/completed_tasks/M0-T26_narrative_integration.md`. Next: M0-T32 (in-act ambient Ghost+Lily banter).
+
 ---
 
 ## Entry Template

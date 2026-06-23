@@ -65,4 +65,49 @@ Ghost grows clearer/cuter each act; Lily grows from nervous to quietly proud.
 - Add a **name-entry step** on Start; hold the player name + narrative state (which acts debriefed) in a
   simple in-memory frontend narrative-state object (no save/load/backend yet — that is M0-T27/M0-T28).
 - Beats are **data-driven** (not hardcoded per screen); **static text** (no LLM yet — that is M0-T29).
+- **Character portrait frame:** the dialogue frame includes a sized portrait **Image slot** for the
+  current speaker (Lily / Ghost), with serialized `Sprite` fields left empty (a labelled placeholder box
+  for now) so character art can be dropped in later.
 - Do NOT change puzzle logic/validators or act mechanics.
+
+## In-Act Ambient Banter (M0-T32)
+
+Use the spare space in each act scene for a small area where Ghost + Lily chat with the player in real
+time while they solve the puzzle. Fixed per-act dialogue loops for now (as many as feasible, fun); later
+extended with player-choice branches + LLM.
+
+Design:
+- A non-blocking ambient dialogue strip in each act scene's spare space; cycles lines (timer and/or a
+  "next" tap) and loops. Reuses the speaker portrait placeholder.
+- Data-driven: per act, a list of ambient beats `{ speaker (Lily/Ghost), text (may use {playerName}),
+  optional tag }`. Structured so future player-choice options + LLM-sourced lines can slot in.
+- Lily's arc: Act 1 nervous/formal → Act 2 warmer → Act 3 comfortable & joking. Recurring nerdy beat:
+  Lily makes a nerdy joke/pun, then immediately backpedals in an embarrassed tone ("...That was a joke.
+  Sorry."). Keep it endearing.
+- Ghost stays story-consistent: Act 1 garbled/confused, Act 2 catching details, Act 3 clearer & asking —
+  cute, short.
+- Tone: light, nerdy, fun. Static text only (no LLM yet).
+
+Seed lines (expandable — add more per act):
+
+**Act 1 (Lily nervous; Ghost garbled)**
+- Lily: "Okay... read the *wish* behind the words, not the words. You've got this, {playerName}."
+- Ghost: "...bl-blrb?"
+- Lily: "Sorry — I think out loud when I'm nervous. Ignore me."
+- Lily: "Whatever they're asking *for* — that's the group it belongs to."
+
+**Act 2 (Lily warmer; Ghost catching details; first joke)**
+- Lily: "You're quick at this. I mean — good teamwork, {playerName}."
+- Ghost: "...key? lantern?"
+- Lily: "Look, Ghost's noticing nouns now. They grow up so fast." (beat) "...That was a joke. Sorry."
+- Lily: "It's kind of nice having company down here this late."
+
+**Act 3 (Lily comfortable, jokier; Ghost clearer)**
+- Lily: "Dialog trees — my natural habitat." (beat) "...okay, that one I meant. Mostly."
+- Ghost: "where... room?"
+- Lily: "It's asking follow-up questions. We basically raised a polite ghost."
+- Lily: "If this works I'm putting 'ghost whisperer' on my CV. ...Kidding. Probably."
+- Ghost: "thank... you."
+
+Future: replace/extend with player-choice branches and LLM-generated lines (later); the deterministic
+puzzle stays untouched.

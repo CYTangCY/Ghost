@@ -108,11 +108,42 @@ namespace Ghost.Presentation.Shell
             outline.effectColor = new Color(0.52f, 0.57f, 0.78f, 0.85f);
             outline.effectDistance = new Vector2(2f, -2f);
 
-            buttonRoot.AddComponent<Button>();
+            var button = buttonRoot.AddComponent<Button>();
+            button.onClick.AddListener(SetPendingDebriefForActiveScene);
+
             var navigation = buttonRoot.AddComponent<ShellSceneNavigationButton>();
             navigation.Configure(ShellSceneNames.GameShellSceneName);
 
             CreateLabel(buttonRoot.transform);
+        }
+
+        private static void SetPendingDebriefForActiveScene()
+        {
+            var actId = GetActIdForScene(SceneManager.GetActiveScene().name);
+            if (!string.IsNullOrWhiteSpace(actId))
+            {
+                GhostNarrativeState.SetPendingDebriefAct(actId);
+            }
+        }
+
+        private static string GetActIdForScene(string sceneName)
+        {
+            if (sceneName == ShellSceneNames.Act1SceneName)
+            {
+                return GhostNarrativeState.Act1Id;
+            }
+
+            if (sceneName == ShellSceneNames.Act2SceneName)
+            {
+                return GhostNarrativeState.Act2Id;
+            }
+
+            if (sceneName == ShellSceneNames.Act3SceneName)
+            {
+                return GhostNarrativeState.Act3Id;
+            }
+
+            return null;
         }
 
         private static void CreateLabel(Transform parent)

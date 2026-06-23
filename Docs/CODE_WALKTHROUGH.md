@@ -643,11 +643,59 @@ Run `Ghost > Build Game Shell Scene`, then confirm the generated shell can load 
 
 ### Script Name
 
+GhostNarrativeState.cs
+
+### Purpose
+
+Stores the shell's lightweight in-memory narrative progress for the Acts 1-3 vertical slice: player name, completed act ids, and the act that should debrief when the player returns to the hub.
+
+### Attached GameObject
+
+None. This is a static C# state holder used by shell presentation scripts.
+
+### Runtime Role
+
+Persists across `SceneManager` scene loads during one app session. It resets naturally when the app restarts; it does not save to disk or call any backend.
+
+### Important Fields
+
+- `PlayerName`: display name used for `{playerName}` substitutions, falling back to `Junior`.
+- `Act1Id`, `Act2Id`, `Act3Id`: shell narrative ids for the three playable acts.
+- Completed act set: tracks which act debriefs have already been consumed.
+- `PendingDebriefActId`: the act id set by the return overlay before the shell reloads.
+
+### Important Methods
+
+- `SetPlayerName(...)`: stores a trimmed player name, or the fallback name if blank.
+- `SetPendingDebriefAct(...)`: records the act the player is returning from.
+- `ConsumePendingDebriefAct()`: reads and clears the pending debrief act id.
+- `MarkActCompleted(...)` / `IsActCompleted(...)`: update and query the completed-act set.
+
+### Input
+
+Name-entry text, act ids, and return-to-hub scene context.
+
+### Output
+
+In-memory state for `GameShellPresenter`, `LilyDialogueFrame`, and `ShellReturnToHubOverlay`.
+
+### Failure Cases
+
+Blank or missing names fall back to `Junior`. Completed acts skip repeated debriefs but still return to the hub. The state is intentionally not persistent across app restarts.
+
+### Unity Test
+
+Enter a name in the shell, launch an act, return to the hub, and confirm the shell remembers the name and plays the correct act debrief within the same Play Mode session.
+
+---
+
+### Script Name
+
 ShellDialogueData.cs
 
 ### Purpose
 
-Provides small data-backed Lily dialogue lines for the shell title screen and act hub screen. The shell presenter asks this data class for text instead of hardcoding separate Lily lines inside each screen method. The hub line now acknowledges Act 1, Act 2, and Act 3.
+Provides data-backed shell dialogue: title, name-entry, hub, per-act intro beats, per-act debrief beats, and the post-Act-3 Ghost closing line. The presenter requests lines by id/act/phase instead of hardcoding narrative text.
 
 ### Attached GameObject
 
@@ -655,33 +703,39 @@ None. This is plain C# data used by shell presentation scripts.
 
 ### Runtime Role
 
-When the shell changes screens, `GameShellPresenter` requests the matching `ShellDialogueLine` and passes it to `LilyDialogueFrame`.
+When the shell changes screens or narrative phases, `GameShellPresenter` requests the matching `ShellDialogueLine` or act beat and passes it to `LilyDialogueFrame`.
 
 ### Important Fields
 
 - `TitleScreenId`: id for the title-screen Lily line.
+- `NameEntryScreenId`: id for the player-name prompt line.
 - `ActHubScreenId`: id for the act-select / hub Lily line.
 - `ShellDialogueLine`: immutable speaker/text data.
+- `ShellDialogueBeat`: immutable act/phase/speaker/text data.
+- `IntroPhaseId`, `DebriefPhaseId`, `ClosingPhaseId`: phases used by `GetBeat(...)`.
+- `LilySpeakerName`, `GhostSpeakerName`: speaker ids used by the portrait frame.
 
 ### Important Methods
 
 - `GetLine(string screenId)`: returns the Lily line for a known shell screen id.
+- `GetBeat(string actId, string phase)`: returns the act-aware intro, debrief, or closing line.
+- `GetActTitle(string actId)`: returns a short label for continue-button copy.
 
 ### Input
 
-A shell screen id.
+A shell screen id, or an act id plus beat phase.
 
 ### Output
 
-A `ShellDialogueLine` containing speaker name and dialogue text.
+A `ShellDialogueLine` containing speaker name and dialogue text. Some text contains `{playerName}` for `LilyDialogueFrame` to substitute.
 
 ### Failure Cases
 
-Unknown screen ids throw `ArgumentException`, which should make missing dialogue wiring obvious during testing.
+Unknown screen ids or act beats throw `ArgumentException`, which should make missing dialogue wiring obvious during testing.
 
 ### Unity Test
 
-Enter Play Mode in the shell scene, click `Start / Continue`, and confirm the Lily dialogue frame changes from the title line to the act hub line mentioning Act 1, Act 2, and Act 3.
+Enter Play Mode in the shell scene, enter a name, click each act card, and confirm the dialogue frame shows that act's intro before loading. Return from each act and confirm the matching debrief appears; after Act 3, continue once more and confirm Ghost says the closing line.
 
 ---
 
@@ -691,7 +745,7 @@ LilyDialogueFrame.cs
 
 ### Purpose
 
-Reusable UI frame for displaying Lily dialogue from `ShellDialogueData`.
+Reusable UI frame for displaying shell narrative lines from `ShellDialogueData`, including Lily and Ghost speaker names, dialogue text, player-name substitution, and a portrait/placeholder slot.
 
 ### Attached GameObject
 
@@ -699,33 +753,37 @@ Attached to the `Lily Dialogue Frame` GameObject created by `GameShellSceneBuild
 
 ### Runtime Role
 
-Receives `ShellDialogueLine` values and writes the speaker name and dialogue text into UGUI `Text` components.
+Receives `ShellDialogueLine` values, replaces `{playerName}` with `GhostNarrativeState.PlayerName`, writes the speaker name and dialogue text into UGUI `Text` components, and switches the portrait slot based on the current speaker.
 
 ### Important Fields
 
-- `speakerNameText`: text component for Lily's name.
-- `dialogueText`: text component for Lily's current guidance line.
+- `speakerNameText`: text component for the current speaker name.
+- `dialogueText`: text component for the current narrative line.
+- `speakerPortraitImage`: sized Image slot for Lily/Ghost portrait art.
+- `portraitPlaceholderText`: placeholder label shown when no speaker sprite is assigned.
+- `lilyPortrait`, `ghostPortrait`: optional serialized sprites, intentionally empty until art exists.
 
 ### Important Methods
 
 - `Configure(...)`: used by the editor builder to assign the text references.
 - `Show(ShellDialogueLine line)`: updates the visible dialogue frame.
+- `UpdatePortrait(...)`: selects the Lily/Ghost sprite or labelled placeholder.
 
 ### Input
 
-Dialogue data from `ShellDialogueData`.
+Dialogue data from `ShellDialogueData` and the current player name from `GhostNarrativeState`.
 
 ### Output
 
-Visible Lily speaker name and dialogue text in the shell UI.
+Visible Lily/Ghost speaker name, portrait placeholder or sprite, and dialogue text in the shell UI.
 
 ### Failure Cases
 
-Missing text references leave that part of the frame unchanged.
+Missing text or portrait references leave that part of the frame unchanged. Empty portrait sprites show the labelled placeholder box.
 
 ### Unity Test
 
-Open the shell scene in Play Mode and confirm the Lily frame appears on both the title screen and the act hub screen with different text.
+Open the shell scene in Play Mode and confirm the frame appears on title, name-entry, hub, intro, debrief, and Act 3 closing beats. Confirm Lily lines show the Lily placeholder and the Act 3 closing line switches to the Ghost placeholder.
 
 ---
 
@@ -735,7 +793,7 @@ GameShellPresenter.cs
 
 ### Purpose
 
-Controls the placeholder shell scene: title screen, act-select/hub screen, Lily dialogue-frame updates, and starting Act 1, Act 2, or Act 3.
+Controls the shell scene narrative flow: title screen, player-name entry, act-select/hub screen, act intro beats, post-act debrief beats, the Act 3 closing line, and starting Act 1, Act 2, or Act 3.
 
 ### Attached GameObject
 
@@ -743,47 +801,56 @@ Attached to the `Game Shell Root` GameObject created by `GameShellSceneBuilder`.
 
 ### Runtime Role
 
-On `Start`, it wires the shell buttons, shows the title screen, and displays the title-screen Lily dialogue. It switches to the hub screen when the player clicks `Start / Continue`, loads Act 1 when the player clicks `Start Act 1`, loads Act 2 when the player clicks `Start Act 2`, and loads Act 3 when the player clicks `Start Act 3`.
+On `Start`, it wires the shell buttons. A fresh session shows the title screen; `Start / Continue` opens the name-entry screen, then the hub. Act card clicks show that act's intro line first; the narrative continue button then loads the selected act. If `GhostNarrativeState` has a pending debrief act on shell load, the presenter opens the hub, plays that act's debrief, and queues the Ghost closing line after Act 3.
 
 ### Important Fields
 
 - `titleScreen`: root GameObject for the title screen.
+- `nameEntryScreen`: root GameObject for the player-name entry step.
 - `actHubScreen`: root GameObject for the act-select/hub screen.
 - `lilyDialogueFrame`: reusable Lily dialogue UI.
 - `startButton`: title-screen button that opens the hub.
+- `playerNameInput`: input field used to store the player's name in `GhostNarrativeState`.
+- `confirmNameButton`: name-entry button that confirms the player name and opens the hub.
 - `act1Button`: hub button that loads Act 1.
 - `act2Button`: hub button that loads Act 2.
 - `act3Button`: hub button that loads Act 3.
+- `narrativeContinueButton`: button used to continue from an intro into an act, or from the Act 3 debrief into the Ghost closing line.
 - `backToTitleButton`: hub button that returns to the title screen.
 
 ### Important Methods
 
 - `Configure(...)`: used by the editor builder to assign all scene references.
 - `ShowTitle()`: shows the title screen and title Lily line.
+- `ShowNameEntry()`: shows the player-name prompt screen and name-entry Lily line.
 - `ShowActHub()`: shows the act hub and hub Lily line.
+- `ConfirmPlayerNameAndShowHub()`: stores the name and opens the hub.
+- `ShowActIntro(...)`: shows the selected act's intro beat and arms the continue button.
 - `StartAct1()`: loads `Act1IntentClassificationPrototype` through `SceneManager`.
 - `StartAct2()`: loads `Act2EntityExtractionPrototype` through `SceneManager`.
 - `StartAct3()`: loads `Act3DialogGraphPrototype` through `SceneManager`.
+- `PlayPendingDebrief()`: consumes `GhostNarrativeState` pending debrief state and shows post-act narrative.
 
 ### Input
 
-Button clicks from the shell UI.
+Button clicks and player-name input from the shell UI.
 
 ### Output
 
-Screen visibility changes, Lily dialogue-frame text changes, and SceneManager loading of Act 1, Act 2, or Act 3.
+Screen visibility changes, data-driven dialogue-frame text changes, in-memory narrative state updates, and SceneManager loading of Act 1, Act 2, or Act 3.
 
 ### Failure Cases
 
 - Missing screen references prevent that screen from being shown or hidden.
 - Missing button references mean that button will not be wired.
+- Missing name input falls back to `Junior`.
 - If Act 1 is not in Build Settings, `StartAct1()` can fail to load the scene.
 - If Act 2 is not in Build Settings, `StartAct2()` can fail to load the scene.
 - If Act 3 is not in Build Settings, `StartAct3()` can fail to load the scene.
 
 ### Unity Test
 
-Open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, click `Start / Continue`, then confirm `Start Act 1` loads Act 1, `Start Act 2` loads Act 2, and `Start Act 3` loads Act 3.
+Open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, click `Start / Continue`, enter a player name, and confirm the hub line uses that name. Click each act card, confirm an intro appears first, then click the continue button to load the act. Return from each act and confirm the debrief appears; after Act 3, click continue again and confirm Ghost's closing line appears.
 
 ---
 
@@ -844,7 +911,7 @@ None in the scene. The static runtime hook creates a dedicated `Shell Return To 
 
 ### Runtime Role
 
-After scene load, it checks the active scene name. If Act 1, Act 2, or Act 3 is active and no return overlay exists, it creates an EventSystem if needed, then creates a dedicated high-sorting overlay Canvas and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`.
+After scene load, it checks the active scene name. If Act 1, Act 2, or Act 3 is active and no return overlay exists, it creates an EventSystem if needed, then creates a dedicated high-sorting overlay Canvas and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`. Before the button loads the shell, it records the active act in `GhostNarrativeState` so the hub can play the matching debrief.
 
 ### Important Fields
 
@@ -857,14 +924,15 @@ No Inspector fields.
 - `ShouldShowOverlay(...)`: returns true for Act 1, Act 2, and Act 3 scene names.
 - `CreateOverlayCanvas(...)`: builds a separate top-layer Canvas so act prototype UI canvases cannot cover the return button.
 - `CreateReturnButton(...)`: builds the placeholder UGUI return button.
+- `SetPendingDebriefForActiveScene()`: maps the current act scene to an act id before returning to the shell.
 
 ### Input
 
-Unity scene-load events.
+Unity scene-load events and return button clicks.
 
 ### Output
 
-A small `Return to Hub` button in Act 1, Act 2, and Act 3 that loads `GameShellPrototype`.
+A small `Return to Hub` button in Act 1, Act 2, and Act 3 that marks the pending debrief act and loads `GameShellPrototype`.
 
 ### Failure Cases
 
@@ -873,7 +941,7 @@ A small `Return to Hub` button in Act 1, Act 2, and Act 3 that loads `GameShellP
 
 ### Unity Test
 
-Start from the shell, enter Act 1, Act 2, and Act 3, confirm the `Return to Hub` button appears above each act's own UI, and click it to return to the shell.
+Start from the shell, enter Act 1, Act 2, and Act 3, confirm the `Return to Hub` button appears above each act's own UI, and click it to return to the shell. Confirm the hub dialogue changes to the returned act's debrief.
 
 ---
 
@@ -883,7 +951,7 @@ GameShellSceneBuilder.cs
 
 ### Purpose
 
-Editor-only helper that creates the placeholder Game Shell scene through Unity-supported scene serialization and registers the shell, Act 1, Act 2, and Act 3 scenes in Build Settings.
+Editor-only helper that creates the placeholder Game Shell scene through Unity-supported scene serialization. It builds the title, name-entry, act hub, companion placeholders, dialogue portrait frame, and shell navigation wiring. The existing builder still registers the shell, Act 1, Act 2, and Act 3 scenes when the menu is run.
 
 ### Attached GameObject
 
@@ -899,8 +967,11 @@ No Inspector fields.
 
 ### Important Methods
 
-- `BuildGameShellScene()`: creates `Assets/Scenes/GameShellPrototype.unity`, builds the placeholder UGUI title/hub/companion/dialogue layout, wires `GameShellPresenter`, and registers shell + Act 1 + Act 2 + Act 3 in Build Settings.
+- `BuildGameShellScene()`: creates `Assets/Scenes/GameShellPrototype.unity`, builds the placeholder UGUI title/name-entry/hub/companion/dialogue layout, wires `GameShellPresenter`, and uses the existing shell registration flow.
 - `RegisterGameShellBuildSettings()`: updates Build Settings without rebuilding the shell scene.
+- `CreateNameEntryScreen(...)`: builds the name-entry screen with an `InputField` and confirm button.
+- `CreateLilyDialogueFrame(...)`: builds the dialogue frame with a speaker portrait Image slot plus placeholder label.
+- `CreateActCardRow(...)`: lays out the three act cards horizontally so the act hub does not push the Lily dialogue frame outside the viewport.
 - `CreateActCard(...)`: creates reusable act-select cards for Act 1, Act 2, and Act 3.
 
 ### Input
@@ -922,7 +993,7 @@ Manual Unity Editor menu actions:
 
 ### Unity Test
 
-Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, confirm `Start Act 1`, `Start Act 2`, and `Start Act 3` are visible, launch all three acts, and confirm `Return to Hub` works from each.
+Run `Ghost > Build Game Shell Scene`, open `Assets/Scenes/GameShellPrototype.unity`, enter Play Mode, confirm name entry appears after `Start / Continue`, confirm the act hub keeps the Lily dialogue frame fully inside the viewport, confirm the dialogue portrait placeholder switches between Lily and Ghost, confirm `Start Act 1`, `Start Act 2`, and `Start Act 3` show intro beats before loading, launch all three acts, and confirm `Return to Hub` plays the correct debrief from each.
 
 ---
 
