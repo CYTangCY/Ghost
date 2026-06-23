@@ -1083,3 +1083,54 @@ M0-T26 uses the Game Shell builder and does not hand-write scene YAML.
 ### Inspector Setup
 
 If the scene is created through `Ghost > Build Game Shell Scene`, no manual Inspector setup should be required. The builder wires `GameShellPresenter` with the title screen, name-entry screen, hub screen, Lily dialogue frame, Start button, name input, name confirmation button, Act 1/2/3 buttons, narrative continue button, and Back-to-title button. The builder wires `LilyDialogueFrame` with speaker text, dialogue text, portrait Image, and portrait placeholder Text; Lily/Ghost portrait Sprite fields can remain empty.
+
+---
+
+## M0-T32: In-Act Ambient Ghost and Lily Banter
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Banter/BanterData.cs`
+   - `Assets/Presentation/Banter/AmbientBanterPanel.cs`
+   - `Assets/Presentation/Banter/AmbientBanterHook.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Setup Check
+
+M0-T32 uses a runtime scene-load hook and does not require scene YAML edits or scene regeneration.
+
+1. Confirm no Inspector setup is required.
+2. Confirm the authored Act 1, Act 2, and Act 3 scenes do not need banter GameObjects added manually.
+3. In Play Mode, inspect the hierarchy after entering an act and confirm runtime objects appear:
+   - `Ambient Banter Canvas`
+   - `Ambient Banter Panel`
+
+### Play Mode Banter Check
+
+1. Enter Play Mode from `Assets/Scenes/GameShellPrototype.unity`.
+2. Enter a player name, then open the act hub.
+3. Launch Act 1.
+4. Confirm a compact ambient banter panel appears in spare screen space.
+5. Confirm Act 1 lines cycle and loop automatically.
+6. Confirm the `Next` button advances to the next line.
+7. Confirm Act 1 includes nervous Lily lines and garbled Ghost lines.
+8. Confirm at least one line addresses the player by the entered name.
+9. Confirm Act 1 puzzle controls remain fully playable with the panel present.
+10. Return to the hub and launch Act 2.
+11. Confirm Act 2 banter appears and cycles/loops.
+12. Confirm Lily is warmer, Ghost catches details, and the first joke/backpedal beat appears.
+13. Confirm Act 2 puzzle controls remain fully playable.
+14. Return to the hub and launch Act 3.
+15. Confirm Act 3 banter appears and cycles/loops.
+16. Confirm Lily is more comfortable/jokier, including a nerdy-joke-then-embarrassed beat.
+17. Confirm Ghost lines are clearer and ask-like, matching the Act 3 stage.
+18. Confirm Act 3 puzzle controls remain fully playable.
+19. Confirm the return-to-hub overlay still appears and works in all three acts.
+20. Confirm there are no new Console errors.
+21. Confirm no LLM, backend, save/load, player-choice branching, final art, or puzzle logic changes were added by M0-T32.
+
+### Inspector Setup
+
+No manual Inspector setup is required. `AmbientBanterHook` creates the runtime Canvas and panel when an Act 1, Act 2, or Act 3 scene loads. Portrait Sprite fields are empty runtime placeholders for now; future art can replace the labelled boxes in a later task.

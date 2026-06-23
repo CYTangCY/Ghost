@@ -1252,6 +1252,152 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## In-Act Ambient Banter
+
+### Script Name
+
+BanterData.cs
+
+### Purpose
+
+Stores static, data-driven ambient Ghost/Lily banter loops for Act 1, Act 2, and Act 3.
+
+### Attached GameObject
+
+None. This is plain C# data used by `AmbientBanterHook` and `AmbientBanterPanel`.
+
+### Runtime Role
+
+Provides per-act lists of `AmbientBanterBeat` values. Each beat has a speaker, text, optional tag, beat kind, and a future-choice placeholder list so later player-choice or LLM extensions can be added without replacing the data shape.
+
+### Important Fields
+
+- `AmbientBanterBeat`: immutable speaker/text/tag/kind/future-choice data.
+- `AmbientBanterBeatKind`: currently only `Line`; exists to keep future beat types explicit.
+- Act 1 beats: nervous Lily plus garbled Ghost lines.
+- Act 2 beats: warmer Lily, first joke/backpedal beat, and Ghost catching details.
+- Act 3 beats: jokier Lily, nerdy-joke-then-embarrassed beats, and clearer Ghost lines.
+
+### Important Methods
+
+- `GetBeats(string actId)`: returns the ambient loop for `act1`, `act2`, or `act3`.
+
+### Input
+
+An act id from `GhostNarrativeState`.
+
+### Output
+
+A read-only list of authored ambient beats for that act.
+
+### Failure Cases
+
+Unknown act ids return an empty beat list, so the runtime hook will not spawn an empty panel.
+
+### Unity Test
+
+Enter each act in Play Mode and confirm the banter panel uses act-appropriate Lily/Ghost lines from this data.
+
+---
+
+### Script Name
+
+AmbientBanterPanel.cs
+
+### Purpose
+
+Displays a compact, non-blocking UGUI banter panel with the current speaker, dialogue text, and a portrait placeholder. It cycles through the current act's beats on a timer and with a small `Next` button.
+
+### Attached GameObject
+
+Attached at runtime to the `Ambient Banter Panel` GameObject created by `AmbientBanterHook`.
+
+### Runtime Role
+
+Receives an act's banter beats, shows the first line, substitutes `{playerName}` from `GhostNarrativeState`, swaps Lily/Ghost portrait placeholders by speaker, advances after a few seconds, and loops back to the beginning.
+
+### Important Fields
+
+- `speakerNameText`: visible speaker label.
+- `dialogueText`: visible banter line.
+- `speakerPortraitImage`: sized placeholder Image for future Lily/Ghost sprites.
+- `portraitPlaceholderText`: label shown when no sprite is assigned.
+- `nextButton`: optional manual advance button.
+- `cycleSeconds`: timer interval for automatic cycling.
+- `lilyPortrait`, `ghostPortrait`: optional sprites left empty for placeholder art.
+
+### Important Methods
+
+- `Configure(...)`: assigns runtime-created UI references and cycle timing.
+- `Initialize(...)`: stores the act beat list, wires the Next button, and shows the first beat.
+- `Update()`: advances the loop when the timer elapses.
+
+### Input
+
+Ambient beats from `BanterData`.
+
+### Output
+
+A cycling, visible ambient banter strip that does not decide puzzle correctness.
+
+### Failure Cases
+
+Empty or missing beat lists show no text. Missing portrait sprites intentionally show labelled placeholders.
+
+### Unity Test
+
+Enter an act in Play Mode, watch the panel cycle, click `Next`, and confirm it loops without blocking puzzle controls.
+
+---
+
+### Script Name
+
+AmbientBanterHook.cs
+
+### Purpose
+
+Runtime scene-load hook that spawns the ambient banter panel in Act 1, Act 2, and Act 3 scenes without editing scene YAML.
+
+### Attached GameObject
+
+None in authored scenes. The static hook creates an `Ambient Banter Canvas` and `Ambient Banter Panel` when an act scene becomes active.
+
+### Runtime Role
+
+On scene load, maps the active scene name to an act id using `ShellSceneNames`, gets that act's banter beats, creates an EventSystem if needed, creates a high-sorting overlay Canvas, builds a compact bottom-right banter panel, and initializes it.
+
+### Important Fields
+
+- `CanvasName`: runtime overlay canvas name.
+- `PanelName`: runtime duplicate guard for the banter panel.
+- `SortingOrder`: keeps banter visible above act UI while below the return-to-hub overlay.
+- `CycleSeconds`: default timer interval.
+
+### Important Methods
+
+- `RegisterSceneHook()`: registers the `SceneManager.sceneLoaded` callback.
+- `CreateForScene(...)`: creates the panel only for Act 1, Act 2, or Act 3 scenes with authored beats.
+- `GetActIdForScene(...)`: maps scene names to `GhostNarrativeState` act ids.
+- `CreatePanel(...)`: builds the non-blocking UGUI panel and wires `AmbientBanterPanel`.
+
+### Input
+
+Unity scene-load events and act scene names.
+
+### Output
+
+A small runtime ambient banter panel in each act scene.
+
+### Failure Cases
+
+If no beats exist for an act, no panel is spawned. If the panel visually overlaps puzzle UI, its background/text do not block raycasts; only the `Next` button is interactive.
+
+### Unity Test
+
+Enter Act 1, Act 2, and Act 3 from the shell. Confirm the panel appears, cycles/loops, can advance with `Next`, uses the player name token, stays visually small, and does not prevent puzzle interaction.
+
+---
+
 ## Act 3 Dialog Graph UI Prototype
 
 ### Script Name
