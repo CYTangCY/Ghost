@@ -1104,33 +1104,42 @@ M0-T32 uses a runtime scene-load hook and does not require scene YAML edits or s
 1. Confirm no Inspector setup is required.
 2. Confirm the authored Act 1, Act 2, and Act 3 scenes do not need banter GameObjects added manually.
 3. In Play Mode, inspect the hierarchy after entering an act and confirm runtime objects appear:
-   - `Ambient Banter Canvas`
    - `Ambient Banter Panel`
+   - a temporary `Ambient Banter Bootstrapper` may appear briefly after scene load, then destroy itself
+4. Confirm the panel is embedded into existing act UI where possible:
+   - Act 1: inside `Validation Controls`, using the taller Act 1 banter style
+   - Act 2: inside `Validation Controls`, using the slimmer Act 2 banter style
+   - Act 3: inside `Goal Test List`, using the taller Act 3 guide style
+5. Confirm `Ambient Banter Canvas` is not created unless the expected act UI host cannot be found.
 
 ### Play Mode Banter Check
 
 1. Enter Play Mode from `Assets/Scenes/GameShellPrototype.unity`.
 2. Enter a player name, then open the act hub.
 3. Launch Act 1.
-4. Confirm a compact ambient banter panel appears in spare screen space.
+4. Confirm a compact ambient banter panel appears in the bottom validation area, not as a floating overlay covering cards or drop targets.
 5. Confirm Act 1 lines cycle and loop automatically.
 6. Confirm the `Next` button advances to the next line.
-7. Confirm Act 1 includes nervous Lily lines and garbled Ghost lines.
+7. Confirm Act 1 includes nervous Lily lines and garbled Ghost lines, with at least 15 Lily lines and 15 Ghost lines available in the loop.
 8. Confirm at least one line addresses the player by the entered name.
-9. Confirm Act 1 puzzle controls remain fully playable with the panel present.
-10. Return to the hub and launch Act 2.
-11. Confirm Act 2 banter appears and cycles/loops.
-12. Confirm Lily is warmer, Ghost catches details, and the first joke/backpedal beat appears.
-13. Confirm Act 2 puzzle controls remain fully playable.
-14. Return to the hub and launch Act 3.
-15. Confirm Act 3 banter appears and cycles/loops.
-16. Confirm Lily is more comfortable/jokier, including a nerdy-joke-then-embarrassed beat.
-17. Confirm Ghost lines are clearer and ask-like, matching the Act 3 stage.
-18. Confirm Act 3 puzzle controls remain fully playable.
-19. Confirm the return-to-hub overlay still appears and works in all three acts.
-20. Confirm there are no new Console errors.
-21. Confirm no LLM, backend, save/load, player-choice branching, final art, or puzzle logic changes were added by M0-T32.
+9. Confirm Act 1 banter text is not vertically cut off.
+10. Confirm Act 1 puzzle controls remain fully playable with the panel present.
+11. Return to the hub and launch Act 2.
+12. Confirm Act 2 banter appears in the bottom validation area and cycles/loops without covering chips or palette controls.
+13. Confirm the Act 2 banter box is visibly slimmer than the earlier oversized version while still readable.
+14. Confirm Lily is warmer, Ghost catches details, and the first joke/backpedal beat appears, with at least 15 Lily lines and 15 Ghost lines available in the loop.
+15. Confirm Act 2 puzzle controls remain fully playable.
+16. Return to the hub and launch Act 3.
+17. Confirm Act 3 banter appears in the right-side guide/test area, not over the graph board, palette, wires, trash zone, or Test Ghost's map controls.
+18. Confirm Act 3 banter cycles/loops.
+19. Confirm Act 3 banter text is not vertically cut off.
+20. Confirm Lily is more comfortable/jokier, including a nerdy-joke-then-embarrassed beat, with at least 15 Lily lines available in the loop.
+21. Confirm Ghost lines are clearer and ask-like, matching the Act 3 stage, with at least 15 Ghost lines available in the loop.
+22. Confirm Act 3 puzzle controls remain fully playable.
+23. Confirm the return-to-hub overlay still appears and works in all three acts.
+24. Confirm there are no new Console errors.
+25. Confirm no LLM, backend, save/load, player-choice branching, final art, or puzzle logic changes were added by M0-T32.
 
 ### Inspector Setup
 
-No manual Inspector setup is required. `AmbientBanterHook` creates the runtime Canvas and panel when an Act 1, Act 2, or Act 3 scene loads. Portrait Sprite fields are empty runtime placeholders for now; future art can replace the labelled boxes in a later task.
+No manual Inspector setup is required. `AmbientBanterHook` waits for each Act 1, Act 2, or Act 3 presenter to render, then embeds the runtime panel into existing UI layout hosts. Portrait Sprite fields are empty runtime placeholders for now; future art can replace the labelled boxes in a later task.

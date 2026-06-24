@@ -1274,9 +1274,9 @@ Provides per-act lists of `AmbientBanterBeat` values. Each beat has a speaker, t
 
 - `AmbientBanterBeat`: immutable speaker/text/tag/kind/future-choice data.
 - `AmbientBanterBeatKind`: currently only `Line`; exists to keep future beat types explicit.
-- Act 1 beats: nervous Lily plus garbled Ghost lines.
-- Act 2 beats: warmer Lily, first joke/backpedal beat, and Ghost catching details.
-- Act 3 beats: jokier Lily, nerdy-joke-then-embarrassed beats, and clearer Ghost lines.
+- Act 1 beats: 16 nervous Lily lines plus 16 garbled Ghost lines.
+- Act 2 beats: 16 warmer Lily lines, including the first joke/backpedal beat, plus 16 Ghost-catching-details lines.
+- Act 3 beats: 16 jokier Lily lines, including nerdy-joke-then-embarrassed beats, plus 16 clearer Ghost lines.
 
 ### Important Methods
 
@@ -1296,7 +1296,7 @@ Unknown act ids return an empty beat list, so the runtime hook will not spawn an
 
 ### Unity Test
 
-Enter each act in Play Mode and confirm the banter panel uses act-appropriate Lily/Ghost lines from this data.
+Enter each act in Play Mode and confirm the banter panel uses act-appropriate Lily/Ghost lines from this data, with at least 15 Lily lines and 15 Ghost lines available per act.
 
 ---
 
@@ -1360,24 +1360,28 @@ Runtime scene-load hook that spawns the ambient banter panel in Act 1, Act 2, an
 
 ### Attached GameObject
 
-None in authored scenes. The static hook creates an `Ambient Banter Canvas` and `Ambient Banter Panel` when an act scene becomes active.
+None in authored scenes. The static hook creates a temporary `Ambient Banter Bootstrapper` after scene load, then creates an `Ambient Banter Panel` after the act presenter has rendered. It uses an `Ambient Banter Canvas` only as a fallback if no suitable act UI host can be found.
 
 ### Runtime Role
 
-On scene load, maps the active scene name to an act id using `ShellSceneNames`, gets that act's banter beats, creates an EventSystem if needed, creates a high-sorting overlay Canvas, builds a compact bottom-right banter panel, and initializes it.
+On scene load, maps the active scene name to an act id using `ShellSceneNames`, gets that act's banter beats, creates an EventSystem if needed, waits briefly for the act presenter to finish layout, then embeds the banter panel into existing act UI space. Act 1 and Act 2 use the `Validation Controls` row; Act 3 uses the right-side `Goal Test List`. Each act has its own panel style: Act 1 uses a taller validation-row panel to avoid clipped text, Act 2 uses a slimmer validation-row panel, and Act 3 uses a taller guide-panel card for wrapped lines. A low-sorting fallback Canvas is created only if those hosts are unavailable.
 
 ### Important Fields
 
-- `CanvasName`: runtime overlay canvas name.
+- `FallbackCanvasName`: runtime fallback canvas name, used only when no act layout host can be found.
+- `BootstrapperName`: temporary runtime object that waits for act UI layout before creating the panel.
 - `PanelName`: runtime duplicate guard for the banter panel.
-- `SortingOrder`: keeps banter visible above act UI while below the return-to-hub overlay.
+- `FallbackSortingOrder`: keeps fallback banter visible without forcing it above all act UI.
 - `CycleSeconds`: default timer interval.
+- `BanterPanelStyle`: per-act runtime sizing for the panel, portrait, text column, and Next button.
 
 ### Important Methods
 
 - `RegisterSceneHook()`: registers the `SceneManager.sceneLoaded` callback.
-- `CreateForScene(...)`: creates the panel only for Act 1, Act 2, or Act 3 scenes with authored beats.
+- `ScheduleForScene(...)`: starts a temporary bootstrapper only for Act 1, Act 2, or Act 3 scenes.
+- `CreateForSceneAfterActLayout(...)`: creates the panel after the act presenter has had time to render its runtime UI.
 - `GetActIdForScene(...)`: maps scene names to `GhostNarrativeState` act ids.
+- `ResolvePlacement(...)`: prefers existing act UI hosts over fallback overlay placement.
 - `CreatePanel(...)`: builds the non-blocking UGUI panel and wires `AmbientBanterPanel`.
 
 ### Input
@@ -1386,15 +1390,15 @@ Unity scene-load events and act scene names.
 
 ### Output
 
-A small runtime ambient banter panel in each act scene.
+A runtime ambient banter panel embedded into each act scene's existing UI layout where possible.
 
 ### Failure Cases
 
-If no beats exist for an act, no panel is spawned. If the panel visually overlaps puzzle UI, its background/text do not block raycasts; only the `Next` button is interactive.
+If no beats exist for an act, no panel is spawned. Missing or unknown scene names do nothing. Duplicate panels are ignored. If expected layout hosts are missing, the hook falls back to a low-sorting runtime canvas. The panel background/text do not block raycasts; only the `Next` button is interactive.
 
 ### Unity Test
 
-Enter Act 1, Act 2, and Act 3 from the shell. Confirm the panel appears, cycles/loops, can advance with `Next`, uses the player name token, stays visually small, and does not prevent puzzle interaction.
+Enter Act 1, Act 2, and Act 3 from the shell. Confirm the panel appears embedded in existing spare UI space rather than floating over puzzle content, cycles/loops, can advance with `Next`, uses the player name token, and does not prevent puzzle interaction.
 
 ---
 

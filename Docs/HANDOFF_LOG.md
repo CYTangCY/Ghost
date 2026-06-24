@@ -344,6 +344,15 @@ the viewport. Puzzles unchanged. Run logs honest; the user verified ("功能完�
 (clean; the Act 2 scene showing modified is an unrelated Editor side-effect, left unstaged). Archive:
 `Docs/completed_tasks/M0-T26_narrative_integration.md`. Next: M0-T32 (in-act ambient Ghost+Lily banter).
 
+### 2026-06-24 — M0-T32: In-act ambient Ghost+Lily banter — Completed
+Codex runs 001–003 added a runtime ambient banter area per act: `AmbientBanterHook` spawns
+`AmbientBanterPanel` from per-act `BanterData`; non-blocking cycling/looping lines that address the
+player by name, Lily warming Act 1→Act 3 with a nerdy-joke-then-embarrassed beat, Ghost story-consistent;
+run 003 fixed per-act text-box sizing. Frontend/static; puzzles unchanged. Run logs honest ("Not run"
+Unity); all 3 retained. User accepted ("先暫時這樣，繼續下一步"). Claude reviewed scope (clean — only
+Banter + docs). Archive: `Docs/completed_tasks/M0-T32_in_act_ambient_banter.md`. Next: M0-T27 (backend +
+database foundation; full-system Phase D).
+
 ---
 
 ## Entry Template

@@ -2,47 +2,54 @@
 
 ## ID
 
-M0-T32
+M0-T27
 
 ## Goal
 
-Add an in-act ambient Ghost+Lily banter area in each act scene's spare space: fixed per-act dialogue
-loops (data-driven, plenty, fun) with Lily warming up across acts + a recurring nerdy-joke-then-
-embarrassed beat, and story-consistent Ghost lines. Frontend, static text; structured so player choices
-+ LLM can extend it later. Continuation of the M0-T26 narrative work (user request).
+Scaffold the full-system backend + database foundation (ROADMAP Phase D / `VERTICAL_SLICE_PLAN.md` §B):
+a local Node.js + TypeScript REST service backed by SQLite, exposing content / progress / attempts
+endpoints. No Unity client wiring yet (M0-T28) and no LLM yet (M0-T29). Deterministic puzzle correctness
+stays client-side — the backend stores and serves data; it does not decide scoring.
 
 ## Context
 
-Acts 1–3 are playable and the shell narrative (name entry, intro/debrief beats, portraits) is done
-(M0-T26). The user wants the spare on-screen space during each act used for real-time Ghost+Lily banter
-that makes the lab feel alive. Content is drafted in `Docs/NARRATIVE.md` ("In-Act Ambient Banter").
-Puzzles stay deterministic and unchanged; this is presentation/flavour only.
+Vertical-slice milestone. Acts 1–3 + the shell narrative + banter are done; the next workstream is the
+server-side foundation. Contracts are already drafted in `VERTICAL_SLICE_PLAN.md` §B and
+`ARCHITECTURE.md` (Phase D). This is the project's first non-Unity component: a new top-level backend
+project (outside `Assets/`). Stack per `CONFIRMED_PROJECT_CONTEXT.md` §8: Node.js + TypeScript, REST,
+SQLite, pseudonymous local profile, attempt-log analytics. Default framework Express + better-sqlite3,
+running locally (confirm if a different stack is preferred).
 
 ## Scope
 
-- An ambient banter panel placed in each act prototype scene's spare space (Act 1/2/3), non-blocking,
-  that cycles per-act dialogue loops (timer and/or a "next" tap) and loops. Reuse the speaker portrait
-  placeholder.
-- Data-driven ambient beats per act `{ speaker, text (with {playerName}), optional tag }`, seeded from
-  `Docs/NARRATIVE.md`; easy to add more lines. Structure leaves room for future player choices / LLM
-  (e.g. a beat type or optional choices field) without building them now.
-- Lily's arc (Act 1 nervous → Act 3 joking) + the nerdy-joke-then-embarrassed beat; Ghost lines match
-  each act's story stage; address the player by name.
-- Frontend, static text only (no LLM, no backend, no save/load). Do NOT change puzzle logic, validators,
-  sessions, or act mechanics. Regenerate scenes via the existing builders if needed; no Build Settings
-  changes beyond existing.
-- Update CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md; create a Codex run log.
+- A new top-level backend project (e.g. `Backend/`), separate from the Unity project (NOT under
+  `Assets/`): `package.json`, `tsconfig.json`, a small REST server, SQLite, and a schema + seed.
+- DB schema: `learning_content`, `puzzles` (per-act content + answer keys as reference/analytics — NOT
+  used to override client validation), `profiles` (pseudonymous), `progress`, `attempts`, `hint_logs`
+  (schema only; populated in M0-T29).
+- Endpoints: `GET /content` (acts/levels metadata + puzzle content), `GET/PUT /progress/:profileId`,
+  `POST /attempts`. (Hint/response endpoints may be stubbed; real LLM is M0-T29.)
+- Seed the DB with Act 1–3 reference content mirrored from the existing C# sample data (reference only;
+  client validators remain authoritative).
+- Minimal backend tests (endpoint smoke tests) runnable via `npm test`; a `Backend/README.md` for
+  running locally.
+- Deterministic-correctness rule: the backend serves content + logs; it does NOT decide puzzle
+  correctness.
 
 ## Out of Scope
 
-- LLM, backend, player-choice branching (future), save/load, final art, and any puzzle-rule change.
+- Unity client integration (M0-T28), LLM endpoints (M0-T29), authentication/accounts, deployment/hosting
+  beyond local, and any graph-simulation/scoring service.
+- Do NOT modify Unity `Assets/`, `ProjectSettings/`, `Packages/`, puzzle logic, or scenes.
 
 ## Acceptance Criteria
 
-- Each act scene shows a non-blocking ambient Ghost+Lily banter area in spare space that cycles fun
-  per-act lines and loops; data-driven; addresses the player by name.
-- Lily noticeably warms across acts and has a nerdy-joke-then-embarrassed beat; Ghost lines match each
-  act's story stage.
-- Puzzle behaviour for Acts 1/2/3 is unchanged; no Console errors.
-- The data is structured so player choices / LLM lines can be added later without a rewrite.
-- CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md updated; a Codex run log created.
+- A runnable local Node/TS backend (`npm install` then a documented run command) with SQLite; documented
+  in `Backend/README.md`.
+- DB schema for content/puzzles/profiles/progress/attempts/hint_logs, seeded with Act 1–3 reference
+  content.
+- `GET /content`, `GET/PUT /progress/:profileId`, `POST /attempts` work and are smoke-tested.
+- The backend does not decide puzzle correctness; no Unity `Assets/`/`ProjectSettings` changes.
+- `npm test` (or equivalent) results are honestly reported in the run log (Codex CAN run npm in its
+  shell — report real results).
+- A backend doc/CODE_WALKTHROUGH note + a Codex run log are created.
