@@ -2,54 +2,49 @@
 
 ## ID
 
-M0-T27
+M0-T28
 
 ## Goal
 
-Scaffold the full-system backend + database foundation (ROADMAP Phase D / `VERTICAL_SLICE_PLAN.md` §B):
-a local Node.js + TypeScript REST service backed by SQLite, exposing content / progress / attempts
-endpoints. No Unity client wiring yet (M0-T28) and no LLM yet (M0-T29). Deterministic puzzle correctness
-stays client-side — the backend stores and serves data; it does not decide scoring.
+Wire the Unity client to the M0-T27 backend for pseudonymous profile + player-progress persistence +
+attempt logging across Acts 1–3, behind **graceful degradation** (NFR5): if the backend is unavailable,
+the game keeps working on the current local/in-memory behaviour with no broken play. Deterministic
+puzzle correctness stays client-side — the backend only stores.
 
 ## Context
 
-Vertical-slice milestone. Acts 1–3 + the shell narrative + banter are done; the next workstream is the
-server-side foundation. Contracts are already drafted in `VERTICAL_SLICE_PLAN.md` §B and
-`ARCHITECTURE.md` (Phase D). This is the project's first non-Unity component: a new top-level backend
-project (outside `Assets/`). Stack per `CONFIRMED_PROJECT_CONTEXT.md` §8: Node.js + TypeScript, REST,
-SQLite, pseudonymous local profile, attempt-log analytics. Default framework Express + better-sqlite3,
-running locally (confirm if a different stack is preferred).
+M0-T27 stood up the backend (content/profiles/progress/attempts; `/hints`+`/responses` are M0-T29
+stubs). This connects Unity to it so progress survives across sessions (today `GhostNarrativeState` is
+in-memory only) and puzzle attempts are logged for analytics. Per `VERTICAL_SLICE_PLAN.md` §B and the
+graceful-degradation rule. Backend base URL is local (configurable).
 
 ## Scope
 
-- A new top-level backend project (e.g. `Backend/`), separate from the Unity project (NOT under
-  `Assets/`): `package.json`, `tsconfig.json`, a small REST server, SQLite, and a schema + seed.
-- DB schema: `learning_content`, `puzzles` (per-act content + answer keys as reference/analytics — NOT
-  used to override client validation), `profiles` (pseudonymous), `progress`, `attempts`, `hint_logs`
-  (schema only; populated in M0-T29).
-- Endpoints: `GET /content` (acts/levels metadata + puzzle content), `GET/PUT /progress/:profileId`,
-  `POST /attempts`. (Hint/response endpoints may be stubbed; real LLM is M0-T29.)
-- Seed the DB with Act 1–3 reference content mirrored from the existing C# sample data (reference only;
-  client validators remain authoritative).
-- Minimal backend tests (endpoint smoke tests) runnable via `npm test`; a `Backend/README.md` for
-  running locally.
-- Deterministic-correctness rule: the backend serves content + logs; it does NOT decide puzzle
-  correctness.
+- A small Unity API client (UnityWebRequest, WebGL-safe) for the backend endpoints (`POST /profiles`,
+  `GET/PUT /progress/:id`, `POST /attempts`; `GET /content` optional this task), with timeouts and
+  best-effort failure handling.
+- Pseudonymous profile: create once and persist the id locally (e.g. PlayerPrefs); reuse thereafter.
+- Progress: load on shell start and save on act completion / narrative-state change (extend
+  `GhostNarrativeState` to sync to the backend without changing its in-memory fallback).
+- Attempt logging: when a puzzle's Validate runs in any of Acts 1–3, best-effort `POST /attempts`
+  (act id + result + brief details) from the existing validation path — WITHOUT changing the
+  deterministic validators or puzzle rules.
+- Graceful degradation (NFR5): every backend call is best-effort and time-bounded; on failure/offline,
+  the game uses the current local behaviour. Backend base URL configurable; gameplay never blocks on the
+  network.
+- Update CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md; create a Codex run log.
 
 ## Out of Scope
 
-- Unity client integration (M0-T28), LLM endpoints (M0-T29), authentication/accounts, deployment/hosting
-  beyond local, and any graph-simulation/scoring service.
-- Do NOT modify Unity `Assets/`, `ProjectSettings/`, `Packages/`, puzzle logic, or scenes.
+- LLM (M0-T29); replacing local sample-data with backend-served content (optional/later);
+  authentication; deployment/hosting; moving any correctness to the backend.
+- Do not change the deterministic validators/sessions or puzzle rules.
 
 ## Acceptance Criteria
 
-- A runnable local Node/TS backend (`npm install` then a documented run command) with SQLite; documented
-  in `Backend/README.md`.
-- DB schema for content/puzzles/profiles/progress/attempts/hint_logs, seeded with Act 1–3 reference
-  content.
-- `GET /content`, `GET/PUT /progress/:profileId`, `POST /attempts` work and are smoke-tested.
-- The backend does not decide puzzle correctness; no Unity `Assets/`/`ProjectSettings` changes.
-- `npm test` (or equivalent) results are honestly reported in the run log (Codex CAN run npm in its
-  shell — report real results).
-- A backend doc/CODE_WALKTHROUGH note + a Codex run log are created.
+- With the backend running: a pseudonymous profile is created/reused; progress persists across sessions
+  (saved then reloaded); attempts are logged (visible in the backend DB / attempts).
+- With the backend stopped: the game still plays fully (graceful degradation) with no blocking errors.
+- Deterministic validators and puzzle rules unchanged; correctness remains client-side.
+- No Console errors in normal play; CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md updated; a Codex run
+  log created.

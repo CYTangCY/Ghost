@@ -353,6 +353,17 @@ Unity); all 3 retained. User accepted ("先暫時這樣，繼續下一步"). Cla
 Banter + docs). Archive: `Docs/completed_tasks/M0-T32_in_act_ambient_banter.md`. Next: M0-T27 (backend +
 database foundation; full-system Phase D).
 
+### 2026-06-24 — M0-T27: Backend + database foundation — Completed (full-system Phase D begins)
+New `Backend/` Node+TS+Express+better-sqlite3 REST service + SQLite. Endpoints: `/health`, `GET /content`,
+`POST /profiles`, `GET/PUT /progress/:id`, `POST /attempts`; `/hints`+`/responses` 501 (M0-T29). Schema
+(learning_content/puzzles/profiles/progress/attempts/hint_logs) seeded with Act 1–3 reference content.
+Backend stores/serves only — `GET /content` omits `answer_key_json`; no scoring endpoint (deterministic
+correctness stays client-side). Codex ran npm; **Claude independently ran `npm run build` + `npm test`
+(4/4 pass)** and reviewed routes/schema (scope clean: Backend/ + 2 docs; no Unity changes). Run log
+honest (dev-tooling audit advisories noted; production audit clean). Archive:
+`Docs/completed_tasks/M0-T27_backend_db_foundation.md`. Next: M0-T28 (Unity client↔backend integration,
+graceful degradation).
+
 ---
 
 ## Entry Template

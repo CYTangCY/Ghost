@@ -1143,3 +1143,31 @@ M0-T32 uses a runtime scene-load hook and does not require scene YAML edits or s
 ### Inspector Setup
 
 No manual Inspector setup is required. `AmbientBanterHook` waits for each Act 1, Act 2, or Act 3 presenter to render, then embeds the runtime panel into existing UI layout hosts. Portrait Sprite fields are empty runtime placeholders for now; future art can replace the labelled boxes in a later task.
+
+---
+
+## M0-T27: Backend / Database Foundation
+
+### Backend Setup and Automated Tests
+
+1. Open a terminal in `Backend/`.
+2. Run `npm install`.
+3. Run `npm run build`.
+4. Run `npm test`.
+5. Expected backend tests:
+   - `GET /content returns seeded acts without scoring answer keys`
+   - `profile progress can be created, updated, and read back`
+   - `POST /attempts stores an attempt for an existing profile`
+   - `future LLM endpoints remain explicit 501 stubs`
+
+### Expected Result
+
+The backend install, TypeScript build, and test suite should complete successfully. The server remains local-only and does not score puzzle submissions.
+
+### Unity Play Mode Check
+
+M0-T27 adds a top-level `Backend/` service only. There is no Unity Play Mode behaviour, scene setup, Inspector setup, or Unity client wiring in this task.
+
+### Inspector Setup
+
+No Inspector setup is required. Do not add backend objects to scenes for M0-T27.

@@ -1,0 +1,27 @@
+{
+  "name": "ghost-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local REST backend and SQLite foundation for the Ghost vertical slice.",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "better-sqlite3": "11.10.0",
+    "express": "4.22.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/express": "4.17.21",
+    "@types/node": "22.10.5",
+    "@types/supertest": "6.0.2",
+    "supertest": "7.0.0",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

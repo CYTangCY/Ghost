@@ -1252,6 +1252,61 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T27 Backend / Database Foundation
+
+### Component Name
+
+Backend REST Service (`Backend/src/server.ts`, `Backend/src/app.ts`)
+
+### Purpose
+
+Creates the first local server-side component for Ghost: a small Node.js + TypeScript + Express REST API. It serves seeded reference learning/puzzle content, creates pseudonymous local profiles, stores progress, and logs attempts.
+
+### Runtime Role
+
+Run locally from `Backend/` with `npm run dev` during development or `npm run build` then `npm start` for compiled output. This service is outside Unity and is not wired to the Unity client yet.
+
+### Important Files
+
+- `Backend/src/server.ts`: starts the local Express server and owns the SQLite connection lifetime.
+- `Backend/src/app.ts`: defines the REST endpoints and request/response handling.
+- `Backend/src/database.ts`: creates the SQLite schema, seeds reference content, and performs profile/progress/attempt operations.
+- `Backend/src/seedData.ts`: contains Act 1-3 reference content mirrored from the C# sample data.
+- `Backend/tests/app.test.ts`: covers seeded content, profile/progress round trip, attempts logging, and M0-T29 stubs.
+
+### Important Endpoints
+
+- `GET /health`: returns `{ ok: true }`.
+- `GET /content`: returns seeded act/level metadata and puzzle content.
+- `POST /profiles`: creates a pseudonymous profile id.
+- `GET /progress/:profileId`: reads progress for a profile.
+- `PUT /progress/:profileId`: upserts completed acts/levels and narrative state JSON.
+- `POST /attempts`: stores attempt-log analytics data.
+- `POST /hints` and `POST /responses`: return HTTP 501 with `not implemented (M0-T29)`.
+
+### Deterministic Correctness Rule
+
+The backend does not score puzzle submissions and does not expose a scoring endpoint. Seeded answer-key JSON is stored only as reference/analytics data. Unity-side deterministic validators remain authoritative for correctness.
+
+### Failure Cases
+
+- Missing profiles return `404` for progress or attempt insertion.
+- Missing `profileId`, `actId`, or `result` on `POST /attempts` returns `400`.
+- SQLite data files are local runtime artifacts and are ignored by git.
+- `/hints` and `/responses` intentionally return `501` until the later LLM task.
+
+### Test
+
+From `Backend/`, run:
+
+1. `npm install`
+2. `npm run build`
+3. `npm test`
+
+These are backend checks, not Unity Play Mode tests.
+
+---
+
 ## In-Act Ambient Banter
 
 ### Script Name
