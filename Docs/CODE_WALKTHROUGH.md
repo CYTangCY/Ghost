@@ -1312,6 +1312,8 @@ Initialized before scene load. Public methods start coroutines and invoke callba
 - `GetProgress(...)`: GETs `/progress/:profileId`.
 - `PutProgress(...)`: PUTs completed acts/levels and narrative state to `/progress/:profileId`.
 - `PostAttempt(...)`: POSTs act id, correct/incorrect result, and brief details to `/attempts`.
+- `PostHint(...)`: POSTs an act id, trigger, and player-facing state summary to `/hints`; it uses a longer non-blocking LLM timeout so local Granite has time to respond, and failures are callback-only.
+- `PostResponse(...)`: POSTs an act id and state summary to `/responses` for optional generated Ghost text, using the same longer non-blocking LLM timeout.
 - `CreateAttemptDetails(...)`: packages validator error count and messages as analytics details.
 
 ### Input
@@ -1320,16 +1322,16 @@ Backend endpoint paths, profile id, progress snapshots, and attempt details from
 
 ### Output
 
-Best-effort backend writes/reads plus callback result objects. It never decides correctness.
+Best-effort backend writes/reads plus callback result objects. It never decides correctness. Hint/response text is display-only natural language.
 
 ### Failure Cases
 
 - Backend down, timeout, parse failure, stale profile id, or HTTP error returns a failed response and logs a warning.
-- If no profile can be created, progress/attempt calls are skipped through failed callbacks.
+- If no profile can be created, progress/attempt/hint calls are skipped through failed callbacks; local static hints remain available through the banter panel.
 
 ### Unity Test
 
-Run the game with the backend up and confirm profile/progress/attempt requests are visible in the backend. Then stop the backend and confirm the same puzzles remain fully playable with warning-only degradation.
+Run the game with the backend up and confirm profile/progress/attempt/hint requests are visible in the backend. Then stop the backend and confirm the same puzzles remain fully playable with warning-only degradation and static hints.
 
 ---
 
@@ -1447,6 +1449,46 @@ Run `npm run build` and `npm test` from `Backend/`. In browser/WebGL verificatio
 
 ---
 
+## M0-T29 LLM Orchestration
+
+### Component Name
+
+Backend Ollama + Granite orchestration (`Backend/src/ollamaClient.ts`, `Backend/src/llmOrchestration.ts`, `/hints`, `/responses`)
+
+### Purpose
+
+Adds local LLM-backed natural-language support for Lily hints and Ghost response text. The LLM never decides correctness, never receives puzzle answer keys, and never gates progression.
+
+### Runtime Role
+
+The backend reads act learning metadata from `learning_content`, builds a curriculum-aware prompt, and calls Ollama's local `/api/generate` endpoint. Generation uses a longer default timeout because local Granite cold starts can be slow. If Ollama is unavailable, errors, or times out, the backend logs the Ollama URL/model/error and returns HTTP 200 with static fallback text and `source: "static"`.
+
+### Important Files
+
+- `Backend/src/ollamaClient.ts`: fetch-based Ollama client, env config (`OLLAMA_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_MS`, `OLLAMA_CHECK_TIMEOUT_MS`), a 60-second default generate timeout, and a short model-list helper timeout.
+- `Backend/src/llmOrchestration.ts`: Lily/Ghost system prompts, static hints/responses, prompt sanitisation, fallback warnings, and hint logging with trigger/state context.
+- `Backend/src/checkOllama.ts`: `npm run check:ollama` command for local setup checks plus one timed test generation.
+- `Backend/src/database.ts`: `getLearningContentSummary(...)`, `insertHintLog(...)`, `getHintLogCount()`, and `getLatestHintLogPayload()` test helper.
+
+### Client Flow
+
+- `GhostBackendClient.PostHint(...)` calls `/hints` best-effort through UnityWebRequest and sends a non-spoiler `trigger` plus `state.summary`.
+- `AmbientBanterPanel` exposes an `Ask Lily` button and a static `RequestHint(...)` helper for incorrect validation events. A requested hint replaces the current banter line in the same panel, pauses the loop, shows an "Asking Lily..." in-flight state, and uses `Back` to resume the loop.
+- Act 1, Act 2, and Act 3 presentation interaction controllers request a Lily hint after an incorrect deterministic Validate result with the `after_incorrect_validate` trigger and an error-count summary.
+- `BanterData.GetStaticHint(...)` provides the local fallback used when the backend or LLM is unavailable.
+
+### Failure Cases
+
+- Ollama unavailable: backend returns static fallback; tests cover this path.
+- Backend unavailable from Unity: `GhostBackendClient` fails callback; `AmbientBanterPanel` displays local static hint.
+- Unity panel missing: incorrect Validate still works; the hint request no-ops.
+
+### Test
+
+From `Backend/`, run `npm install`, `npm run build`, and `npm test`. Use `npm run check:ollama` to verify a live local Ollama + Granite setup and see timed generation latency. In Unity Play Mode, enter each act, click `Ask Lily`, confirm the current banter line is replaced rather than overlapped, then press `Back` to resume the loop. Validate incorrectly and confirm Lily requests use the `after_incorrect_validate` trigger. Repeat with backend/Ollama stopped and confirm static fallback.
+
+---
+
 ## M0-T27 Backend / Database Foundation
 
 ### Component Name
@@ -1464,10 +1506,13 @@ Run locally from `Backend/` with `npm run dev` during development or `npm run bu
 ### Important Files
 
 - `Backend/src/server.ts`: starts the local Express server and owns the SQLite connection lifetime.
-- `Backend/src/app.ts`: defines the REST endpoints and request/response handling.
-- `Backend/src/database.ts`: creates the SQLite schema, seeds reference content, and performs profile/progress/attempt operations.
+- `Backend/src/app.ts`: defines the REST endpoints and request/response handling, including `/hints` and `/responses`.
+- `Backend/src/database.ts`: creates the SQLite schema, seeds reference content, and performs profile/progress/attempt/hint-log operations.
+- `Backend/src/ollamaClient.ts`: small fetch-based Ollama client plus `check:ollama` support.
+- `Backend/src/llmOrchestration.ts`: curriculum-aware Lily/Ghost prompts and static fallbacks.
+- `Backend/src/checkOllama.ts`: human-readable local Ollama/model availability check plus a timed test generation.
 - `Backend/src/seedData.ts`: contains Act 1-3 reference content mirrored from the C# sample data.
-- `Backend/tests/app.test.ts`: covers seeded content, profile/progress round trip, attempts logging, and M0-T29 stubs.
+- `Backend/tests/app.test.ts`: covers seeded content, profile/progress round trip, attempts logging, and the no-live-LLM static fallback path.
 
 ### Important Endpoints
 
@@ -1476,19 +1521,21 @@ Run locally from `Backend/` with `npm run dev` during development or `npm run bu
 - `POST /profiles`: creates a pseudonymous profile id.
 - `GET /progress/:profileId`: reads progress for a profile.
 - `PUT /progress/:profileId`: upserts completed acts/levels and narrative state JSON.
+- `POST /hints`: returns `{ hint, source }`, using Ollama/Granite when available and static hints otherwise; logs kind/source/level/trigger/state/error to `hint_logs`.
+- `POST /responses`: returns `{ text, source }`, using Ollama/Granite when available and static Ghost response text otherwise.
 - `POST /attempts`: stores attempt-log analytics data.
 - `POST /hints` and `POST /responses`: return HTTP 501 with `not implemented (M0-T29)`.
 
 ### Deterministic Correctness Rule
 
-The backend does not score puzzle submissions and does not expose a scoring endpoint. Seeded answer-key JSON is stored only as reference/analytics data. Unity-side deterministic validators remain authoritative for correctness.
+The backend does not score puzzle submissions and does not expose a scoring endpoint. Seeded answer-key JSON is stored only as reference/analytics data and is not included in LLM prompts. Unity-side deterministic validators remain authoritative for correctness.
 
 ### Failure Cases
 
 - Missing profiles return `404` for progress or attempt insertion.
 - Missing `profileId`, `actId`, or `result` on `POST /attempts` returns `400`.
 - SQLite data files are local runtime artifacts and are ignored by git.
-- `/hints` and `/responses` intentionally return `501` until the later LLM task.
+- Ollama errors/timeouts on `/hints` and `/responses` return HTTP 200 with `source: "static"` so gameplay can continue; fallback warnings include the configured Ollama URL, model, and actual error.
 
 ### Test
 
@@ -1497,6 +1544,7 @@ From `Backend/`, run:
 1. `npm install`
 2. `npm run build`
 3. `npm test`
+4. `npm run check:ollama` if local Ollama availability needs to be checked.
 
 These are backend checks, not Unity Play Mode tests.
 
@@ -1531,6 +1579,7 @@ Provides per-act lists of `AmbientBanterBeat` values. Each beat has a speaker, t
 ### Important Methods
 
 - `GetBeats(string actId)`: returns the ambient loop for `act1`, `act2`, or `act3`.
+- `GetStaticHint(string actId)`: returns a local non-spoiler Lily hint for use when the backend or Ollama is unavailable.
 
 ### Input
 
@@ -1556,7 +1605,7 @@ AmbientBanterPanel.cs
 
 ### Purpose
 
-Displays a compact, non-blocking UGUI banter panel with the current speaker, dialogue text, and a portrait placeholder. It cycles through the current act's beats on a timer and with a small `Next` button.
+Displays a compact, non-blocking UGUI banter panel with the current speaker, dialogue text, and a portrait placeholder. It cycles through the current act's beats on a timer and includes an `Ask Lily` button for non-spoiler hints.
 
 ### Attached GameObject
 
@@ -1564,7 +1613,7 @@ Attached at runtime to the `Ambient Banter Panel` GameObject created by `Ambient
 
 ### Runtime Role
 
-Receives an act's banter beats, shows the first line, substitutes `{playerName}` from `GhostNarrativeState`, swaps Lily/Ghost portrait placeholders by speaker, advances after a few seconds, and loops back to the beginning.
+Receives an act's banter beats, shows the first line, substitutes `{playerName}` from `GhostNarrativeState`, swaps Lily/Ghost portrait placeholders by speaker, advances after a few seconds, and loops back to the beginning. M0-T29 also lets the panel request a Lily hint from the backend and display a local static hint if the request fails. During a hint request, the same panel pauses the ambient loop, replaces the current banter text with an "Asking Lily..." or hint line, and uses the button as `Back` to resume the loop.
 
 ### Important Fields
 
@@ -1572,31 +1621,32 @@ Receives an act's banter beats, shows the first line, substitutes `{playerName}`
 - `dialogueText`: visible banter line.
 - `speakerPortraitImage`: sized placeholder Image for future Lily/Ghost sprites.
 - `portraitPlaceholderText`: label shown when no sprite is assigned.
-- `nextButton`: optional manual advance button.
+- `nextButton`: runtime button now labelled `Ask Lily`; it requests a hint instead of deciding correctness.
 - `cycleSeconds`: timer interval for automatic cycling.
 - `lilyPortrait`, `ghostPortrait`: optional sprites left empty for placeholder art.
 
 ### Important Methods
 
-- `Configure(...)`: assigns runtime-created UI references and cycle timing.
-- `Initialize(...)`: stores the act beat list, wires the Next button, and shows the first beat.
-- `Update()`: advances the loop when the timer elapses.
+- `Configure(...)`: assigns runtime-created UI references, cycle timing, and current act id.
+- `Initialize(...)`: stores the act beat list, wires the Ask Lily button, and shows the first beat.
+- `RequestHint(...)`: static helper used by act controllers after incorrect validation; routes through `GhostBackendClient.PostHint(...)` with trigger/state context and falls back to `BanterData.GetStaticHint(...)`.
+- `Update()`: advances the loop when the timer elapses, but stays paused while hint text is visible.
 
 ### Input
 
-Ambient beats from `BanterData`.
+Ambient beats and static fallback hints from `BanterData`; optional LLM hints from the backend.
 
 ### Output
 
-A cycling, visible ambient banter strip that does not decide puzzle correctness.
+A cycling, visible ambient banter strip and Lily hint display area. It does not decide puzzle correctness.
 
 ### Failure Cases
 
-Empty or missing beat lists show no text. Missing portrait sprites intentionally show labelled placeholders.
+Empty or missing beat lists show no text. Missing portrait sprites intentionally show labelled placeholders. Backend/Ollama failures display local static hints instead of blocking play.
 
 ### Unity Test
 
-Enter an act in Play Mode, watch the panel cycle, click `Next`, and confirm it loops without blocking puzzle controls.
+Enter an act in Play Mode, watch the panel cycle, click `Ask Lily`, and confirm a Lily hint appears without blocking puzzle controls. Stop the backend and confirm `Ask Lily` still shows a static hint.
 
 ---
 

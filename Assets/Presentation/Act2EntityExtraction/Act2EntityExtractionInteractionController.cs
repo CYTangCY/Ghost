@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Banter;
 using Ghost.Presentation.Backend;
 using Ghost.Presentation.Shell;
 using Ghost.Puzzles.EntityExtraction;
@@ -145,6 +146,14 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);
 
             FeedbackChanged?.Invoke(feedbackMessage, result.IsCorrect);
+            if (!result.IsCorrect)
+            {
+                AmbientBanterPanel.RequestHint(
+                    GhostNarrativeState.Act2Id,
+                    "after_incorrect_validate",
+                    "The player validated an incorrect entity span/type annotation. Error count: " + result.Errors.Count + ". Give a non-spoiler hint about useful details.");
+            }
+
             return result;
         }
 

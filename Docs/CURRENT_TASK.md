@@ -2,49 +2,58 @@
 
 ## ID
 
-M0-T28
+M0-T33
 
 ## Goal
 
-Wire the Unity client to the M0-T27 backend for pseudonymous profile + player-progress persistence +
-attempt logging across Acts 1–3, behind **graceful degradation** (NFR5): if the backend is unavailable,
-the game keeps working on the current local/in-memory behaviour with no broken play. Deterministic
-puzzle correctness stays client-side — the backend only stores.
+Turn "Ask Lily" into a constrained **chat**: a dedicated chat window (not the ambient reply box) where
+the player can TYPE questions and Lily replies in one short, in-character sentence via the LLM, staying
+on-topic (the current act's chatbot/NLP learning + the Ghost story), with persona guardrails. Plus fix
+the ambient banter UI (Act 2 box too large; fixed-reply position).
 
 ## Context
 
-M0-T27 stood up the backend (content/profiles/progress/attempts; `/hints`+`/responses` are M0-T29
-stubs). This connects Unity to it so progress survives across sessions (today `GhostNarrativeState` is
-in-memory only) and puzzle attempts are logged for analytics. Per `VERTICAL_SLICE_PLAN.md` §B and the
-graceful-degradation rule. Backend base URL is local (configurable).
+M0-T29 made the LLM work (one-shot hints; `source:"llm"` verified) but it has no free-text input and
+writes into the ambient reply box. The user wants a real chat: type a question → short in-character Lily
+reply, in a separate window, with topic guardrails. Builds on the M0-T29 backend (Ollama client +
+orchestration) and the M0-T28 client pattern. Deterministic puzzles unchanged; the LLM never scores;
+static in-character fallback stays.
 
 ## Scope
 
-- A small Unity API client (UnityWebRequest, WebGL-safe) for the backend endpoints (`POST /profiles`,
-  `GET/PUT /progress/:id`, `POST /attempts`; `GET /content` optional this task), with timeouts and
-  best-effort failure handling.
-- Pseudonymous profile: create once and persist the id locally (e.g. PlayerPrefs); reuse thereafter.
-- Progress: load on shell start and save on act completion / narrative-state change (extend
-  `GhostNarrativeState` to sync to the backend without changing its in-memory fallback).
-- Attempt logging: when a puzzle's Validate runs in any of Acts 1–3, best-effort `POST /attempts`
-  (act id + result + brief details) from the existing validation path — WITHOUT changing the
-  deterministic validators or puzzle rules.
-- Graceful degradation (NFR5): every backend call is best-effort and time-bounded; on failure/offline,
-  the game uses the current local behaviour. Backend base URL configurable; gameplay never blocks on the
-  network.
-- Update CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md; create a Codex run log.
+- Backend: add `POST /chat { actId, message, history?, profileId? }` → `{ reply, source }` that sends the
+  PLAYER'S typed `message` plus a persona/guardrail system prompt to Ollama; returns ONE short sentence;
+  logs to `hint_logs` (`kind:"chat"`, `trigger`, a non-spoiler note of the player's topic). Reuse the
+  Ollama client; static in-character fallback if unavailable. No answer-key in the prompt; no scoring.
+  - **Lily persona + guardrails (system prompt):** human postdoctoral senior, nerdy/timid/warm, not an
+    AI; reply in ONE short sentence, in character, addressing {playerName}; ONLY discuss the current
+    act's chatbot/NLP concept and the Ghost story/situation; if asked about Lily's private life → react
+    a bit flustered/annoyed and deflect (in character); if asked anything off-topic/unrelated → redirect
+    ("let's focus on helping Ghost right now"); never reveal puzzle solutions/answers; never decide
+    correctness or progression.
+- Client (Unity): a dedicated Lily chat window/panel that OPENS on Ask Lily (instead of writing into the
+  ambient banter): a scrollable message list + a text input field + send + close; it PAUSES the ambient
+  banter while open and RESUMES on close. WebGL-safe + graceful (LLM/backend down → a static
+  in-character line). The after-incorrect-validate hint may open/append to this chat window.
+- Tighten reply length across hints/responses/chat to ~one short sentence (≤ ~25 words) in the prompts.
+- Ambient banter UI fixes: resize the Act 2 box (too large) and fix the fixed-reply position so it reads
+  cleanly and does not overlap.
+- Keep deterministic validators/sessions/puzzle rules unchanged. Update CODE_WALKTHROUGH.md +
+  UNITY_TEST_CHECKLIST.md; create a Codex run log.
 
 ## Out of Scope
 
-- LLM (M0-T29); replacing local sample-data with backend-served content (optional/later);
-  authentication; deployment/hosting; moving any correctness to the backend.
-- Do not change the deterministic validators/sessions or puzzle rules.
+- Persistent chat history across sessions; multiple LLMs; voice; the Act 8 capstone; any LLM scoring.
 
 ## Acceptance Criteria
 
-- With the backend running: a pseudonymous profile is created/reused; progress persists across sessions
-  (saved then reloaded); attempts are logged (visible in the backend DB / attempts).
-- With the backend stopped: the game still plays fully (graceful degradation) with no blocking errors.
-- Deterministic validators and puzzle rules unchanged; correctness remains client-side.
-- No Console errors in normal play; CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md updated; a Codex run
-  log created.
+- Pressing Ask Lily opens a separate chat window (not the ambient box); the player can type a question
+  and gets a short, in-character Lily reply from the LLM (`source:"llm"` when Ollama is up; static
+  in-character fallback otherwise).
+- Lily stays on-topic: off-topic → redirect to the task; private-life → flustered deflection; never
+  reveals answers; never scores.
+- Replies are one short sentence and match the persona.
+- The ambient banter pauses while chatting and resumes on close; the Act 2 banter box is sized
+  correctly; nothing overlaps.
+- Deterministic puzzles unchanged; graceful when backend/LLM is down; `hint_logs` records chat turns
+  (`kind:"chat"` + a topic note). Docs + a Codex run log updated.

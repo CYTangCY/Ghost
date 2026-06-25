@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Banter;
 using Ghost.Presentation.Backend;
 using Ghost.Presentation.Shell;
 using Ghost.Puzzles.DialogGraph;
@@ -179,6 +180,14 @@ namespace Ghost.Presentation.Act3DialogGraph
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);
 
             FeedbackChanged?.Invoke(feedbackMessage, result.IsCorrect, result.Errors);
+            if (!result.IsCorrect)
+            {
+                AmbientBanterPanel.RequestHint(
+                    GhostNarrativeState.Act3Id,
+                    "after_incorrect_validate",
+                    "The player validated an incorrect dialog graph. Error count: " + result.Errors.Count + ". Give a non-spoiler hint about ordering the map and checking slots before answering.");
+            }
+
             return result;
         }
 

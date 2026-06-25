@@ -1,7 +1,9 @@
 import express, { NextFunction, Request, Response } from "express";
+import { createGhostResponse, createLilyHint, LlmRequestBody } from "./llmOrchestration";
+import { OllamaClient, OllamaTextClient } from "./ollamaClient";
 import { GhostDatabase, ProgressPayload } from "./database";
 
-export function createApp(database: GhostDatabase) {
+export function createApp(database: GhostDatabase, ollamaClient: OllamaTextClient = new OllamaClient()) {
   const app = express();
   app.use(addDevCorsHeaders);
   app.use(express.json({ limit: "1mb" }));
@@ -68,12 +70,32 @@ export function createApp(database: GhostDatabase) {
     response.status(201).json(attempt);
   });
 
-  app.post("/hints", (_request: Request, response: Response) => {
-    response.status(501).json({ error: "not implemented (M0-T29)" });
+  app.post("/hints", async (request: Request, response: Response) => {
+    const payload = readObjectBody<LlmRequestBody>(request);
+    if (isMissing(payload.actId)) {
+      response.status(400).json({ error: "actId is required" });
+      return;
+    }
+
+    const hint = await createLilyHint(database, ollamaClient, payload);
+    response.json({
+      hint: hint.text,
+      source: hint.source
+    });
   });
 
-  app.post("/responses", (_request: Request, response: Response) => {
-    response.status(501).json({ error: "not implemented (M0-T29)" });
+  app.post("/responses", async (request: Request, response: Response) => {
+    const payload = readObjectBody<LlmRequestBody>(request);
+    if (isMissing(payload.actId)) {
+      response.status(400).json({ error: "actId is required" });
+      return;
+    }
+
+    const ghostResponse = await createGhostResponse(database, ollamaClient, payload);
+    response.json({
+      text: ghostResponse.text,
+      source: ghostResponse.source
+    });
   });
 
   return app;

@@ -1119,7 +1119,7 @@ M0-T32 uses a runtime scene-load hook and does not require scene YAML edits or s
 3. Launch Act 1.
 4. Confirm a compact ambient banter panel appears in the bottom validation area, not as a floating overlay covering cards or drop targets.
 5. Confirm Act 1 lines cycle and loop automatically.
-6. Confirm the `Next` button advances to the next line.
+6. Confirm the `Ask Lily` button shows a Lily hint without blocking the puzzle.
 7. Confirm Act 1 includes nervous Lily lines and garbled Ghost lines, with at least 15 Lily lines and 15 Ghost lines available in the loop.
 8. Confirm at least one line addresses the player by the entered name.
 9. Confirm Act 1 banter text is not vertically cut off.
@@ -1158,7 +1158,8 @@ No manual Inspector setup is required. `AmbientBanterHook` waits for each Act 1,
    - `GET /content returns seeded acts without scoring answer keys`
    - `profile progress can be created, updated, and read back`
    - `POST /attempts stores an attempt for an existing profile`
-   - `future LLM endpoints remain explicit 501 stubs`
+   - `POST /hints falls back to a static hint and logs when Ollama is unavailable`
+   - `POST /responses falls back to static Ghost text when Ollama is unavailable`
 
 ### Expected Result
 
@@ -1223,3 +1224,57 @@ No Inspector setup is required. Do not add backend objects to scenes for M0-T27.
 ### Inspector Setup
 
 No manual Inspector setup is required. `BackendSync` starts from runtime hooks, `GameShellPresenter` ensures sync once, and `GhostBackendClient` creates its hidden coroutine runner automatically. To use a non-default backend URL, set `GhostBackendConfig.BaseUrl` or the `Ghost.Backend.BaseUrl` PlayerPrefs value.
+
+---
+
+## M0-T29: LLM Orchestration for Lily Hints and Ghost Responses
+
+### Backend Automated Check
+
+1. Open a terminal in `Backend/`.
+2. Run `npm install`.
+3. Run `npm run build`.
+4. Run `npm test`.
+5. Expected fallback/logging tests:
+   - `/hints` returns HTTP 200 with `source: "static"` when Ollama is unavailable.
+   - `/hints` inserts a `hint_logs` row with trigger and non-spoiler state summary.
+   - `/hints` can return mocked `source: "llm"` and log trigger/state without requiring live Ollama.
+   - `/responses` returns HTTP 200 with static Ghost text when Ollama is unavailable.
+6. Run `npm run check:ollama` to verify whether local Ollama and the configured Granite model are available, and to see timed test generation latency.
+
+### Ollama-Up Play Mode Check
+
+1. Install and start Ollama.
+2. In `Backend/`, run `ollama pull granite3.1-dense:2b`.
+3. Run `npm run check:ollama` and confirm the model is available.
+4. Run `npm run dev`.
+5. Open `Assets/Scenes/GameShellPrototype.unity` and enter Play Mode.
+6. Enter a player name and launch Act 1.
+7. Click `Ask Lily`.
+8. Confirm the existing banter panel is reused: the current line changes to an "asking Lily" state, then the hint appears in the same frame with no second panel or overlapping text.
+9. Confirm the button changes to `Back`, pressing it resumes the ambient banter loop, and the puzzle remains playable while a longer local Granite request is in flight.
+10. Validate an incorrect Act 1 grouping and confirm Lily offers a hint after the deterministic incorrect feedback.
+11. Repeat `Ask Lily` and incorrect Validate in Act 2 and Act 3.
+12. Confirm the backend writes `hint_logs` rows with `trigger` values such as `ask_lily_button` and `after_incorrect_validate`, plus a non-spoiler state summary.
+13. Confirm puzzle correctness and progression still come only from the existing validators.
+
+### Ollama-Down / Backend-Down Fallback Check
+
+1. Stop Ollama but keep the backend running.
+2. Click `Ask Lily` in each act.
+3. Confirm a static Lily hint appears in the same banter frame and gameplay continues.
+4. Stop the backend.
+5. Click `Ask Lily` and validate incorrectly in each act.
+6. Confirm the Unity client shows local static hints in the same frame, with `Back` resuming ambient banter, and never blocks play.
+7. Confirm network failures produce at most warning logs.
+
+### Validator / Scope Regression Check
+
+1. Confirm no files under `Assets/Scripts/Puzzles/` changed.
+2. Confirm there is still no backend scoring endpoint.
+3. Confirm `/hints` and `/responses` generate/display text only.
+4. Confirm no ProjectSettings, Packages, Build Settings, scenes, or `.meta` files were edited for M0-T29.
+
+### Inspector Setup
+
+No manual Inspector setup is required. `AmbientBanterHook` creates the `Ask Lily` affordance at runtime, `GhostBackendClient` hosts backend requests on its hidden runner, and `BanterData.GetStaticHint(...)` supplies local fallback hints.

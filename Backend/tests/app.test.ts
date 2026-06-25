@@ -2,12 +2,13 @@ import request from "supertest";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import { GhostDatabase } from "../src/database";
+import { OllamaGenerateRequest, OllamaGenerateResult, OllamaTextClient } from "../src/ollamaClient";
 
 let database: GhostDatabase | null = null;
 
-function createTestClient() {
+function createTestClient(ollamaClient: OllamaTextClient = new FailingOllamaClient()) {
   database = new GhostDatabase(":memory:");
-  return request(createApp(database));
+  return request(createApp(database, ollamaClient));
 }
 
 afterEach(() => {
@@ -72,10 +73,94 @@ describe("Ghost backend", () => {
     expect(attempt.body.details).toEqual({ errors: ["missing span"], source: "unity-client" });
   });
 
-  it("POST /hints and /responses are explicit M0-T29 stubs", async () => {
+  it("POST /hints falls back to a static hint and logs when Ollama is unavailable", async () => {
+    const client = createTestClient(new FailingOllamaClient());
+
+    const response = await client
+      .post("/hints")
+      .send({
+        actId: "act1",
+        level: "1",
+        trigger: "ask_lily_button",
+        state: { reason: "player asked for help in test" }
+      })
+      .expect(200);
+
+    expect(response.body.source).toBe("static");
+    expect(response.body.hint).toContain("What does the person want");
+    expect(database?.getHintLogCount()).toBe(1);
+    expect(database?.getLatestHintLogPayload()).toMatchObject({
+      kind: "hint",
+      source: "static",
+      level: "1",
+      trigger: "ask_lily_button"
+    });
+    expect(database?.getLatestHintLogPayload()?.state).toContain("player asked for help");
+    expect(database?.getLatestHintLogPayload()?.error).toContain("Ollama unavailable");
+  });
+
+  it("POST /hints returns LLM text and logs trigger/state when Ollama succeeds", async () => {
+    const client = createTestClient(new SuccessfulOllamaClient("Try looking at the request purpose first."));
+
+    const response = await client
+      .post("/hints")
+      .send({
+        actId: "act2",
+        level: "1",
+        trigger: "after_incorrect_validate",
+        state: {
+          summary: "last validate result was incorrect",
+          errorCount: 2
+        }
+      })
+      .expect(200);
+
+    expect(response.body.source).toBe("llm");
+    expect(response.body.hint).toBe("Try looking at the request purpose first.");
+    expect(database?.getHintLogCount()).toBe(1);
+    expect(database?.getLatestHintLogPayload()).toMatchObject({
+      kind: "hint",
+      source: "llm",
+      level: "1",
+      trigger: "after_incorrect_validate",
+      error: null
+    });
+    expect(database?.getLatestHintLogPayload()?.state).toContain("errorCount");
+  });
+
+  it("POST /responses falls back to static Ghost text when Ollama is unavailable", async () => {
     const client = createTestClient();
 
-    await client.post("/hints").send({}).expect(501, { error: "not implemented (M0-T29)" });
-    await client.post("/responses").send({}).expect(501, { error: "not implemented (M0-T29)" });
+    const response = await client
+      .post("/responses")
+      .send({
+        actId: "act3",
+        state: { result: "incorrect" }
+      })
+      .expect(200);
+
+    expect(response.body.source).toBe("static");
+    expect(response.body.text).toContain("reply map");
   });
 });
+
+class FailingOllamaClient implements OllamaTextClient {
+  public readonly baseUrl = "http://localhost:11434";
+  public readonly model = "granite3.1-dense:2b";
+
+  public generateText(_request: OllamaGenerateRequest): Promise<OllamaGenerateResult> {
+    return Promise.reject(new Error("Ollama unavailable in test."));
+  }
+}
+
+class SuccessfulOllamaClient implements OllamaTextClient {
+  public readonly baseUrl = "http://localhost:11434";
+  public readonly model = "granite3.1-dense:2b";
+
+  public constructor(private readonly responseText: string) {
+  }
+
+  public generateText(_request: OllamaGenerateRequest): Promise<OllamaGenerateResult> {
+    return Promise.resolve({ text: this.responseText });
+  }
+}

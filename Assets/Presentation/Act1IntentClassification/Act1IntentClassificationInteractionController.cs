@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Banter;
 using Ghost.Presentation.Backend;
 using Ghost.Presentation.Shell;
 using Ghost.Puzzles.IntentClassification;
@@ -101,6 +102,10 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             SetFeedback(Act1IntentClassificationFeedback.Incorrect(
                 "Some messages are in the wrong group. Compare what the speaker wants."));
+            AmbientBanterPanel.RequestHint(
+                GhostNarrativeState.Act1Id,
+                "after_incorrect_validate",
+                "The player validated an incorrect intent grouping. Error count: " + result.Errors.Count + ". Give a non-spoiler hint about grouping by purpose.");
         }
 
         private void SetFeedback(Act1IntentClassificationFeedback feedback)

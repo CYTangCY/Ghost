@@ -364,6 +364,28 @@ honest (dev-tooling audit advisories noted; production audit clean). Archive:
 `Docs/completed_tasks/M0-T27_backend_db_foundation.md`. Next: M0-T28 (Unity client↔backend integration,
 graceful degradation).
 
+### 2026-06-24 — M0-T28: Unity ↔ backend integration — Completed
+Unity client ↔ backend: `GhostBackendClient` (UnityWebRequest coroutines, best-effort + timeouts),
+`BackendSync` (profile + load/save progress to `GhostNarrativeState`), profile id in PlayerPrefs,
+best-effort attempt logging from all three act validation paths, graceful degradation (offline →
+in-memory fallback, warning-only). Backend `app.ts` gained dev CORS (+ OPTIONS 204). Correctness stays
+client-side. Claude confirmed each feature's wiring + ran the backend build/test (4/4 after CORS). The
+user verified in the Editor (backend on: profile/progress persist across Play sessions + attempts
+logged; backend off: full play, no hangs) — "過了". Scope clean (Backend client + shell/controllers +
+app.ts CORS + docs). Archive: `Docs/completed_tasks/M0-T28_client_backend_integration.md`. Next: M0-T29
+(LLM orchestration; static-hint fallback; LLM never scores).
+
+### 2026-06-25 — M0-T29: LLM orchestration — Completed
+Runs 001 (Lily hints / Ghost responses via Ollama + Granite, static fallback, hint_logs, no scoring /
+no answer-key) + 002 (fixed the 5s→60s Ollama timeout that caused always-static, added a fallback
+warning + a timed `check:ollama`, Ask-Lily-replace-in-panel, and `trigger` logging). The user confirmed
+live: `hint_logs` now shows `source:"llm"`, `trigger:"ask_lily_button"`, `error:null` (after killing a
+stale `:3000` backend and raising the timeout). LLM never scores/gates; deterministic validators
+unchanged. Claude reviewed the orchestration (no answer-key, no scoring) and relied on the live
+evidence. Archive: `Docs/completed_tasks/M0-T29_llm_orchestration.md`. Next: M0-T33 (Lily chat:
+free-text input, dedicated chat window, one-sentence in-character replies, topic guardrails; + banter UI
+sizing — supersedes the run-002 same-panel hint UX).
+
 ---
 
 ## Entry Template

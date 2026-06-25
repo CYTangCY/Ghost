@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Ghost.Presentation.Backend;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +9,9 @@ namespace Ghost.Presentation.Banter
     public sealed class AmbientBanterPanel : MonoBehaviour
     {
         private const float DefaultCycleSeconds = 6f;
+        private const string AskLilyButtonLabel = "Ask Lily";
+        private const string BackButtonLabel = "Back";
+        private const string AskLilyTrigger = "ask_lily_button";
 
         [SerializeField] private Text speakerNameText;
         [SerializeField] private Text dialogueText;
@@ -21,6 +25,13 @@ namespace Ghost.Presentation.Banter
         private IReadOnlyList<AmbientBanterBeat> beats;
         private int currentIndex;
         private float elapsedSeconds;
+        private string actId;
+        private Text nextButtonLabel;
+        private bool isShowingHint;
+        private bool isRequestInFlight;
+        private int hintRequestVersion;
+
+        public static AmbientBanterPanel ActivePanel { get; private set; }
 
         public void Initialize(IReadOnlyList<AmbientBanterBeat> sourceBeats)
         {
@@ -30,10 +41,14 @@ namespace Ghost.Presentation.Banter
 
             if (nextButton != null)
             {
-                nextButton.onClick.RemoveListener(ShowNextBeat);
-                nextButton.onClick.AddListener(ShowNextBeat);
+                nextButton.onClick.RemoveListener(HandleActionButtonClicked);
+                nextButton.onClick.AddListener(HandleActionButtonClicked);
             }
 
+            isShowingHint = false;
+            isRequestInFlight = false;
+            SetButtonLabel(AskLilyButtonLabel);
+            ActivePanel = this;
             ShowCurrentBeat();
         }
 
@@ -41,13 +56,18 @@ namespace Ghost.Presentation.Banter
         {
             if (nextButton != null)
             {
-                nextButton.onClick.RemoveListener(ShowNextBeat);
+                nextButton.onClick.RemoveListener(HandleActionButtonClicked);
+            }
+
+            if (ActivePanel == this)
+            {
+                ActivePanel = null;
             }
         }
 
         private void Update()
         {
-            if (beats == null || beats.Count <= 1)
+            if (isShowingHint || isRequestInFlight || beats == null || beats.Count <= 1)
             {
                 return;
             }
@@ -67,6 +87,93 @@ namespace Ghost.Presentation.Banter
             }
 
             currentIndex = (currentIndex + 1) % beats.Count;
+            ShowCurrentBeat();
+        }
+
+        public static void RequestHint(string requestedActId, string trigger, string stateSummary)
+        {
+            if (ActivePanel == null)
+            {
+                return;
+            }
+
+            ActivePanel.RequestHintInternal(requestedActId, trigger, stateSummary);
+        }
+
+        private void HandleActionButtonClicked()
+        {
+            if (isShowingHint || isRequestInFlight)
+            {
+                ResumeBanter();
+                return;
+            }
+
+            RequestHintInternal(
+                actId,
+                AskLilyTrigger,
+                "The player pressed Ask Lily for a non-spoiler hint.");
+        }
+
+        private void RequestHintInternal(string requestedActId, string trigger, string stateSummary)
+        {
+            var normalizedActId = string.IsNullOrWhiteSpace(requestedActId)
+                ? actId
+                : requestedActId;
+
+            if (string.IsNullOrWhiteSpace(normalizedActId))
+            {
+                ShowHintText(BanterData.GetStaticHint(string.Empty));
+                return;
+            }
+
+            var requestToken = ++hintRequestVersion;
+            ShowAskingState();
+
+            GhostBackendClient.PostHint(normalizedActId, trigger, stateSummary, response =>
+            {
+                if (requestToken != hintRequestVersion)
+                {
+                    return;
+                }
+
+                isRequestInFlight = false;
+                if (response.Succeeded && response.Value != null && !string.IsNullOrWhiteSpace(response.Value.hint))
+                {
+                    ShowHintText(response.Value.hint);
+                    return;
+                }
+
+                ShowHintText(BanterData.GetStaticHint(normalizedActId));
+            });
+        }
+
+        private void ShowAskingState()
+        {
+            elapsedSeconds = 0f;
+            isShowingHint = true;
+            isRequestInFlight = true;
+            SetButtonLabel(BackButtonLabel);
+            SetText(speakerNameText, ShellDialogueData.LilySpeakerName);
+            SetText(dialogueText, "Asking Lily...");
+            UpdatePortrait(ShellDialogueData.LilySpeakerName);
+        }
+
+        private void ShowHintText(string hint)
+        {
+            elapsedSeconds = 0f;
+            isShowingHint = true;
+            SetButtonLabel(BackButtonLabel);
+            SetText(speakerNameText, ShellDialogueData.LilySpeakerName);
+            SetText(dialogueText, FormatText(hint));
+            UpdatePortrait(ShellDialogueData.LilySpeakerName);
+        }
+
+        private void ResumeBanter()
+        {
+            hintRequestVersion++;
+            isShowingHint = false;
+            isRequestInFlight = false;
+            SetButtonLabel(AskLilyButtonLabel);
             ShowCurrentBeat();
         }
 
@@ -138,14 +245,22 @@ namespace Ghost.Presentation.Banter
             Image portraitImage,
             Text portraitPlaceholder,
             Button next,
-            float secondsPerBeat)
+            float secondsPerBeat,
+            string configuredActId)
         {
             speakerNameText = speakerName;
             dialogueText = dialogue;
             speakerPortraitImage = portraitImage;
             portraitPlaceholderText = portraitPlaceholder;
             nextButton = next;
+            nextButtonLabel = next == null ? null : next.GetComponentInChildren<Text>();
             cycleSeconds = secondsPerBeat <= 0f ? DefaultCycleSeconds : secondsPerBeat;
+            actId = configuredActId ?? string.Empty;
+        }
+
+        private void SetButtonLabel(string value)
+        {
+            SetText(nextButtonLabel, value);
         }
     }
 }

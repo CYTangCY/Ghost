@@ -19,6 +19,20 @@ export type AttemptPayload = {
   details?: Record<string, unknown>;
 };
 
+export type HintLogPayload = {
+  profileId?: string;
+  actId: string;
+  payload: Record<string, unknown>;
+};
+
+export type LearningContentSummary = {
+  actId: string;
+  title: string;
+  concept: string;
+  learningObjective: string;
+  metadata: Record<string, unknown>;
+};
+
 type LearningContentRow = {
   act_id: string;
   title: string;
@@ -49,6 +63,8 @@ type ProgressRow = {
 };
 
 export class GhostDatabase {
+  private static readonly AnonymousHintProfileId = "profile_anonymous";
+
   private readonly db: SqliteDatabase;
 
   public constructor(dbPath: string) {
@@ -87,6 +103,26 @@ export class GhostDatabase {
         title: row.title,
         content: parseJson(row.content_json, {})
       }))
+    };
+  }
+
+  public getLearningContentSummary(actId: string): LearningContentSummary | null {
+    const row = this.db
+      .prepare(
+        "SELECT act_id, title, concept, learning_objective, metadata_json FROM learning_content WHERE act_id = ?"
+      )
+      .get(actId) as LearningContentRow | undefined;
+
+    if (row == null) {
+      return null;
+    }
+
+    return {
+      actId: row.act_id,
+      title: row.title,
+      concept: row.concept,
+      learningObjective: row.learning_objective,
+      metadata: parseJson(row.metadata_json, {})
     };
   }
 
@@ -203,6 +239,43 @@ export class GhostDatabase {
     };
   }
 
+  public insertHintLog(payload: HintLogPayload) {
+    const profileId = this.resolveHintProfileId(payload.profileId);
+    const createdAt = nowIso();
+    const insertResult = this.db
+      .prepare(
+        "INSERT INTO hint_logs (profile_id, act_id, payload_json, created_at) VALUES (?, ?, ?, ?)"
+      )
+      .run(profileId, payload.actId, JSON.stringify(payload.payload ?? {}), createdAt);
+
+    return {
+      id: Number(insertResult.lastInsertRowid),
+      profileId,
+      actId: payload.actId,
+      payload: payload.payload ?? {},
+      createdAt
+    };
+  }
+
+  public getHintLogCount(): number {
+    const row = this.db
+      .prepare("SELECT COUNT(*) AS count FROM hint_logs")
+      .get() as { count: number };
+    return row.count;
+  }
+
+  public getLatestHintLogPayload(): Record<string, unknown> | null {
+    const row = this.db
+      .prepare("SELECT payload_json FROM hint_logs ORDER BY id DESC LIMIT 1")
+      .get() as { payload_json: string } | undefined;
+
+    if (row == null) {
+      return null;
+    }
+
+    return parseJson<Record<string, unknown>>(row.payload_json, {});
+  }
+
   private createSchema(): void {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS learning_content (
@@ -308,6 +381,21 @@ export class GhostDatabase {
       });
       insertMany();
     }
+  }
+
+  private resolveHintProfileId(profileId: string | undefined): string {
+    if (typeof profileId === "string" && profileId.trim().length > 0 && this.profileExists(profileId.trim())) {
+      return profileId.trim();
+    }
+
+    const anonymousProfileId = GhostDatabase.AnonymousHintProfileId;
+    if (!this.profileExists(anonymousProfileId)) {
+      this.db
+        .prepare("INSERT INTO profiles (id, created_at) VALUES (?, ?)")
+        .run(anonymousProfileId, nowIso());
+    }
+
+    return anonymousProfileId;
   }
 }
 

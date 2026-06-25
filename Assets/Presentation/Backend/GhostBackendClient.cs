@@ -14,6 +14,7 @@ namespace Ghost.Presentation.Backend
         public const string IncorrectResult = "incorrect";
 
         private const string RunnerName = "Ghost Backend Client Runner";
+        private const int LlmRequestTimeoutSeconds = 65;
 
         private static GhostBackendClientRunner runner;
         private static bool isEnsuringProfile;
@@ -134,6 +135,86 @@ namespace Ghost.Presentation.Backend
             });
         }
 
+        public static void PostHint(
+            string actId,
+            string trigger,
+            string stateSummary,
+            Action<GhostBackendResponse<HintResponse>> callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(actId))
+            {
+                callback?.Invoke(GhostBackendResponse<HintResponse>.Failed("Hint act id is required."));
+                return;
+            }
+
+            EnsureProfile(profileResponse =>
+            {
+                if (!profileResponse.Succeeded || profileResponse.Value == null)
+                {
+                    callback?.Invoke(GhostBackendResponse<HintResponse>.Failed("No backend profile id is available."));
+                    return;
+                }
+
+                var payload = new HintRequest
+                {
+                    profileId = profileResponse.Value.id,
+                    actId = actId,
+                    level = "1",
+                    trigger = string.IsNullOrWhiteSpace(trigger) ? "unspecified" : trigger,
+                    state = new HintState
+                    {
+                        summary = stateSummary ?? string.Empty
+                    }
+                };
+
+                Run(SendRequest(
+                    "POST",
+                    "/hints",
+                    JsonUtility.ToJson(payload),
+                    callback,
+                    LlmRequestTimeoutSeconds));
+            });
+        }
+
+        public static void PostResponse(
+            string actId,
+            string stateSummary,
+            Action<GhostBackendResponse<GeneratedResponse>> callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(actId))
+            {
+                callback?.Invoke(GhostBackendResponse<GeneratedResponse>.Failed("Response act id is required."));
+                return;
+            }
+
+            EnsureProfile(profileResponse =>
+            {
+                if (!profileResponse.Succeeded || profileResponse.Value == null)
+                {
+                    callback?.Invoke(GhostBackendResponse<GeneratedResponse>.Failed("No backend profile id is available."));
+                    return;
+                }
+
+                var payload = new HintRequest
+                {
+                    profileId = profileResponse.Value.id,
+                    actId = actId,
+                    level = "1",
+                    state = new HintState
+                    {
+                        summary = stateSummary ?? string.Empty
+                    }
+                };
+
+                Run(SendRequest(
+                    "POST",
+                    "/responses",
+                    JsonUtility.ToJson(payload),
+                    callback,
+                    LlmRequestTimeoutSeconds));
+            });
+        }
+
         public static string CreateAttemptResult(bool isCorrect)
         {
             return isCorrect ? CorrectResult : IncorrectResult;
@@ -173,12 +254,15 @@ namespace Ghost.Presentation.Backend
             string method,
             string path,
             string jsonBody,
-            Action<GhostBackendResponse<T>> callback)
+            Action<GhostBackendResponse<T>> callback,
+            int timeoutSeconds = 0)
         {
             var url = GhostBackendConfig.BuildUrl(path);
             using (var request = new UnityWebRequest(url, method))
             {
-                request.timeout = GhostBackendConfig.RequestTimeoutSeconds;
+                request.timeout = timeoutSeconds > 0
+                    ? timeoutSeconds
+                    : GhostBackendConfig.RequestTimeoutSeconds;
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Accept", "application/json");
 
@@ -367,5 +451,35 @@ namespace Ghost.Presentation.Backend
         public string result;
         public AttemptDetails details;
         public string createdAt;
+    }
+
+    [Serializable]
+    public sealed class HintRequest
+    {
+        public string profileId;
+        public string actId;
+        public string level = "1";
+        public string trigger = "unspecified";
+        public HintState state = new HintState();
+    }
+
+    [Serializable]
+    public sealed class HintState
+    {
+        public string summary;
+    }
+
+    [Serializable]
+    public sealed class HintResponse
+    {
+        public string hint;
+        public string source;
+    }
+
+    [Serializable]
+    public sealed class GeneratedResponse
+    {
+        public string text;
+        public string source;
     }
 }

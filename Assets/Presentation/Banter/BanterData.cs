@@ -170,5 +170,23 @@ namespace Ghost.Presentation.Banter
                     return Array.Empty<AmbientBanterBeat>();
             }
         }
+
+        public static string GetStaticHint(string actId)
+        {
+            switch (actId)
+            {
+                case GhostNarrativeState.Act1Id:
+                    return "Um... maybe don't look at the exact words first. What does the person want Ghost to do?";
+
+                case GhostNarrativeState.Act2Id:
+                    return "I think Ghost understands the broad request, but it lost the useful detail. Look for the place, time, or thing the message depends on.";
+
+                case GhostNarrativeState.Act3Id:
+                    return "Ghost knows the request and the details, but it still needs a safe order. Try checking whether the room is known before Ghost answers.";
+
+                default:
+                    return "Um... try looking at what Ghost needs to understand next, without jumping straight to the answer.";
+            }
+        }
     }
 }

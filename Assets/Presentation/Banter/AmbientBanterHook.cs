@@ -68,7 +68,7 @@ namespace Ghost.Presentation.Banter
             EnsureEventSystem();
 
             var placement = ResolvePlacement(sceneName, actId);
-            var panel = CreatePanel(placement);
+            var panel = CreatePanel(placement, actId);
             panel.Initialize(beats);
 
             if (placement.UsesLayout)
@@ -150,7 +150,7 @@ namespace Ghost.Presentation.Banter
                 BanterPanelStyle.Fallback().Size);
         }
 
-        private static AmbientBanterPanel CreatePanel(BanterPlacement placement)
+        private static AmbientBanterPanel CreatePanel(BanterPlacement placement, string actId)
         {
             var panelRoot = new GameObject(PanelName, typeof(RectTransform));
             panelRoot.transform.SetParent(placement.Parent, false);
@@ -196,7 +196,7 @@ namespace Ghost.Presentation.Banter
             var nextButton = CreateNextButton(panelRoot.transform, placement.Style);
 
             var panel = panelRoot.AddComponent<AmbientBanterPanel>();
-            panel.Configure(speakerText, dialogueText, portraitImage, portraitPlaceholder, nextButton, CycleSeconds);
+            panel.Configure(speakerText, dialogueText, portraitImage, portraitPlaceholder, nextButton, CycleSeconds, actId);
             return panel;
         }
 
@@ -294,7 +294,7 @@ namespace Ghost.Presentation.Banter
             CreateFillText(
                 "Next Label",
                 buttonRoot.transform,
-                "Next",
+                "Ask Lily",
                 style.NextButtonFontSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleCenter,
@@ -537,7 +537,7 @@ namespace Ghost.Presentation.Banter
                     new RectOffset(10, 10, 8, 8),
                     8f,
                     0f,
-                    44f,
+                    76f,
                     11,
                     13,
                     18f,
@@ -565,7 +565,7 @@ namespace Ghost.Presentation.Banter
                     21f,
                     34f,
                     1f,
-                    38f,
+                    68f,
                     26f,
                     10);
             }
@@ -585,7 +585,7 @@ namespace Ghost.Presentation.Banter
                     112f,
                     136f,
                     3f,
-                    50f,
+                    78f,
                     34f,
                     12);
             }
@@ -605,7 +605,7 @@ namespace Ghost.Presentation.Banter
                     72f,
                     96f,
                     3f,
-                    50f,
+                    78f,
                     34f,
                     12);
             }
