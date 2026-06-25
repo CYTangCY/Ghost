@@ -142,6 +142,36 @@ describe("Ghost backend", () => {
     expect(response.body.source).toBe("static");
     expect(response.body.text).toContain("reply map");
   });
+
+  it("POST /chat falls back to static Lily text and logs chat context when Ollama is unavailable", async () => {
+    const client = createTestClient(new FailingOllamaClient());
+
+    const response = await client
+      .post("/chat")
+      .send({
+        actId: "act3",
+        level: "1",
+        playerName: "Chao",
+        message: "Can you tell me exactly which wire to connect?",
+        history: [
+          { role: "player", text: "I am stuck." },
+          { role: "lily", text: "Um... look at the room check first." }
+        ]
+      })
+      .expect(200);
+
+    expect(response.body.source).toBe("static");
+    expect(response.body.reply).toContain("Um");
+    expect(database?.getHintLogCount()).toBe(1);
+    expect(database?.getLatestHintLogPayload()).toMatchObject({
+      kind: "chat",
+      source: "static",
+      level: "1",
+      trigger: "chat_message"
+    });
+    expect(database?.getLatestHintLogPayload()?.message).toContain("which wire");
+    expect(database?.getLatestHintLogPayload()?.historyCount).toBe(2);
+  });
 });
 
 class FailingOllamaClient implements OllamaTextClient {

@@ -386,6 +386,33 @@ evidence. Archive: `Docs/completed_tasks/M0-T29_llm_orchestration.md`. Next: M0-
 free-text input, dedicated chat window, one-sentence in-character replies, topic guardrails; + banter UI
 sizing — supersedes the run-002 same-panel hint UX).
 
+### 2026-06-25 — IBM course CONTENT COVERAGE direction (goal corrected; planning, no code)
+Reviewed Codex's `Docs/IBM_COURSE_ALIGNMENT_REVIEW.md` (Claude could not re-render the image-based PDF
+in-session — no pdftoppm — so corroborated its concept list against `CONFIRMED_PROJECT_CONTEXT.md` §4/§5;
+consistent). **Goal corrected by the user:** the requirement is that **the GAME teaches the IBM course's
+content** (players learn the course curriculum by playing) — NOT the dissertation/architecture
+"mirroring" the course, and NOT concept labels or dissertation wording. So the work is pedagogical
+CONTENT COVERAGE, kept playable per §2. The review's "alignment = labels/framing" angle missed this and
+is superseded. Plan (after the in-flight M0-T33): (1) a curriculum coverage map from the actual PDF
+(course teaching point → where the game teaches it → gaps); (2) build the missing in-game teaching —
+fundamentals first (chatbot definition, rule vs AI, five components, four challenges), strengthen Acts
+1–3 to actually teach their concept, then cover the rest (Acts 4–7); Acts 4–8 are coverage, not extras.
+Recorded in ROADMAP ("IBM Course Content Coverage"). CURRENT_TASK left as M0-T33. Next: finish M0-T33,
+then the coverage map.
+
+### 2026-06-25 — M0-T33: Lily chat — Completed
+Codex run 001 added a dedicated `LilyChatWindow` (separate overlay, free-text input + Send + Close +
+scrollable ≤10-turn history) that opens on Ask Lily and pauses/resumes the ambient banter; backend
+`POST /chat` sends the player's message + history + a Lily persona/guardrail system prompt to Ollama,
+returns one short in-character sentence, logs `kind:"chat"` (+ trigger + the player's message), static
+fallback. Persona stammers + addresses {playerName}; guardrails: act/story only, private-life→flustered
+deflect, off-topic→refocus, never reveals answers, never scores. Claude verified LIVE: `POST /chat`
+returned `source:"llm"` ("Um... I, I don't have a favorite food, Alex. My focus is on intent
+classification…") — stammer + name + off-topic deflection working; `hint_logs` now records the actual
+question (fixes the prior gap); `npm test` 7/7; build clean. Unity window reviewed by reading
+(pause/resume; separate canvas). Residual Editor checks: window visual + Act 2 banter sizing. Archive:
+`Docs/completed_tasks/M0-T33_lily_chat.md`. Next: M0-T34 (IBM course content coverage map).
+
 ---
 
 ## Entry Template

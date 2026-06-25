@@ -2,58 +2,44 @@
 
 ## ID
 
-M0-T33
+M0-T34
 
 ## Goal
 
-Turn "Ask Lily" into a constrained **chat**: a dedicated chat window (not the ambient reply box) where
-the player can TYPE questions and Lily replies in one short, in-character sentence via the LLM, staying
-on-topic (the current act's chatbot/NLP learning + the Ghost story), with persona guardrails. Plus fix
-the ambient banter UI (Act 2 box too large; fixed-reply position).
+Produce the IBM course **content coverage map**: extract the course's actual teaching points from
+`unorganized_data/Course_IBM_chatbot.pdf`, and map each to where the game currently teaches it
+(introduced AND practiced) vs what is MISSING — so we know exactly what in-game teaching to build so the
+GAME teaches the course content. Planning/analysis task; no gameplay code.
 
 ## Context
 
-M0-T29 made the LLM work (one-shot hints; `source:"llm"` verified) but it has no free-text input and
-writes into the ambient reply box. The user wants a real chat: type a question → short in-character Lily
-reply, in a separate window, with topic guardrails. Builds on the M0-T29 backend (Ollama client +
-orchestration) and the M0-T28 client pattern. Deterministic puzzles unchanged; the LLM never scores;
-static in-character fallback stays.
+User-corrected goal (2026-06-25): the game must TEACH the IBM course's content — players learn the
+curriculum by playing — kept playable (`CONFIRMED_PROJECT_CONTEXT.md` §2: no lecture/quiz dump). The
+vertical slice (Acts 1–3 + backend/DB + LLM Lily chat) is built and verified. Before building more
+teaching, we need a precise map of what the course teaches vs what the game teaches. Claude cannot render
+the image-based PDF in its environment; Codex can.
 
 ## Scope
 
-- Backend: add `POST /chat { actId, message, history?, profileId? }` → `{ reply, source }` that sends the
-  PLAYER'S typed `message` plus a persona/guardrail system prompt to Ollama; returns ONE short sentence;
-  logs to `hint_logs` (`kind:"chat"`, `trigger`, a non-spoiler note of the player's topic). Reuse the
-  Ollama client; static in-character fallback if unavailable. No answer-key in the prompt; no scoring.
-  - **Lily persona + guardrails (system prompt):** human postdoctoral senior, nerdy/timid/warm, not an
-    AI; reply in ONE short sentence, in character, addressing {playerName}; ONLY discuss the current
-    act's chatbot/NLP concept and the Ghost story/situation; if asked about Lily's private life → react
-    a bit flustered/annoyed and deflect (in character); if asked anything off-topic/unrelated → redirect
-    ("let's focus on helping Ghost right now"); never reveal puzzle solutions/answers; never decide
-    correctness or progression.
-- Client (Unity): a dedicated Lily chat window/panel that OPENS on Ask Lily (instead of writing into the
-  ambient banter): a scrollable message list + a text input field + send + close; it PAUSES the ambient
-  banter while open and RESUMES on close. WebGL-safe + graceful (LLM/backend down → a static
-  in-character line). The after-incorrect-validate hint may open/append to this chat window.
-- Tighten reply length across hints/responses/chat to ~one short sentence (≤ ~25 words) in the prompts.
-- Ambient banter UI fixes: resize the Act 2 box (too large) and fix the fixed-reply position so it reads
-  cleanly and does not overlap.
-- Keep deterministic validators/sessions/puzzle rules unchanged. Update CODE_WALKTHROUGH.md +
-  UNITY_TEST_CHECKLIST.md; create a Codex run log.
+- Codex renders `unorganized_data/Course_IBM_chatbot.pdf` and extracts a faithful, structured outline of
+  the course's TEACHING CONTENT (modules/sections + the key points each teaches) into a new
+  `Docs/IBM_COURSE_CONTENT.md`, citing page ranges; no invented content.
+- A coverage map (in that doc): for each course teaching point → where the game currently teaches it
+  (which Act / Game Shell, and whether it is INTRODUCED/explained as well as PRACTICED) → status:
+  `taught` / `partial (practiced but not explained)` / `missing`.
+- A prioritized gap list of in-game teaching to add (fundamentals first — chatbot definition, rule-based
+  vs AI-enabled, five components, four challenges; then strengthen Acts 1–3 teaching; then breadth via
+  Acts 4–7), framed as proposed follow-up tasks (do NOT implement them here).
+- No Unity/gameplay/puzzle changes. Update HANDOFF; this feeds the next implementation tasks.
 
 ## Out of Scope
 
-- Persistent chat history across sessions; multiple LLMs; voice; the Act 8 capstone; any LLM scoring.
+- Implementing the teaching content (later tasks); changing puzzle rules/validators; dissertation/slide
+  wording (a separate, minor concern).
 
 ## Acceptance Criteria
 
-- Pressing Ask Lily opens a separate chat window (not the ambient box); the player can type a question
-  and gets a short, in-character Lily reply from the LLM (`source:"llm"` when Ollama is up; static
-  in-character fallback otherwise).
-- Lily stays on-topic: off-topic → redirect to the task; private-life → flustered deflection; never
-  reveals answers; never scores.
-- Replies are one short sentence and match the persona.
-- The ambient banter pauses while chatting and resumes on close; the Act 2 banter box is sized
-  correctly; nothing overlaps.
-- Deterministic puzzles unchanged; graceful when backend/LLM is down; `hint_logs` records chat turns
-  (`kind:"chat"` + a topic note). Docs + a Codex run log updated.
+- `Docs/IBM_COURSE_CONTENT.md` exists with a faithful, page-cited outline of the course's teaching
+  content + a coverage map (taught / partial / missing per concept) + a prioritized gap list.
+- It accurately reflects the PDF (Codex actually rendered it); no invented content.
+- No gameplay/code changes; a run log is created.

@@ -1119,14 +1119,14 @@ M0-T32 uses a runtime scene-load hook and does not require scene YAML edits or s
 3. Launch Act 1.
 4. Confirm a compact ambient banter panel appears in the bottom validation area, not as a floating overlay covering cards or drop targets.
 5. Confirm Act 1 lines cycle and loop automatically.
-6. Confirm the `Ask Lily` button shows a Lily hint without blocking the puzzle.
+6. Confirm the `Ask Lily` button opens a dedicated Lily chat window without blocking the puzzle.
 7. Confirm Act 1 includes nervous Lily lines and garbled Ghost lines, with at least 15 Lily lines and 15 Ghost lines available in the loop.
 8. Confirm at least one line addresses the player by the entered name.
 9. Confirm Act 1 banter text is not vertically cut off.
 10. Confirm Act 1 puzzle controls remain fully playable with the panel present.
 11. Return to the hub and launch Act 2.
 12. Confirm Act 2 banter appears in the bottom validation area and cycles/loops without covering chips or palette controls.
-13. Confirm the Act 2 banter box is visibly slimmer than the earlier oversized version while still readable.
+13. Confirm the Act 2 banter box is visibly slimmer than the earlier oversized version while still readable and not overlapping fixed validation feedback.
 14. Confirm Lily is warmer, Ghost catches details, and the first joke/backpedal beat appears, with at least 15 Lily lines and 15 Ghost lines available in the loop.
 15. Confirm Act 2 puzzle controls remain fully playable.
 16. Return to the hub and launch Act 3.
@@ -1251,9 +1251,9 @@ No manual Inspector setup is required. `BackendSync` starts from runtime hooks, 
 5. Open `Assets/Scenes/GameShellPrototype.unity` and enter Play Mode.
 6. Enter a player name and launch Act 1.
 7. Click `Ask Lily`.
-8. Confirm the existing banter panel is reused: the current line changes to an "asking Lily" state, then the hint appears in the same frame with no second panel or overlapping text.
-9. Confirm the button changes to `Back`, pressing it resumes the ambient banter loop, and the puzzle remains playable while a longer local Granite request is in flight.
-10. Validate an incorrect Act 1 grouping and confirm Lily offers a hint after the deterministic incorrect feedback.
+8. Confirm M0-T33 supersedes the M0-T29 one-shot hint UI: `Ask Lily` now opens a dedicated chat window rather than replacing the banter line.
+9. Confirm closing the chat resumes the ambient banter loop, and the puzzle remains playable while a longer local Granite request is in flight.
+10. Validate an incorrect Act 1 grouping and confirm Lily opens/uses the chat window after the deterministic incorrect feedback.
 11. Repeat `Ask Lily` and incorrect Validate in Act 2 and Act 3.
 12. Confirm the backend writes `hint_logs` rows with `trigger` values such as `ask_lily_button` and `after_incorrect_validate`, plus a non-spoiler state summary.
 13. Confirm puzzle correctness and progression still come only from the existing validators.
@@ -1262,10 +1262,10 @@ No manual Inspector setup is required. `BackendSync` starts from runtime hooks, 
 
 1. Stop Ollama but keep the backend running.
 2. Click `Ask Lily` in each act.
-3. Confirm a static Lily hint appears in the same banter frame and gameplay continues.
+3. Confirm static Lily support appears through the M0-T33 chat window and gameplay continues.
 4. Stop the backend.
 5. Click `Ask Lily` and validate incorrectly in each act.
-6. Confirm the Unity client shows local static hints in the same frame, with `Back` resuming ambient banter, and never blocks play.
+6. Confirm the Unity client shows local static Lily chat lines, with Close resuming ambient banter, and never blocks play.
 7. Confirm network failures produce at most warning logs.
 
 ### Validator / Scope Regression Check
@@ -1278,3 +1278,49 @@ No manual Inspector setup is required. `BackendSync` starts from runtime hooks, 
 ### Inspector Setup
 
 No manual Inspector setup is required. `AmbientBanterHook` creates the `Ask Lily` affordance at runtime, `GhostBackendClient` hosts backend requests on its hidden runner, and `BanterData.GetStaticHint(...)` supplies local fallback hints.
+
+---
+
+## M0-T33: Constrained Lily Chat Window
+
+### Backend Automated Check
+
+1. Open a terminal in `Backend/`.
+2. Run `npm run build`.
+3. Run `npm test`.
+4. Expected tests:
+   - Existing content/profile/progress/attempt tests still pass.
+   - `/hints` fallback and mocked LLM tests still pass.
+   - `/responses` fallback still passes.
+   - `/chat` returns HTTP 200 with `source: "static"` when Ollama is unavailable.
+   - `/chat` inserts a `hint_logs` row with `kind:"chat"`, `trigger:"chat_message"`, and the player message/topic.
+
+### Chat Window Play Mode Check
+
+1. Start Ollama and the backend, then enter Play Mode from `Assets/Scenes/GameShellPrototype.unity`.
+2. Enter a player name and launch Act 1.
+3. Click `Ask Lily`.
+4. Confirm a dedicated `Lily Chat Window` opens with a scrollable message list, text input, Send button, and Close button.
+5. Confirm the ambient banter strip pauses while the chat window is open.
+6. Type an on-topic question about the current act and send it.
+7. Confirm Lily replies in one short, hesitant, in-character sentence and does not reveal the exact answer.
+8. Ask a private-life question and confirm Lily gives a flustered/annoyed deflection.
+9. Ask an off-topic question and confirm Lily redirects toward helping Ghost.
+10. Close the chat window and confirm ambient banter resumes.
+11. Repeat Ask Lily in Act 2 and Act 3.
+12. Trigger an incorrect Validate in each act and confirm it opens/uses the chat window with a Lily opening line.
+13. Confirm `hint_logs` contains `kind:"chat"` rows.
+
+### Fallback / Layout Check
+
+1. Stop Ollama but keep the backend running.
+2. Send a Lily chat message and confirm the backend returns/static displays an in-character fallback line.
+3. Stop the backend.
+4. Send a Lily chat message and confirm the Unity client appends a local static Lily line.
+5. Confirm puzzle controls remain playable and correctness still comes only from deterministic validators.
+6. Confirm the Act 2 ambient banter box is slimmer, readable, and does not overlap fixed validation feedback.
+7. Confirm no ProjectSettings, Packages, Build Settings, scenes, `.meta`, or deterministic puzzle logic files were edited for M0-T33.
+
+### Inspector Setup
+
+No manual Inspector setup is required. `AmbientBanterHook` creates the banter affordance at runtime, `LilyChatWindow` creates its own runtime canvas/window when Ask Lily is opened, and `GhostBackendClient.PostChat(...)` sends best-effort chat requests through UnityWebRequest.

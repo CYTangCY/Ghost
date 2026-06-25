@@ -188,5 +188,23 @@ namespace Ghost.Presentation.Banter
                     return "Um... try looking at what Ghost needs to understand next, without jumping straight to the answer.";
             }
         }
+
+        public static string GetStaticChatReply(string actId)
+        {
+            switch (actId)
+            {
+                case GhostNarrativeState.Act1Id:
+                    return "Um... let's stay with what the message wants Ghost to do.";
+
+                case GhostNarrativeState.Act2Id:
+                    return "I-I think the useful detail matters most here.";
+
+                case GhostNarrativeState.Act3Id:
+                    return "Um... let's keep Ghost's reply map focused on checking before answering.";
+
+                default:
+                    return "Um... let's focus on helping Ghost right now, okay?";
+            }
+        }
     }
 }

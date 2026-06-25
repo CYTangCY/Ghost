@@ -186,6 +186,7 @@ namespace Ghost.Presentation.Banter
             var layout = panelRoot.AddComponent<HorizontalLayoutGroup>();
             layout.padding = placement.Style.Padding;
             layout.spacing = placement.Style.Spacing;
+            layout.childAlignment = TextAnchor.MiddleLeft;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
@@ -553,20 +554,20 @@ namespace Ghost.Presentation.Banter
             public static BanterPanelStyle Act2Validation()
             {
                 return new BanterPanelStyle(
-                    new Vector2(360f, 48f),
-                    new RectOffset(8, 8, 5, 5),
+                    new Vector2(300f, 58f),
+                    new RectOffset(9, 9, 6, 6),
                     7f,
                     0f,
-                    32f,
+                    38f,
                     9,
                     11,
                     13f,
                     11,
-                    21f,
-                    34f,
+                    28f,
+                    42f,
                     1f,
-                    68f,
-                    26f,
+                    64f,
+                    30f,
                     10);
             }
 

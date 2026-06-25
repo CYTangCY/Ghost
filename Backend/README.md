@@ -9,10 +9,10 @@ Local Node.js + TypeScript REST service for the Ghost vertical-slice backend/dat
 - Local pseudonymous profiles.
 - Progress and attempt-log storage.
 - Seeded Act 1-3 reference content mirrored from the Unity sample data.
-- LLM-backed Lily hints and Ghost response text through local Ollama + Granite, with static fallback.
+- LLM-backed Lily hints, Lily chat, and Ghost response text through local Ollama + Granite, with static fallback.
 
 The backend does **not** score puzzle submissions. Unity's deterministic validators and graph simulator remain authoritative. Stored answer keys are reference/analytics data only.
-The LLM also does **not** score puzzle submissions. It only generates natural-language hints/responses.
+The LLM also does **not** score puzzle submissions. It only generates natural-language hints, chat replies, and responses.
 
 ## Setup
 
@@ -157,6 +157,27 @@ Hints are logged to the `hint_logs` table for analytics, including the trigger (
 uses only act learning metadata and player-facing state summaries; it intentionally does not include
 puzzle answer keys.
 
+### Try `/chat`
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:3000/chat" `
+  -ContentType "application/json" `
+  -Body '{"actId":"act3","level":"1","playerName":"Junior","message":"Why should Ghost check the room first?","history":[]}'
+```
+
+Response shape:
+
+```json
+{ "reply": "Um... Ghost should check the room before it answers.", "source": "llm" }
+```
+
+If Ollama is unavailable, `/chat` still returns HTTP 200 with a short in-character static Lily line.
+Chat turns are logged to `hint_logs` with `kind:"chat"` and `trigger:"chat_message"`.
+
 ## Endpoints
 
 - `GET /health` -> `{ ok: true }`
@@ -167,5 +188,6 @@ puzzle answer keys.
 - `POST /attempts` -> insert an attempt log
 - `POST /hints` -> Lily hint text, `{ hint, source: "llm" | "static" }`
 - `POST /responses` -> Ghost response text, `{ text, source: "llm" | "static" }`
+- `POST /chat` -> constrained Lily chat reply, `{ reply, source: "llm" | "static" }`
 
 There is intentionally no scoring endpoint. Deterministic correctness remains in the Unity client.

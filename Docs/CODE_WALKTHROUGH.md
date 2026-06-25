@@ -1314,6 +1314,7 @@ Initialized before scene load. Public methods start coroutines and invoke callba
 - `PostAttempt(...)`: POSTs act id, correct/incorrect result, and brief details to `/attempts`.
 - `PostHint(...)`: POSTs an act id, trigger, and player-facing state summary to `/hints`; it uses a longer non-blocking LLM timeout so local Granite has time to respond, and failures are callback-only.
 - `PostResponse(...)`: POSTs an act id and state summary to `/responses` for optional generated Ghost text, using the same longer non-blocking LLM timeout.
+- `PostChat(...)`: POSTs an act id, typed player message, short chat history, and player name to `/chat`; failures are callback-only so the Lily chat window can show local static fallback text.
 - `CreateAttemptDetails(...)`: packages validator error count and messages as analytics details.
 
 ### Input
@@ -1453,11 +1454,11 @@ Run `npm run build` and `npm test` from `Backend/`. In browser/WebGL verificatio
 
 ### Component Name
 
-Backend Ollama + Granite orchestration (`Backend/src/ollamaClient.ts`, `Backend/src/llmOrchestration.ts`, `/hints`, `/responses`)
+Backend Ollama + Granite orchestration (`Backend/src/ollamaClient.ts`, `Backend/src/llmOrchestration.ts`, `/hints`, `/responses`, `/chat`)
 
 ### Purpose
 
-Adds local LLM-backed natural-language support for Lily hints and Ghost response text. The LLM never decides correctness, never receives puzzle answer keys, and never gates progression.
+Adds local LLM-backed natural-language support for Lily hints, constrained Lily chat, and Ghost response text. The LLM never decides correctness, never receives puzzle answer keys, and never gates progression.
 
 ### Runtime Role
 
@@ -1466,26 +1467,64 @@ The backend reads act learning metadata from `learning_content`, builds a curric
 ### Important Files
 
 - `Backend/src/ollamaClient.ts`: fetch-based Ollama client, env config (`OLLAMA_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_MS`, `OLLAMA_CHECK_TIMEOUT_MS`), a 60-second default generate timeout, and a short model-list helper timeout.
-- `Backend/src/llmOrchestration.ts`: Lily/Ghost system prompts, static hints/responses, prompt sanitisation, fallback warnings, and hint logging with trigger/state context.
+- `Backend/src/llmOrchestration.ts`: Lily/Ghost system prompts, constrained Lily chat prompt, static hints/responses/chat fallback, prompt sanitisation, fallback warnings, and hint logging with trigger/state context.
 - `Backend/src/checkOllama.ts`: `npm run check:ollama` command for local setup checks plus one timed test generation.
 - `Backend/src/database.ts`: `getLearningContentSummary(...)`, `insertHintLog(...)`, `getHintLogCount()`, and `getLatestHintLogPayload()` test helper.
 
 ### Client Flow
 
 - `GhostBackendClient.PostHint(...)` calls `/hints` best-effort through UnityWebRequest and sends a non-spoiler `trigger` plus `state.summary`.
-- `AmbientBanterPanel` exposes an `Ask Lily` button and a static `RequestHint(...)` helper for incorrect validation events. A requested hint replaces the current banter line in the same panel, pauses the loop, shows an "Asking Lily..." in-flight state, and uses `Back` to resume the loop.
-- Act 1, Act 2, and Act 3 presentation interaction controllers request a Lily hint after an incorrect deterministic Validate result with the `after_incorrect_validate` trigger and an error-count summary.
-- `BanterData.GetStaticHint(...)` provides the local fallback used when the backend or LLM is unavailable.
+- `GhostBackendClient.PostChat(...)` calls `/chat` best-effort through UnityWebRequest and sends typed player text plus a short in-memory history.
+- `AmbientBanterPanel` exposes an `Ask Lily` button and a static `RequestHint(...)` helper for incorrect validation events. Both open the dedicated Lily chat window instead of writing hint text into the ambient banter strip.
+- `LilyChatWindow` pauses ambient banter while open, sends chat turns to `/chat`, appends Lily replies to the scrollable chat list, and shows local static fallback if the backend or LLM fails.
+- Act 1, Act 2, and Act 3 presentation interaction controllers open Lily chat after an incorrect deterministic Validate result.
+- `BanterData.GetStaticHint(...)` and `BanterData.GetStaticChatReply(...)` provide local fallbacks used when the backend or LLM is unavailable.
 
 ### Failure Cases
 
 - Ollama unavailable: backend returns static fallback; tests cover this path.
-- Backend unavailable from Unity: `GhostBackendClient` fails callback; `AmbientBanterPanel` displays local static hint.
+- Backend unavailable from Unity: `GhostBackendClient` fails callback; `LilyChatWindow` displays local static Lily chat fallback.
 - Unity panel missing: incorrect Validate still works; the hint request no-ops.
 
 ### Test
 
-From `Backend/`, run `npm install`, `npm run build`, and `npm test`. Use `npm run check:ollama` to verify a live local Ollama + Granite setup and see timed generation latency. In Unity Play Mode, enter each act, click `Ask Lily`, confirm the current banter line is replaced rather than overlapped, then press `Back` to resume the loop. Validate incorrectly and confirm Lily requests use the `after_incorrect_validate` trigger. Repeat with backend/Ollama stopped and confirm static fallback.
+From `Backend/`, run `npm install`, `npm run build`, and `npm test`. Use `npm run check:ollama` to verify a live local Ollama + Granite setup and see timed generation latency. In Unity Play Mode, enter each act, click `Ask Lily`, confirm the dedicated chat window opens and ambient banter pauses, type a question, then close the chat and confirm banter resumes. Repeat with backend/Ollama stopped and confirm static fallback.
+
+---
+
+## M0-T33 Constrained Lily Chat
+
+### Component Name
+
+Constrained Lily chat (`POST /chat`, `GhostBackendClient.PostChat(...)`, `LilyChatWindow.cs`)
+
+### Purpose
+
+Turns Ask Lily into a dedicated free-text chat window while keeping the LLM constrained to one short in-character sentence about the current act's chatbot/NLP concept and Ghost story situation.
+
+### Runtime Role
+
+The backend `/chat` endpoint receives the current act id, typed player message, short recent history, player name, optional profile id, and level. It builds a Lily persona and guardrail prompt with act learning metadata only. It never includes puzzle answer keys, never decides scoring, and logs each chat turn to `hint_logs` as `kind:"chat"` / `trigger:"chat_message"`.
+
+### Important Files
+
+- `Backend/src/llmOrchestration.ts`: `createLilyChatReply(...)`, Lily chat system prompt, short-history prompt construction, and static chat fallback.
+- `Backend/src/app.ts`: exposes `POST /chat`.
+- `Backend/tests/app.test.ts`: covers `/chat` static fallback and `hint_logs` chat payload.
+- `Assets/Presentation/Backend/GhostBackendClient.cs`: `PostChat(...)` coroutine wrapper and JSON payload/response classes.
+- `Assets/Presentation/Banter/LilyChatWindow.cs`: runtime-created UGUI chat window with scrollable message list, text input, Send, and Close.
+- `Assets/Presentation/Banter/AmbientBanterPanel.cs`: Ask Lily and incorrect Validate now open chat, pause ambient banter, and resume it on close.
+- `Assets/Presentation/Banter/AmbientBanterHook.cs`: Act 2 banter style adjusted to a slimmer, readable validation-area strip.
+
+### Failure Cases
+
+- Ollama unavailable: backend returns HTTP 200 with `source:"static"` and logs the chat turn.
+- Backend unavailable from Unity: the chat window appends a local static Lily line and gameplay continues.
+- Off-topic/private-life handling is enforced by the LLM prompt and must be manually checked with live Ollama.
+
+### Unity Test
+
+No Inspector setup is required. In Play Mode, enter any act, click `Ask Lily`, type an on-topic question, and confirm Lily replies in one short sentence. Ask an off-topic question and a private-life question to confirm redirect/deflection. Stop the backend and confirm a local static line appears. Close the chat and confirm ambient banter resumes.
 
 ---
 
@@ -1523,8 +1562,8 @@ Run locally from `Backend/` with `npm run dev` during development or `npm run bu
 - `PUT /progress/:profileId`: upserts completed acts/levels and narrative state JSON.
 - `POST /hints`: returns `{ hint, source }`, using Ollama/Granite when available and static hints otherwise; logs kind/source/level/trigger/state/error to `hint_logs`.
 - `POST /responses`: returns `{ text, source }`, using Ollama/Granite when available and static Ghost response text otherwise.
+- `POST /chat`: returns `{ reply, source }`, using constrained Lily chat when available and static Lily chat fallback otherwise.
 - `POST /attempts`: stores attempt-log analytics data.
-- `POST /hints` and `POST /responses`: return HTTP 501 with `not implemented (M0-T29)`.
 
 ### Deterministic Correctness Rule
 
@@ -1535,7 +1574,7 @@ The backend does not score puzzle submissions and does not expose a scoring endp
 - Missing profiles return `404` for progress or attempt insertion.
 - Missing `profileId`, `actId`, or `result` on `POST /attempts` returns `400`.
 - SQLite data files are local runtime artifacts and are ignored by git.
-- Ollama errors/timeouts on `/hints` and `/responses` return HTTP 200 with `source: "static"` so gameplay can continue; fallback warnings include the configured Ollama URL, model, and actual error.
+- Ollama errors/timeouts on `/hints`, `/responses`, and `/chat` return HTTP 200 with `source: "static"` so gameplay can continue; fallback warnings include the configured Ollama URL, model, and actual error.
 
 ### Test
 
@@ -1580,6 +1619,7 @@ Provides per-act lists of `AmbientBanterBeat` values. Each beat has a speaker, t
 
 - `GetBeats(string actId)`: returns the ambient loop for `act1`, `act2`, or `act3`.
 - `GetStaticHint(string actId)`: returns a local non-spoiler Lily hint for use when the backend or Ollama is unavailable.
+- `GetStaticChatReply(string actId)`: returns a short in-character Lily chat fallback for offline chat.
 
 ### Input
 
@@ -1605,7 +1645,7 @@ AmbientBanterPanel.cs
 
 ### Purpose
 
-Displays a compact, non-blocking UGUI banter panel with the current speaker, dialogue text, and a portrait placeholder. It cycles through the current act's beats on a timer and includes an `Ask Lily` button for non-spoiler hints.
+Displays a compact, non-blocking UGUI banter panel with the current speaker, dialogue text, and a portrait placeholder. It cycles through the current act's beats on a timer and includes an `Ask Lily` button that opens the dedicated Lily chat window.
 
 ### Attached GameObject
 
@@ -1613,7 +1653,7 @@ Attached at runtime to the `Ambient Banter Panel` GameObject created by `Ambient
 
 ### Runtime Role
 
-Receives an act's banter beats, shows the first line, substitutes `{playerName}` from `GhostNarrativeState`, swaps Lily/Ghost portrait placeholders by speaker, advances after a few seconds, and loops back to the beginning. M0-T29 also lets the panel request a Lily hint from the backend and display a local static hint if the request fails. During a hint request, the same panel pauses the ambient loop, replaces the current banter text with an "Asking Lily..." or hint line, and uses the button as `Back` to resume the loop.
+Receives an act's banter beats, shows the first line, substitutes `{playerName}` from `GhostNarrativeState`, swaps Lily/Ghost portrait placeholders by speaker, advances after a few seconds, and loops back to the beginning. M0-T33 makes the button open `LilyChatWindow`; the ambient loop pauses while chat is open and resumes when chat closes.
 
 ### Important Fields
 
@@ -1621,7 +1661,7 @@ Receives an act's banter beats, shows the first line, substitutes `{playerName}`
 - `dialogueText`: visible banter line.
 - `speakerPortraitImage`: sized placeholder Image for future Lily/Ghost sprites.
 - `portraitPlaceholderText`: label shown when no sprite is assigned.
-- `nextButton`: runtime button now labelled `Ask Lily`; it requests a hint instead of deciding correctness.
+- `nextButton`: runtime button labelled `Ask Lily`; it opens the dedicated Lily chat window instead of deciding correctness.
 - `cycleSeconds`: timer interval for automatic cycling.
 - `lilyPortrait`, `ghostPortrait`: optional sprites left empty for placeholder art.
 
@@ -1629,24 +1669,25 @@ Receives an act's banter beats, shows the first line, substitutes `{playerName}`
 
 - `Configure(...)`: assigns runtime-created UI references, cycle timing, and current act id.
 - `Initialize(...)`: stores the act beat list, wires the Ask Lily button, and shows the first beat.
-- `RequestHint(...)`: static helper used by act controllers after incorrect validation; routes through `GhostBackendClient.PostHint(...)` with trigger/state context and falls back to `BanterData.GetStaticHint(...)`.
-- `Update()`: advances the loop when the timer elapses, but stays paused while hint text is visible.
+- `RequestHint(...)`: static helper used by act controllers after incorrect validation; opens `LilyChatWindow` with an opening Lily line.
+- `PauseForChat()` / `ResumeAfterChat()`: used by `LilyChatWindow` to pause and resume ambient cycling.
+- `Update()`: advances the loop when the timer elapses, but stays paused while chat is open.
 
 ### Input
 
-Ambient beats and static fallback hints from `BanterData`; optional LLM hints from the backend.
+Ambient beats from `BanterData`; chat opens through `LilyChatWindow`.
 
 ### Output
 
-A cycling, visible ambient banter strip and Lily hint display area. It does not decide puzzle correctness.
+A cycling, visible ambient banter strip plus an entry point into Lily chat. It does not decide puzzle correctness.
 
 ### Failure Cases
 
-Empty or missing beat lists show no text. Missing portrait sprites intentionally show labelled placeholders. Backend/Ollama failures display local static hints instead of blocking play.
+Empty or missing beat lists show no text. Missing portrait sprites intentionally show labelled placeholders. Chat/backend/Ollama failures are handled by `LilyChatWindow`, not by the ambient strip.
 
 ### Unity Test
 
-Enter an act in Play Mode, watch the panel cycle, click `Ask Lily`, and confirm a Lily hint appears without blocking puzzle controls. Stop the backend and confirm `Ask Lily` still shows a static hint.
+Enter an act in Play Mode, watch the panel cycle, click `Ask Lily`, and confirm a separate chat window opens and pauses ambient cycling. Close the chat and confirm the panel resumes.
 
 ---
 
@@ -1683,6 +1724,7 @@ On scene load, maps the active scene name to an act id using `ShellSceneNames`, 
 - `GetActIdForScene(...)`: maps scene names to `GhostNarrativeState` act ids.
 - `ResolvePlacement(...)`: prefers existing act UI hosts over fallback overlay placement.
 - `CreatePanel(...)`: builds the non-blocking UGUI panel and wires `AmbientBanterPanel`.
+- `BanterPanelStyle.Act2Validation()`: keeps the Act 2 validation-area banter strip slimmer while preserving readable text and button spacing.
 
 ### Input
 

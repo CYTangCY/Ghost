@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from "express";
-import { createGhostResponse, createLilyHint, LlmRequestBody } from "./llmOrchestration";
+import { ChatRequestBody, createGhostResponse, createLilyChatReply, createLilyHint, LlmRequestBody } from "./llmOrchestration";
 import { OllamaClient, OllamaTextClient } from "./ollamaClient";
 import { GhostDatabase, ProgressPayload } from "./database";
 
@@ -95,6 +95,25 @@ export function createApp(database: GhostDatabase, ollamaClient: OllamaTextClien
     response.json({
       text: ghostResponse.text,
       source: ghostResponse.source
+    });
+  });
+
+  app.post("/chat", async (request: Request, response: Response) => {
+    const payload = readObjectBody<ChatRequestBody>(request);
+    if (isMissing(payload.actId)) {
+      response.status(400).json({ error: "actId is required" });
+      return;
+    }
+
+    if (isMissing(payload.message)) {
+      response.status(400).json({ error: "message is required" });
+      return;
+    }
+
+    const reply = await createLilyChatReply(database, ollamaClient, payload);
+    response.json({
+      reply: reply.text,
+      source: reply.source
     });
   });
 

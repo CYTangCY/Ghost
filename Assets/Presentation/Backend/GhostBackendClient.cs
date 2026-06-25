@@ -215,6 +215,69 @@ namespace Ghost.Presentation.Backend
             });
         }
 
+        public static void PostChat(
+            string actId,
+            string message,
+            IReadOnlyList<ChatHistoryItem> history,
+            string playerName,
+            Action<GhostBackendResponse<ChatResponse>> callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(actId) || string.IsNullOrWhiteSpace(message))
+            {
+                callback?.Invoke(GhostBackendResponse<ChatResponse>.Failed("Chat act id and message are required."));
+                return;
+            }
+
+            EnsureProfile(profileResponse =>
+            {
+                if (!profileResponse.Succeeded || profileResponse.Value == null)
+                {
+                    callback?.Invoke(GhostBackendResponse<ChatResponse>.Failed("No backend profile id is available."));
+                    return;
+                }
+
+                var payload = new ChatRequest
+                {
+                    profileId = profileResponse.Value.id,
+                    actId = actId,
+                    level = "1",
+                    message = message.Trim(),
+                    playerName = string.IsNullOrWhiteSpace(playerName) ? GhostNarrativeState.PlayerName : playerName.Trim(),
+                    history = CopyChatHistory(history)
+                };
+
+                Run(SendRequest(
+                    "POST",
+                    "/chat",
+                    JsonUtility.ToJson(payload),
+                    callback,
+                    LlmRequestTimeoutSeconds));
+            });
+        }
+
+        private static ChatHistoryItem[] CopyChatHistory(IReadOnlyList<ChatHistoryItem> history)
+        {
+            if (history == null || history.Count == 0)
+            {
+                return new ChatHistoryItem[0];
+            }
+
+            var count = Mathf.Min(history.Count, 8);
+            var copied = new ChatHistoryItem[count];
+            var start = history.Count - count;
+            for (var i = 0; i < count; i++)
+            {
+                var item = history[start + i] ?? new ChatHistoryItem();
+                copied[i] = new ChatHistoryItem
+                {
+                    role = item.role ?? string.Empty,
+                    text = item.text ?? string.Empty
+                };
+            }
+
+            return copied;
+        }
+
         public static string CreateAttemptResult(bool isCorrect)
         {
             return isCorrect ? CorrectResult : IncorrectResult;
@@ -480,6 +543,31 @@ namespace Ghost.Presentation.Backend
     public sealed class GeneratedResponse
     {
         public string text;
+        public string source;
+    }
+
+    [Serializable]
+    public sealed class ChatRequest
+    {
+        public string profileId;
+        public string actId;
+        public string level = "1";
+        public string message;
+        public string playerName;
+        public ChatHistoryItem[] history = new ChatHistoryItem[0];
+    }
+
+    [Serializable]
+    public sealed class ChatHistoryItem
+    {
+        public string role;
+        public string text;
+    }
+
+    [Serializable]
+    public sealed class ChatResponse
+    {
+        public string reply;
         public string source;
     }
 }

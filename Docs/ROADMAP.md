@@ -78,6 +78,34 @@ execution order is **M0-T30** Act 3 UX redesign → **M0-T26** narrative → **M
 **M0-T28** client↔backend → **M0-T29** LLM. Acts 4–8 (the phases below) resume after the slice reaches a
 certain completeness. Deterministic-correctness still holds throughout.
 
+### IBM Course Content Coverage (queued — after M0-T33; goal corrected 2026-06-25)
+
+**Goal (user-corrected): the game must TEACH the IBM course's content — players learn the course's
+chatbot/NLP curriculum by playing it.** This is pedagogical CONTENT COVERAGE, not the dissertation or
+architecture "mirroring" the course, and not merely adding concept labels. Teaching stays playable
+(`CONFIRMED_PROJECT_CONTEXT.md` §2: no lecture/quiz dump): each course concept should be introduced
+in-fiction (Lily, via Ghost's problem), practiced through a mechanic, and shown in consequence.
+
+Gap: the current Acts let the player DO intent / entity / dialog, but the game does not yet clearly
+TEACH those concepts, nor the course's fundamentals (what a chatbot is; rule-based vs AI-enabled; the
+five components; the four challenges), nor the rest of the curriculum (confidence/fallback, testing,
+integration, NLP subtasks: tokenisation / POS / NER / sentiment). Those are course content the game must
+deliver — so Acts 4–8 are part of coverage, not optional extras.
+
+Plan (after M0-T33):
+- **First — Curriculum coverage map:** extract the IBM course's actual teaching points from
+  `unorganized_data/Course_IBM_chatbot.pdf` (Codex/the user can render the image PDF; Claude cannot in
+  this environment) and map each teaching point → where the game currently teaches it (intro + practice)
+  → what is MISSING.
+- **Then — build the missing in-game teaching** as playable learning, prioritised by the map: the
+  fundamentals first (chatbot definition, rule-based vs AI-enabled, five components, four challenges,
+  taught in-game — the deferred "Act 0"), strengthen Acts 1–3 so they genuinely teach their concept (not
+  just run a puzzle), then cover the remaining curriculum (Acts 4–7) for breadth.
+
+(This supersedes the earlier "alignment UI labels / dissertation framing" plan from
+`Docs/IBM_COURSE_ALIGNMENT_REVIEW.md`, which treated alignment as labelling/wording and missed the real
+goal — the game teaching the course content. Labels/dissertation wording are at most a minor by-product.)
+
 ## Phase D — Full-System Foundation (backend + database + LLM)
 
 The final project is a full AI-assisted educational game system, not only a Unity puzzle prototype.

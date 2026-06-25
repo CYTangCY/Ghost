@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Ghost.Presentation.Backend;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,8 +9,8 @@ namespace Ghost.Presentation.Banter
     {
         private const float DefaultCycleSeconds = 6f;
         private const string AskLilyButtonLabel = "Ask Lily";
-        private const string BackButtonLabel = "Back";
-        private const string AskLilyTrigger = "ask_lily_button";
+        private const string AskLilyOpeningLine = "Um... what should we think through for Ghost?";
+        private const string IncorrectValidateOpeningLine = "I-I think Ghost missed something there; ask me what you want to check.";
 
         [SerializeField] private Text speakerNameText;
         [SerializeField] private Text dialogueText;
@@ -27,9 +26,7 @@ namespace Ghost.Presentation.Banter
         private float elapsedSeconds;
         private string actId;
         private Text nextButtonLabel;
-        private bool isShowingHint;
-        private bool isRequestInFlight;
-        private int hintRequestVersion;
+        private bool isPausedForChat;
 
         public static AmbientBanterPanel ActivePanel { get; private set; }
 
@@ -45,8 +42,7 @@ namespace Ghost.Presentation.Banter
                 nextButton.onClick.AddListener(HandleActionButtonClicked);
             }
 
-            isShowingHint = false;
-            isRequestInFlight = false;
+            isPausedForChat = false;
             SetButtonLabel(AskLilyButtonLabel);
             ActivePanel = this;
             ShowCurrentBeat();
@@ -67,7 +63,7 @@ namespace Ghost.Presentation.Banter
 
         private void Update()
         {
-            if (isShowingHint || isRequestInFlight || beats == null || beats.Count <= 1)
+            if (isPausedForChat || beats == null || beats.Count <= 1)
             {
                 return;
             }
@@ -97,84 +93,31 @@ namespace Ghost.Presentation.Banter
                 return;
             }
 
-            ActivePanel.RequestHintInternal(requestedActId, trigger, stateSummary);
+            ActivePanel.OpenChatWindow(requestedActId, IncorrectValidateOpeningLine);
         }
 
         private void HandleActionButtonClicked()
         {
-            if (isShowingHint || isRequestInFlight)
-            {
-                ResumeBanter();
-                return;
-            }
-
-            RequestHintInternal(
-                actId,
-                AskLilyTrigger,
-                "The player pressed Ask Lily for a non-spoiler hint.");
+            OpenChatWindow(actId, AskLilyOpeningLine);
         }
 
-        private void RequestHintInternal(string requestedActId, string trigger, string stateSummary)
+        public void PauseForChat()
+        {
+            isPausedForChat = true;
+        }
+
+        public void ResumeAfterChat()
+        {
+            isPausedForChat = false;
+            elapsedSeconds = 0f;
+        }
+
+        private void OpenChatWindow(string requestedActId, string openingLine)
         {
             var normalizedActId = string.IsNullOrWhiteSpace(requestedActId)
                 ? actId
                 : requestedActId;
-
-            if (string.IsNullOrWhiteSpace(normalizedActId))
-            {
-                ShowHintText(BanterData.GetStaticHint(string.Empty));
-                return;
-            }
-
-            var requestToken = ++hintRequestVersion;
-            ShowAskingState();
-
-            GhostBackendClient.PostHint(normalizedActId, trigger, stateSummary, response =>
-            {
-                if (requestToken != hintRequestVersion)
-                {
-                    return;
-                }
-
-                isRequestInFlight = false;
-                if (response.Succeeded && response.Value != null && !string.IsNullOrWhiteSpace(response.Value.hint))
-                {
-                    ShowHintText(response.Value.hint);
-                    return;
-                }
-
-                ShowHintText(BanterData.GetStaticHint(normalizedActId));
-            });
-        }
-
-        private void ShowAskingState()
-        {
-            elapsedSeconds = 0f;
-            isShowingHint = true;
-            isRequestInFlight = true;
-            SetButtonLabel(BackButtonLabel);
-            SetText(speakerNameText, ShellDialogueData.LilySpeakerName);
-            SetText(dialogueText, "Asking Lily...");
-            UpdatePortrait(ShellDialogueData.LilySpeakerName);
-        }
-
-        private void ShowHintText(string hint)
-        {
-            elapsedSeconds = 0f;
-            isShowingHint = true;
-            SetButtonLabel(BackButtonLabel);
-            SetText(speakerNameText, ShellDialogueData.LilySpeakerName);
-            SetText(dialogueText, FormatText(hint));
-            UpdatePortrait(ShellDialogueData.LilySpeakerName);
-        }
-
-        private void ResumeBanter()
-        {
-            hintRequestVersion++;
-            isShowingHint = false;
-            isRequestInFlight = false;
-            SetButtonLabel(AskLilyButtonLabel);
-            ShowCurrentBeat();
+            LilyChatWindow.Open(normalizedActId, openingLine);
         }
 
         private void ShowCurrentBeat()
