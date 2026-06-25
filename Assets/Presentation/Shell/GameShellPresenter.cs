@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Ghost.Presentation.Backend;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -66,6 +67,8 @@ namespace Ghost.Presentation.Shell
 
         private void Start()
         {
+            BackendSync.EnsureStarted();
+
             WireButton(startButton, ShowNameEntryOrHub);
             WireButton(confirmNameButton, ConfirmPlayerNameAndShowHub);
             WireButton(act1Button, () => ShowActIntro(GhostNarrativeState.Act1Id));

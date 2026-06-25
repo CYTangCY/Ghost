@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Backend;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.IntentClassification;
 
 namespace Ghost.Presentation.Act1IntentClassification
@@ -82,6 +84,14 @@ namespace Ghost.Presentation.Act1IntentClassification
         public void ValidateCurrentGrouping()
         {
             var result = session.ValidateCurrentState();
+            GhostBackendClient.PostAttempt(
+                GhostNarrativeState.Act1Id,
+                GhostBackendClient.CreateAttemptResult(result.IsCorrect),
+                GhostBackendClient.CreateAttemptDetails(
+                    "act1-intent-classification",
+                    result.Errors,
+                    "Intent grouping validation"));
+
             if (result.IsCorrect)
             {
                 SetFeedback(Act1IntentClassificationFeedback.Correct(

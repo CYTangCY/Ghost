@@ -1171,3 +1171,55 @@ M0-T27 adds a top-level `Backend/` service only. There is no Unity Play Mode beh
 ### Inspector Setup
 
 No Inspector setup is required. Do not add backend objects to scenes for M0-T27.
+
+---
+
+## M0-T28: Unity Client Backend Integration
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Backend/GhostBackendConfig.cs`
+   - `Assets/Presentation/Backend/GhostBackendClient.cs`
+   - `Assets/Presentation/Backend/BackendSync.cs`
+   - `Assets/Presentation/Shell/GhostNarrativeState.cs`
+   - `Assets/Presentation/Shell/GameShellPresenter.cs`
+   - the Act 1, Act 2, and Act 3 interaction controllers
+3. Confirm there are no Console compile errors.
+
+### Backend-Up Play Mode Check
+
+1. In a terminal, open `Backend/`.
+2. Run `npm install` if dependencies are missing.
+3. Run `npm run dev`.
+4. Open `Assets/Scenes/GameShellPrototype.unity`.
+5. Enter Play Mode.
+6. Confirm the client creates or reuses a PlayerPrefs profile id.
+7. Enter a player name and reach the hub.
+8. Return from at least one act so it becomes completed.
+9. Stop and restart Play Mode with the backend still running.
+10. Confirm progress is fetched and applied from the backend where available.
+11. In Act 1, click Validate and confirm an attempt row is inserted in the backend database.
+12. Repeat Validate in Act 2 and Act 3 and confirm attempts are inserted with `act1`, `act2`, and `act3` ids and `correct`/`incorrect` result strings.
+13. Confirm the backend stores only analytics/progress; correctness feedback still comes from the existing Unity validators.
+
+### Backend-Down Graceful Degradation Check
+
+1. Stop the backend server.
+2. Enter Play Mode again.
+3. Confirm the shell still opens and the player can enter a name.
+4. Confirm Act 1, Act 2, and Act 3 are fully playable.
+5. Confirm Validate in each act still produces the same deterministic feedback as before.
+6. Confirm backend failures produce at most warning logs and no gameplay-blocking Console errors.
+7. Confirm there is no hang longer than the configured short request timeout.
+
+### Validator / Puzzle Rule Regression Check
+
+1. Confirm no files under `Assets/Scripts/Puzzles/` changed for M0-T28.
+2. Run the existing EditMode tests if desired; M0-T28 does not change validators or sessions.
+3. Confirm no LLM, backend scoring endpoint, or backend-served puzzle content replacement was added.
+
+### Inspector Setup
+
+No manual Inspector setup is required. `BackendSync` starts from runtime hooks, `GameShellPresenter` ensures sync once, and `GhostBackendClient` creates its hidden coroutine runner automatically. To use a non-default backend URL, set `GhostBackendConfig.BaseUrl` or the `Ghost.Backend.BaseUrl` PlayerPrefs value.

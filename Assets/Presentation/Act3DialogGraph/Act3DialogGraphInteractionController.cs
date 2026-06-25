@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Backend;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.DialogGraph;
 using UnityEngine;
 
@@ -164,6 +166,14 @@ namespace Ghost.Presentation.Act3DialogGraph
         public DialogGraphResult ValidateCurrentState()
         {
             var result = session.ValidateCurrentState();
+            GhostBackendClient.PostAttempt(
+                GhostNarrativeState.Act3Id,
+                GhostBackendClient.CreateAttemptResult(result.IsCorrect),
+                GhostBackendClient.CreateAttemptDetails(
+                    "act3-dialog-graph",
+                    result.Errors,
+                    "Dialog graph validation"));
+
             var feedbackMessage = result.IsCorrect
                 ? "Nice. Ghost answers when the room is known and asks when it is missing."
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);

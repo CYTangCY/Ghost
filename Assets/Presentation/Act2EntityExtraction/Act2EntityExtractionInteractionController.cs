@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.Backend;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.EntityExtraction;
 
 namespace Ghost.Presentation.Act2EntityExtraction
@@ -130,6 +132,14 @@ namespace Ghost.Presentation.Act2EntityExtraction
         public EntityExtractionResult ValidateCurrentState()
         {
             var result = session.ValidateCurrentState();
+            GhostBackendClient.PostAttempt(
+                GhostNarrativeState.Act2Id,
+                GhostBackendClient.CreateAttemptResult(result.IsCorrect),
+                GhostBackendClient.CreateAttemptDetails(
+                    "act2-entity-extraction",
+                    result.Errors,
+                    "Entity extraction validation"));
+
             var feedbackMessage = result.IsCorrect
                 ? "All key details are tagged with the right entity types."
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);

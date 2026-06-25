@@ -1,8 +1,9 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { GhostDatabase, ProgressPayload } from "./database";
 
 export function createApp(database: GhostDatabase) {
   const app = express();
+  app.use(addDevCorsHeaders);
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/health", (_request: Request, response: Response) => {
@@ -76,6 +77,19 @@ export function createApp(database: GhostDatabase) {
   });
 
   return app;
+}
+
+function addDevCorsHeaders(request: Request, response: Response, next: NextFunction) {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
+
+  if (request.method === "OPTIONS") {
+    response.sendStatus(204);
+    return;
+  }
+
+  next();
 }
 
 function readObjectBody<T extends Record<string, unknown>>(request: Request): T {

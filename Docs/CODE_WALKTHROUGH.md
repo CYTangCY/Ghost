@@ -1252,6 +1252,201 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T28 Unity Client Backend Integration
+
+### Script Name
+
+GhostBackendConfig.cs
+
+### Purpose
+
+Stores the Unity client's backend base URL and request timeout. The default URL is `http://localhost:3000`, and the base URL can be overridden at runtime or through PlayerPrefs.
+
+### Attached GameObject
+
+None. This is a static presentation helper.
+
+### Runtime Role
+
+`GhostBackendClient` reads this config before each UnityWebRequest.
+
+### Important Fields
+
+- `DefaultBaseUrl`: local backend URL.
+- `BaseUrlPlayerPrefsKey`: PlayerPrefs key for overriding the URL.
+- `RequestTimeoutSeconds`: clamped short timeout for graceful degradation.
+
+### Important Methods
+
+- `BuildUrl(...)`: combines the configured base URL with an endpoint path.
+
+### Failure Cases
+
+- Empty or whitespace base URLs fall back to the local default.
+
+### Unity Test
+
+In Play Mode, override `GhostBackendConfig.BaseUrl` from a debug console or script if a non-default backend port is needed, then verify backend calls still degrade gracefully if the URL is wrong.
+
+---
+
+### Script Name
+
+GhostBackendClient.cs
+
+### Purpose
+
+Provides a WebGL-safe, best-effort UnityWebRequest API client for the M0-T27 backend. It creates/reuses a pseudonymous profile, reads/writes progress, and logs puzzle attempts.
+
+### Attached GameObject
+
+None manually. The client creates a hidden persistent runner GameObject named `Ghost Backend Client Runner` to host coroutines.
+
+### Runtime Role
+
+Initialized before scene load. Public methods start coroutines and invoke callbacks with success/failure results. Network failures, timeouts, or offline backend states log warnings only and do not throw or block gameplay.
+
+### Important Methods
+
+- `EnsureProfile(...)`: reuses the PlayerPrefs profile id or POSTs `/profiles` and stores the returned id.
+- `GetProgress(...)`: GETs `/progress/:profileId`.
+- `PutProgress(...)`: PUTs completed acts/levels and narrative state to `/progress/:profileId`.
+- `PostAttempt(...)`: POSTs act id, correct/incorrect result, and brief details to `/attempts`.
+- `CreateAttemptDetails(...)`: packages validator error count and messages as analytics details.
+
+### Input
+
+Backend endpoint paths, profile id, progress snapshots, and attempt details from presentation controllers.
+
+### Output
+
+Best-effort backend writes/reads plus callback result objects. It never decides correctness.
+
+### Failure Cases
+
+- Backend down, timeout, parse failure, stale profile id, or HTTP error returns a failed response and logs a warning.
+- If no profile can be created, progress/attempt calls are skipped through failed callbacks.
+
+### Unity Test
+
+Run the game with the backend up and confirm profile/progress/attempt requests are visible in the backend. Then stop the backend and confirm the same puzzles remain fully playable with warning-only degradation.
+
+---
+
+### Script Name
+
+BackendSync.cs
+
+### Purpose
+
+Coordinates narrative progress sync between `GhostNarrativeState` and the backend. It starts once, ensures a profile, loads backend progress if available, and pushes progress whenever the local narrative state changes.
+
+### Attached GameObject
+
+None. This is a static presentation coordinator.
+
+### Runtime Role
+
+Starts from a runtime initialize hook and is also explicitly ensured by `GameShellPresenter.Start()`. It subscribes to `GhostNarrativeState.StateChanged`.
+
+### Important Methods
+
+- `EnsureStarted()`: starts sync once.
+- `PushProgress()`: sends the current player name and completed acts through `GhostBackendClient.PutProgress(...)`.
+
+### Input
+
+Local narrative state and backend progress responses.
+
+### Output
+
+Applies fetched backend player name/completed acts into `GhostNarrativeState` if fetch succeeds, and best-effort saves local progress back to the backend.
+
+### Failure Cases
+
+- If the backend is unavailable, sync silently keeps local in-memory behaviour except for warning logs from the client.
+
+### Unity Test
+
+With backend running, enter a player name, complete/return from acts, restart Play Mode, and confirm progress reloads. With backend stopped, confirm the shell and acts still work.
+
+---
+
+### Script Name
+
+GhostNarrativeState.cs (M0-T28 sync additions)
+
+### Purpose
+
+Keeps the existing in-memory narrative fallback while exposing backend sync hooks.
+
+### Runtime Role
+
+Stores player name, completed act ids, pending debrief id, and the persisted backend profile id.
+
+### Important Methods
+
+- `SetBackendProfileId(...)`: stores or clears the pseudonymous backend profile id in PlayerPrefs.
+- `GetCompletedActIds()`: returns a sorted snapshot for progress sync.
+- `ApplyBackendProgress(...)`: merges backend player name/completed acts into local narrative state.
+- `StateChanged`: event raised when player name or completed acts change.
+
+### Unity Test
+
+Confirm name entry and act completion still work offline, then confirm backend sync writes the same state when the backend is available.
+
+---
+
+### Script Name
+
+Act 1/2/3 interaction controllers (M0-T28 attempt logging)
+
+### Purpose
+
+After each existing deterministic Validate call, the presentation controller sends a best-effort attempt log to the backend.
+
+### Runtime Role
+
+The controllers still call their existing sessions/validators for correctness. The backend receives only the result string (`correct` or `incorrect`) plus brief analytics details; it does not score the attempt.
+
+### Important Methods
+
+- `Act1IntentClassificationInteractionController.ValidateCurrentGrouping()`
+- `Act2EntityExtractionInteractionController.ValidateCurrentState()`
+- `Act3DialogGraphInteractionController.ValidateCurrentState()`
+
+### Failure Cases
+
+- Backend failures do not affect validation feedback or puzzle state.
+
+### Unity Test
+
+Run Validate in each act with backend up and confirm attempts are inserted. Stop the backend and confirm Validate feedback still appears normally.
+
+---
+
+### Component Name
+
+Backend CORS Middleware (`Backend/src/app.ts`, M0-T28)
+
+### Purpose
+
+Adds minimal permissive local-development CORS headers so Unity WebGL/browser builds can call the local M0-T27 backend.
+
+### Runtime Role
+
+Runs before JSON parsing in the Express app. It allows `GET`, `POST`, `PUT`, and `OPTIONS`, and returns `204` for preflight requests.
+
+### Failure Cases
+
+- This is intentionally broad for local prototype development and should be revisited before any hosted deployment.
+
+### Test
+
+Run `npm run build` and `npm test` from `Backend/`. In browser/WebGL verification, confirm backend calls are not blocked by CORS.
+
+---
+
 ## M0-T27 Backend / Database Foundation
 
 ### Component Name
