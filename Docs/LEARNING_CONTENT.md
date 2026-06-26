@@ -55,6 +55,41 @@ four challenges) is preserved — its concepts are introduced by Lily in the Gam
 "Rebuild Ghost's Voice" pipeline mechanic becomes the Act 8 capstone. The detailed per-Act sections
 below still use the earlier numbering and are being migrated to this structure.
 
+### IBM Course → Act Teaching Coverage (2026-06-25)
+
+Per the M0-T34 coverage map (`Docs/IBM_COURSE_CONTENT.md`) and the user-corrected goal (the game must
+TEACH the course content), the existing 8-Act structure is the vehicle that teaches the whole course —
+modify the existing acts; do not invent a parallel structure. The five chatbot components AND the NLP
+subtasks are woven in as below; teaching stays playable (problem → Lily explanation → player action →
+visible consequence; no lecture/quiz dump).
+
+- **Fundamentals (Game Shell intro — M0-T35):** chatbot definition; NLP & ML pillars; rule-based vs
+  AI-enabled; benefits; five-components OVERVIEW; four-challenges overview. (Orientation only; depth is
+  in the acts.)
+- **Act 1 — Intent:** NLP engine (intent classification); ties to "identify key topics / user purpose."
+- **Act 2 — Entity:** NLP engine (NER) + **tokenisation** (word chips, made explicit); system vs custom
+  entities; synonyms.
+- **Act 3 — Dialogue management:** dialogue-management component; rule-based / decision-tree flow; slots
+  (entities) + **contextual-awareness** challenge; response nodes (→ response generation); preview/test.
+- **Act 4 — Confidence & Fallback:** confidence scoring; fallback / disambiguation; **handoff /
+  escalation**; **sentiment analysis** feeding routing/escalation; misunderstanding + unstructured-input
+  challenges.
+- **Act 5 — Testing & Debugging:** the course's preview / test / revise workflow.
+- **Act 6 — Integration / Backend / Response generation:** backend-integration + response-generation
+  components.
+- **Act 7 — NLP Pipeline Lab:** NLP subtasks breadth — **POS tagging, sentiment analysis** (in depth),
+  tokenisation / NER recap, **machine translation** (light / optional), NLU/NLG/speech recognition
+  (conceptual).
+- **Act 8 — Capstone "Repair Ghost's Voice":** reconnect the five components (UI → NLP engine →
+  Dialogue management → Response generation → UI, + Backend integration) as one pipeline — the **UI
+  component** and full-system integration are taught here.
+- **Planning** (goal / starting channel / key topics / handoff): a short planning mini-level (M0-T39),
+  or folded into the shell / Act 1.
+
+Gap order (fundamentals first): in-game fundamentals (M0-T35) → explicit concept teaching added to
+Acts 1–3 (M0-T36–T38) → planning (M0-T39) → Acts 4–8 incl. the NLP subtasks in Act 7 and the
+UI/component integration in Act 8. Machine translation and speech recognition are light/optional.
+
 ### Per-Act Backend / Database / LLM Interaction (added 2026-06-22)
 
 High-level only; see `Docs/ARCHITECTURE.md` Phase D layers. In every Act the correctness check is
