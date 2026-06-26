@@ -413,6 +413,17 @@ question (fixes the prior gap); `npm test` 7/7; build clean. Unity window review
 (pause/resume; separate canvas). Residual Editor checks: window visual + Act 2 banter sizing. Archive:
 `Docs/completed_tasks/M0-T33_lily_chat.md`. Next: M0-T34 (IBM course content coverage map).
 
+### 2026-06-25 — M0-T34: IBM course content coverage map — Completed (docs/analysis)
+Codex rendered all 44 PDF pages (Poppler) and produced `Docs/IBM_COURSE_CONTENT.md`: a page-cited course
+outline, a coverage map separating "introduced/explained in-game" vs "practiced via mechanic" (most
+concepts partial or missing — the game practices intent/entity/dialog but does not yet TEACH them;
+fundamentals + breadth missing), a prioritized gap list (M0-T35 fundamentals → M0-T36/37/38 strengthen
+Acts 1–3 teaching → M0-T39 planning → M0-T40–44 Acts 4–8), out-of-scope items, and a playable-teaching
+design pattern (Ghost problem + Lily explanation + action + consequence; no lecture/quiz). Claude could
+not re-render the image PDF but cross-checked the outline against `CONFIRMED §4/§5` (consistent) and
+accepted; scope clean (2 docs only). Archive: `Docs/completed_tasks/M0-T34_ibm_course_coverage_map.md`.
+Next: M0-T35 (Chatbot Fundamentals Teaching Pass).
+
 ---
 
 ## Entry Template
