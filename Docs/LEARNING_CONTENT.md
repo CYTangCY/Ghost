@@ -55,6 +55,11 @@ four challenges) is preserved — its concepts are introduced by Lily in the Gam
 "Rebuild Ghost's Voice" pipeline mechanic becomes the Act 8 capstone. The detailed per-Act sections
 below still use the earlier numbering and are being migrated to this structure.
 
+M0-T35 implementation note (2026-06-27): the Game Shell now includes a compact playable
+"Ghost's Voice Basics" overview that covers chatbot definition, NLP/ML pillars, rule-based vs
+AI-enabled contrast, benefits, the five-component overview, and the four challenges through
+Ghost problem -> Lily explanation -> small player action -> visible Ghost consequence.
+
 ### IBM Course → Act Teaching Coverage (2026-06-25)
 
 Per the M0-T34 coverage map (`Docs/IBM_COURSE_CONTENT.md`) and the user-corrected goal (the game must
@@ -65,7 +70,7 @@ visible consequence; no lecture/quiz dump).
 
 - **Fundamentals (Game Shell intro — M0-T35):** chatbot definition; NLP & ML pillars; rule-based vs
   AI-enabled; benefits; five-components OVERVIEW; four-challenges overview. (Orientation only; depth is
-  in the acts.)
+  in the acts.) M0-T35 implements this as a playable Shell sequence, not a lecture or multiple-choice quiz.
 - **Act 1 — Intent:** NLP engine (intent classification); ties to "identify key topics / user purpose."
 - **Act 2 — Entity:** NLP engine (NER) + **tokenisation** (word chips, made explicit); system vs custom
   entities; synonyms.
@@ -121,6 +126,9 @@ deterministic; the LLM only adds hints/responses/explanations.
 > Revised mapping (2026-06-20): the fundamentals concepts here are now introduced by Lily in the
 > Game Shell, and the "Rebuild Ghost's Voice" pipeline mechanic below is re-planned as the **Act 8
 > capstone**. This section is retained for that reuse.
+
+> M0-T35 update (2026-06-27): the shell-level version is now a short playable overview, while this
+> section remains the source for the later full capstone treatment.
 
 ### Confirmed Topic
 

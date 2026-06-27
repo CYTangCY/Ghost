@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Ghost.Presentation.Backend;
+using Ghost.Presentation.Fundamentals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,8 +11,10 @@ namespace Ghost.Presentation.Shell
     {
         [SerializeField] private GameObject titleScreen;
         [SerializeField] private GameObject nameEntryScreen;
+        [SerializeField] private GameObject fundamentalsScreen;
         [SerializeField] private GameObject actHubScreen;
         [SerializeField] private LilyDialogueFrame lilyDialogueFrame;
+        [SerializeField] private ChatbotFundamentalsPresenter fundamentalsPresenter;
         [SerializeField] private Button startButton;
         [SerializeField] private InputField playerNameInput;
         [SerializeField] private Button confirmNameButton;
@@ -19,6 +22,7 @@ namespace Ghost.Presentation.Shell
         [SerializeField] private Button createAccountButton;
         [SerializeField] private Button useAccountButton;
         [SerializeField] private Text accountStatusText;
+        [SerializeField] private Button fundamentalsButton;
         [SerializeField] private Button act1Button;
         [SerializeField] private Button act2Button;
         [SerializeField] private Button act3Button;
@@ -38,7 +42,7 @@ namespace Ghost.Presentation.Shell
             Button act3,
             Button back)
         {
-            Configure(title, null, hub, dialogueFrame, start, null, null, null, null, null, null, act1, act2, act3, null, back);
+            Configure(title, null, null, hub, dialogueFrame, null, start, null, null, null, null, null, null, null, act1, act2, act3, null, back);
         }
 
         public void Configure(
@@ -59,10 +63,55 @@ namespace Ghost.Presentation.Shell
             Button continueNarrative,
             Button back)
         {
+            Configure(
+                title,
+                nameEntry,
+                null,
+                hub,
+                dialogueFrame,
+                null,
+                start,
+                nameInput,
+                confirmName,
+                accountInput,
+                createAccount,
+                useAccount,
+                accountStatus,
+                null,
+                act1,
+                act2,
+                act3,
+                continueNarrative,
+                back);
+        }
+
+        public void Configure(
+            GameObject title,
+            GameObject nameEntry,
+            GameObject fundamentals,
+            GameObject hub,
+            LilyDialogueFrame dialogueFrame,
+            ChatbotFundamentalsPresenter fundamentalsSequence,
+            Button start,
+            InputField nameInput,
+            Button confirmName,
+            InputField accountInput,
+            Button createAccount,
+            Button useAccount,
+            Text accountStatus,
+            Button fundamentalsEntry,
+            Button act1,
+            Button act2,
+            Button act3,
+            Button continueNarrative,
+            Button back)
+        {
             titleScreen = title;
             nameEntryScreen = nameEntry;
+            fundamentalsScreen = fundamentals;
             actHubScreen = hub;
             lilyDialogueFrame = dialogueFrame;
+            fundamentalsPresenter = fundamentalsSequence;
             startButton = start;
             playerNameInput = nameInput;
             confirmNameButton = confirmName;
@@ -70,6 +119,7 @@ namespace Ghost.Presentation.Shell
             createAccountButton = createAccount;
             useAccountButton = useAccount;
             accountStatusText = accountStatus;
+            fundamentalsButton = fundamentalsEntry;
             act1Button = act1;
             act2Button = act2;
             act3Button = act3;
@@ -85,11 +135,18 @@ namespace Ghost.Presentation.Shell
             WireButton(confirmNameButton, ConfirmPlayerNameAndShowHub);
             WireButton(createAccountButton, CreateAccountAndShowHub);
             WireButton(useAccountButton, UseAccountAndShowHub);
+            WireButton(fundamentalsButton, ShowFundamentals);
             WireButton(act1Button, () => ShowActIntro(GhostNarrativeState.Act1Id));
             WireButton(act2Button, () => ShowActIntro(GhostNarrativeState.Act2Id));
             WireButton(act3Button, () => ShowActIntro(GhostNarrativeState.Act3Id));
             WireButton(narrativeContinueButton, ContinueNarrative);
             WireButton(backToTitleButton, ShowTitle);
+
+            if (fundamentalsPresenter != null)
+            {
+                fundamentalsPresenter.Finished -= ShowActHub;
+                fundamentalsPresenter.Finished += ShowActHub;
+            }
 
             if (!string.IsNullOrWhiteSpace(GhostNarrativeState.PendingDebriefActId))
             {
@@ -106,6 +163,7 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, true);
             SetScreenActive(nameEntryScreen, false);
+            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, false);
             ShowDialogue(ShellDialogueData.TitleScreenId);
         }
@@ -126,6 +184,7 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, true);
+            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, false);
             PrepareAccountFields();
             ShowDialogue(ShellDialogueData.NameEntryScreenId);
@@ -136,8 +195,26 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, false);
+            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, true);
             ShowDialogue(ShellDialogueData.ActHubScreenId);
+        }
+
+        public void ShowFundamentals()
+        {
+            ClearNarrativeFlow();
+            SetScreenActive(titleScreen, false);
+            SetScreenActive(nameEntryScreen, false);
+            SetScreenActive(actHubScreen, false);
+            SetScreenActive(fundamentalsScreen, true);
+
+            if (fundamentalsPresenter == null)
+            {
+                ShowActHub();
+                return;
+            }
+
+            fundamentalsPresenter.Begin();
         }
 
         public void ConfirmPlayerNameAndShowHub()
@@ -209,6 +286,7 @@ namespace Ghost.Presentation.Shell
             pendingLaunchActId = actId;
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, false);
+            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, true);
             ShowLine(ShellDialogueData.GetBeat(actId, ShellDialogueData.IntroPhaseId));
             SetNarrativeContinueVisible("Continue to " + ShellDialogueData.GetActTitle(actId));
@@ -330,6 +408,14 @@ namespace Ghost.Presentation.Shell
                 SetAccountStatus("Account found, but progress could not be loaded. Starting from an empty local state.");
                 ShowActHub();
             });
+        }
+
+        private void OnDestroy()
+        {
+            if (fundamentalsPresenter != null)
+            {
+                fundamentalsPresenter.Finished -= ShowActHub;
+            }
         }
 
         private void PrepareAccountFields()

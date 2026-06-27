@@ -1398,3 +1398,46 @@ No manual Inspector setup is required after running `Ghost > Build Game Shell Sc
 ### Inspector Setup
 
 No manual Inspector setup is required. `AmbientBanterHook` creates the banter affordance at runtime, `LilyChatWindow` creates its own runtime canvas/window when Ask Lily is opened, and `GhostBackendClient.PostChat(...)` sends best-effort chat requests through UnityWebRequest.
+
+---
+
+## M0-T35: Game Shell Chatbot Fundamentals Sequence
+
+### Scene Generation
+
+1. Open the Unity project and wait for scripts to compile.
+2. Run `Ghost > Build Game Shell Scene`.
+3. Open `Assets/Scenes/GameShellPrototype.unity`.
+4. Confirm the scene was generated through the builder, not by hand-editing scene YAML.
+
+### Play Mode Check
+
+1. Enter Play Mode from `Assets/Scenes/GameShellPrototype.unity`.
+2. Click `Start / Continue`, enter a display name or continue as guest, and reach the act hub.
+3. Confirm the hub shows a `Ghost's Voice Basics` / `Start Basics` entry alongside Acts 1-3.
+4. Open `Ghost's Voice Basics`.
+5. Confirm the six fundamentals appear in order:
+   - chatbot definition
+   - NLP and ML pillars
+   - rule-based vs AI-enabled contrast
+   - benefits / repetitive tasks
+   - five-component overview with backend side link
+   - four chatbot challenges
+6. For each beat, confirm there is a Ghost problem, a short Lily explanation, a player action, and a visible Ghost consequence.
+7. Confirm `Next` does not advance until the current action has been tried.
+8. In the five-component beat, arrange the path as `UI input -> NLP engine -> Dialogue management -> Response generation -> UI output`, attach the backend side link, and confirm Ghost's voice connects.
+9. In the challenge beat, trigger all four failure modes and confirm each produces a different Ghost reaction.
+10. Confirm `Skip overview` returns to the act hub.
+11. Finish the sequence and confirm it returns to the act hub.
+12. Launch Acts 1, 2, and 3 from the hub and confirm their existing puzzle mechanics still open.
+13. Confirm no Console errors appear.
+
+### Scope Check
+
+1. Confirm this is a playable overview, not a wall-of-text lecture or multiple-choice quiz.
+2. Confirm Acts 1-3 validators, sessions, and puzzle rules are unchanged.
+3. Confirm no ProjectSettings, Packages, Build Settings, `.meta` files, or unrelated scenes were intentionally edited.
+
+### Inspector Setup
+
+No manual Inspector setup is required after running `Ghost > Build Game Shell Scene`. The builder wires the fundamentals screen, presenter, dynamic button roots, navigation buttons, shared Lily dialogue frame, and hub entry button into `GameShellPresenter`.

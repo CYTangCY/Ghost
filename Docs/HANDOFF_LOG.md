@@ -438,6 +438,23 @@ design). NOTE: this was OFF the stated `CURRENT_TASK` (M0-T35 fundamentals) — 
 detour; future Codex runs should track `CURRENT_TASK`. Residual: Unity Editor verification of the
 account UI (the iterative UI-fix runs imply in-Editor testing). `CURRENT_TASK` remains M0-T35 (next).
 
+### 2026-06-27 — M0-T35: Chatbot Fundamentals Teaching Pass — Completed
+Codex run 001 added a compact, playable chatbot-fundamentals overview to the Game Shell (the preserved
+"former Act 0"): an optional `Ghost's Voice Basics` hub card walks the player through six teaching beats —
+chatbot definition, NLP+ML pillars, rule-based vs AI-enabled, benefits, the five components (an ordering
+puzzle + backend side link), and the four challenges — each as Ghost problem → Lily explanation → small
+player action → visible Ghost consequence (no lecture/quiz). New `ChatbotFundamentalsData` +
+`ChatbotFundamentalsPresenter`; `GameShellPresenter`/`GameShellSceneBuilder` add the screen + hub card +
+`Finished → ShowActHub`; the sequence is optional and does not gate Acts 1–3. Correctness stays
+deterministic (only the component order has a right/wrong state, via `IsSelectedComponentOrderCorrect()`;
+no LLM). Run log honest (Unity Play Mode / Test Runner / scene builder "Not run" in-session). The user
+verified in the Editor ("通過"): hub card visible, all six beats playable with visible consequences,
+component order + backend link work, skip/finish returns to hub, Acts 1–3 still launch, no Console errors.
+Claude reviewed scope (clean — no `Assets/Scripts/Puzzles`, no Act 1–3 validators/sessions/rules, no
+ProjectSettings/Packages/Build Settings/existing `.meta`). The regenerated `GameShellPrototype.unity` is a
+shelved Game Shell scene side-effect and is excluded from the commit. Archive:
+`Docs/completed_tasks/M0-T35_fundamentals_teaching.md`. Next: M0-T36 (strengthen Act 1 intent teaching).
+
 ---
 
 ## Entry Template

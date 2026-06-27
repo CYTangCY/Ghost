@@ -1252,6 +1252,208 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T35 Chatbot Fundamentals Shell Sequence
+
+### Script Name
+
+ChatbotFundamentalsData.cs
+
+### Purpose
+
+Data source for the compact Game Shell fundamentals sequence. It defines the six IBM-course overview
+beats: chatbot definition, NLP/ML pillars, rule-based vs AI-enabled contrast, benefits,
+five-component overview, and four common chatbot challenges.
+
+### Attached GameObject
+
+None. Static presentation data only.
+
+### Runtime Role
+
+Provides short problem/explanation/action/consequence text plus component and challenge labels to
+`ChatbotFundamentalsPresenter`.
+
+### Important Fields
+
+No serialized Unity fields. Static factory methods return copied read-only lists.
+
+### Important Methods
+
+- `CreateBeats()` returns the six teaching beats.
+- `CreateComponentOrder()` and `CreateComponentPaletteOrder()` provide the five-component ordering
+  mini-interaction data.
+- `CreateChallengeModes()` provides the four challenge failure modes.
+
+### Input
+
+No runtime input.
+
+### Output
+
+In-memory data consumed by the presenter.
+
+### Failure Cases
+
+- If a beat is missing or misordered, the Shell overview no longer covers the required M0-T35
+  fundamentals.
+
+### Unity Test
+
+Run the Shell scene in Play Mode after rebuilding it with `Ghost > Build Game Shell Scene`.
+
+---
+
+### Script Name
+
+ChatbotFundamentalsPresenter.cs
+
+### Purpose
+
+Runs the playable fundamentals overview in the Game Shell. Each beat requires a small action before
+the player can continue, then shows a visible Ghost consequence.
+
+### Attached GameObject
+
+Attached by `GameShellSceneBuilder` to the generated `Chatbot Fundamentals Screen`.
+
+### Runtime Role
+
+Shows the current beat, creates runtime action buttons, updates Ghost/Lily/consequence text, handles
+the component-order mini-interaction, and returns to the act hub when finished or skipped.
+
+### Important Fields
+
+- Text fields for progress, title, Ghost problem, Lily explanation, action prompt, consequence, Ghost
+  status, component path, backend side link, and feedback.
+- Dynamic button roots for simple actions, component ordering, and challenge modes.
+- Previous / Next / Skip buttons.
+- Optional `LilyDialogueFrame` reference so Lily's explanation also appears in the shared portrait
+  dialogue frame.
+
+### Important Methods
+
+- `Begin()` resets the sequence and renders the first beat.
+- `ShowNextBeat()` only advances after the current action has produced a consequence.
+- `RenderComponentOrderBeat(...)` lets the player arrange the overview path and attach backend
+  integration as a side link.
+- `RenderChallengeModesBeat(...)` makes the player trigger the four challenge failure modes.
+
+### Input
+
+Player button clicks in the Shell overview.
+
+### Output
+
+Updated Shell UI text, Ghost reaction text, and the `Finished` event used by `GameShellPresenter` to
+return to the act hub.
+
+### Failure Cases
+
+- Wrong component order resets the mini-interaction and shows a wrong-order Ghost consequence.
+- Pressing Next before an action shows a feedback prompt instead of advancing.
+
+### Unity Test
+
+Run Play Mode after rebuilding the shell; verify all six beats require action and can finish or skip
+back to the hub.
+
+---
+
+### Script Name
+
+GameShellPresenter.cs
+
+### Purpose
+
+Adds a Shell-level entry point for the fundamentals overview while preserving existing title,
+name/account, narrative, and Act 1-3 launch flows.
+
+### Attached GameObject
+
+Generated on the `Game Shell Root` GameObject by `GameShellSceneBuilder`.
+
+### Runtime Role
+
+Wires the `Ghost's Voice Basics` hub button, shows/hides the fundamentals screen, starts
+`ChatbotFundamentalsPresenter.Begin()`, and returns to the hub when the overview finishes.
+
+### Important Fields
+
+`fundamentalsScreen`, `fundamentalsPresenter`, and `fundamentalsButton`.
+
+### Important Methods
+
+- `ShowFundamentals()` switches from hub/name/title screens into the overview.
+- Existing `ShowTitle`, `ShowNameEntry`, `ShowActHub`, and `ShowActIntro` now hide the fundamentals
+  screen.
+
+### Input
+
+The fundamentals hub button and the presenter's `Finished` event.
+
+### Output
+
+Screen transitions inside the Game Shell.
+
+### Failure Cases
+
+- If the presenter reference is missing, `ShowFundamentals()` safely returns to the hub.
+
+### Unity Test
+
+Run `Ghost > Build Game Shell Scene`, enter Play Mode, open `Ghost's Voice Basics`, finish or skip it,
+and confirm Act 1-3 buttons still work.
+
+---
+
+### Script Name
+
+GameShellSceneBuilder.cs
+
+### Purpose
+
+Builds the Game Shell UI with the new `Chatbot Fundamentals Screen` and a `Ghost's Voice Basics`
+entry card in the act hub.
+
+### Attached GameObject
+
+Editor-only scene builder. It creates and wires GameObjects in `Assets/Scenes/GameShellPrototype.unity`
+when the menu item is run.
+
+### Runtime Role
+
+No runtime role after scene generation.
+
+### Important Fields
+
+No serialized fields.
+
+### Important Methods
+
+- `CreateFundamentalsScreen(...)` creates the overview UI and configures
+  `ChatbotFundamentalsPresenter`.
+- `CreateFundamentalsHubCard(...)` adds the hub entry button.
+- `CreateShellUi(...)` wires the fundamentals screen, presenter, and hub button into
+  `GameShellPresenter`.
+
+### Input
+
+Editor menu action `Ghost > Build Game Shell Scene`.
+
+### Output
+
+Regenerated Game Shell scene containing the fundamentals overview UI.
+
+### Failure Cases
+
+- If the menu builder is not rerun, the existing scene may not show the new overview entry.
+
+### Unity Test
+
+Run the builder, then test the shell in Play Mode.
+
+---
+
 ## M0-T28 Unity Client Backend Integration
 
 ### Script Name

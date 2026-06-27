@@ -2,57 +2,69 @@
 
 ## ID
 
-M0-T35
+M0-T36
 
 ## Goal
 
-Add a compact, **playable** chatbot-fundamentals teaching layer so the player actually LEARNS the IBM
-course fundamentals in-game: what a chatbot is; NLP & ML as the two pillars; rule-based vs AI-enabled
-chatbots; benefits (simple level); the five components; the four challenges. Taught via Ghost's problem
-+ Lily's short in-fiction explanation + a small player action + visible consequence — NOT a lecture or
-quiz dump (`CONFIRMED_PROJECT_CONTEXT.md` §2).
+Strengthen **Act 1 (Intent Classification)** so it actually **teaches** its concept in-game, not just lets
+the player practice it. Keep the existing intent-classification mechanic (group message cards by purpose)
+unchanged, and add a thin in-fiction teaching layer so the player understands:
+
+- **intent = the user's purpose** (what the speaker wants), not the exact words;
+- **different wording can share one intent** (the reason cards group together);
+- **grouping intents = the chatbot-planning step of identifying key topics / common requests**
+  (`IBM_COURSE_CONTENT.md` §1.8, §1.6 NLU).
+
+Taught the playable way (`CONFIRMED_PROJECT_CONTEXT.md` §2): Ghost's problem + Lily's short in-fiction
+explanation + the existing player action + visible consequence — NOT a lecture wall or multiple-choice
+quiz.
 
 ## Context
 
-The M0-T34 coverage map (`Docs/IBM_COURSE_CONTENT.md` §1.1–1.4, §3) shows the game practices
-intent/entity/dialog but does not teach the course fundamentals, which are currently missing. The course
-starts there and the user-corrected goal is that the game teaches the course content. This is the
-"fundamentals first" priority. Builds on the Game Shell + `LilyDialogueFrame` + the deferred "Rebuild
-Ghost's Voice / five components" idea (LEARNING_CONTENT Act 0 / Act 8) + the existing Lily portrait/chat
-UI.
+The M0-T34 coverage map marks Act 1's intent concept as **partial**: the player *does* intent grouping but
+the game never *explains* what intent is or why different wording groups together. M0-T35 added the
+fundamentals overview (chatbot definition, pillars, rule vs AI, components, challenges); M0-T36 is the
+first of the "strengthen Acts 1–3 teaching" trio (M0-T36 Act 1, M0-T37 Act 2, M0-T38 Act 3). Reuse the
+existing Act 1 presenter / `LilyDialogueFrame` / banter; this is a teaching-text + light-consequence pass,
+not a mechanic redesign.
 
 ## Scope
 
-- A short, playable fundamentals sequence (in the Game Shell, e.g. an early "Ghost's voice is
-  disconnected" intro before/at the act hub), data-driven, reusing the Lily dialogue frame / portrait,
-  covering:
-  - **Chatbot definition** (a program that simulates conversation) — via Ghost.
-  - **NLP & ML pillars** (NLP understands language/intent; ML learns from data) — simple.
-  - **Rule-based vs AI-enabled** — use Ghost's deterministic validators vs Lily's LLM chat as the
-    concrete in-game contrast.
-  - **Benefits** (efficiency / repetitive tasks) — brief.
-  - **Five components** (UI → NLP engine → dialogue management → response generation → UI, + backend
-    integration) — a small visual "Ghost's voice parts" map.
-  - **Four challenges** (unstructured input, misunderstanding, human-like interaction, contextual
-    awareness) — shown as Ghost's cute failure modes.
-- Each beat = Ghost problem → Lily short explanation → a small player action (tap / arrange / pick) →
-  visible consequence. Playable + visual; NOT a lecture wall or multiple-choice quiz.
-- Frontend, data-driven, static text (the existing Lily LLM chat may be reused but is not required). Do
-  NOT change puzzle validators/sessions/rules or Acts 1–3 mechanics.
-- Update `Docs/LEARNING_CONTENT.md` (fundamentals now taught in-game), CODE_WALKTHROUGH.md,
-  UNITY_TEST_CHECKLIST.md; create a Codex run log.
+- Add a short in-fiction intent explanation to Act 1 (before/at the start of the puzzle, via Lily and/or
+  Ghost), in the existing Act 1 presentation layer — data-driven static text where possible.
+- Make the teaching visible through the existing mechanic: when the player groups differently-worded cards
+  under one intent, surface a brief in-fiction line that this is one intent / purpose (e.g. on a correct
+  group, or as a Lily aside) so the *why* is shown, not just pass/fail.
+- Optionally connect grouping to "identifying key topics / common user requests" in one Lily line, lightly
+  referencing the chatbot-planning idea (no new planning mechanic — that is M0-T39).
+- Update `Docs/LEARNING_CONTENT.md` (Act 1 now teaches, not just practices), `CODE_WALKTHROUGH.md`,
+  `UNITY_TEST_CHECKLIST.md`; create a Codex run log.
+
+## Files Codex may modify
+
+- Act 1 presentation layer (`Assets/Presentation/...` Act 1 presenter / interaction controller / any Act 1
+  static-text/dialogue source) and the Act 1 scene builder, for teaching text + light consequence only.
+- `Docs/LEARNING_CONTENT.md`, `Docs/CODE_WALKTHROUGH.md`, `Docs/UNITY_TEST_CHECKLIST.md`; new run log.
+
+## Files Codex must NOT modify
+
+- Act 1 puzzle logic: `IntentClassificationValidator`, `IntentClassificationSession`, the Act 1 sample
+  data / answer key, and the validation rules (correctness stays deterministic and unchanged).
+- Act 2 / Act 3 puzzles, the M0-T35 fundamentals files, backend code, ProjectSettings, Packages, Build
+  Settings, and `.meta` files. Do not regenerate or hand-edit scene YAML beyond what the Act 1 scene
+  builder requires (the Game Shell scene is a shelved side-effect, excluded from commits).
 
 ## Out of Scope
 
-- The watsonx product UI walkthrough; the per-Act teaching strengthening (M0-T36–T38) and Acts 4–8
-  (later); quizzes; any change to puzzle rules/validators.
+- The chatbot-planning mini-level (M0-T39), Act 2/3 strengthening (M0-T37/T38), Acts 4–8, any quiz, and any
+  change to how correctness is decided.
 
 ## Acceptance Criteria
 
-- From the shell, the player can go through a short playable fundamentals sequence that teaches the six
-  fundamentals above.
-- It teaches via Ghost problem + Lily explanation + player action + consequence (playable/visual), not a
-  lecture/quiz dump.
-- Acts 1–3 puzzles and validators are unchanged; no Console errors.
-- `Docs/LEARNING_CONTENT.md` + CODE_WALKTHROUGH.md + UNITY_TEST_CHECKLIST.md and a Codex run log are
+- Starting Act 1, the player sees a short in-fiction explanation of what intent is (purpose, not exact
+  wording) before/while grouping, in Lily's/Ghost's voice — not a lecture or quiz.
+- Grouping differently-worded cards under one intent produces a visible in-fiction beat that conveys "these
+  share one intent/purpose," so the concept is taught through the action.
+- The Act 1 validator / session / sample data / correctness behaviour are unchanged; no Console errors.
+- `Docs/LEARNING_CONTENT.md` + `CODE_WALKTHROUGH.md` + `UNITY_TEST_CHECKLIST.md` and a Codex run log are
   updated.

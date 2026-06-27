@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Ghost.Presentation.Fundamentals;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -139,25 +140,33 @@ namespace Ghost.Presentation.Shell.Editor
                 out var createAccountButton,
                 out var useAccountButton,
                 out var accountStatusText);
+            var fundamentalsScreen = CreateFundamentalsScreen(
+                screenColumn,
+                out var fundamentalsPresenter);
             var hubScreen = CreateActHubScreen(
                 screenColumn,
+                out var fundamentalsButton,
                 out var act1Button,
                 out var act2Button,
                 out var act3Button,
                 out var narrativeContinueButton,
                 out var backToTitleButton);
             nameEntryScreen.SetActive(false);
+            fundamentalsScreen.SetActive(false);
             hubScreen.SetActive(false);
 
             CreatePresencePanel(presenceColumn);
             var dialogueFrame = CreateLilyDialogueFrame(root);
+            fundamentalsPresenter.SetDialogueFrame(dialogueFrame);
             var startButton = titleScreen.GetComponentInChildren<Button>();
 
             presenter.Configure(
                 titleScreen,
                 nameEntryScreen,
+                fundamentalsScreen,
                 hubScreen,
                 dialogueFrame,
+                fundamentalsPresenter,
                 startButton,
                 playerNameInput,
                 confirmNameButton,
@@ -165,6 +174,7 @@ namespace Ghost.Presentation.Shell.Editor
                 createAccountButton,
                 useAccountButton,
                 accountStatusText,
+                fundamentalsButton,
                 act1Button,
                 act2Button,
                 act3Button,
@@ -173,6 +183,7 @@ namespace Ghost.Presentation.Shell.Editor
 
             dialogueFrame.Show(ShellDialogueData.GetLine(ShellDialogueData.TitleScreenId));
             EditorUtility.SetDirty(presenter);
+            EditorUtility.SetDirty(fundamentalsPresenter);
             EditorUtility.SetDirty(dialogueFrame);
         }
 
@@ -284,8 +295,169 @@ namespace Ghost.Presentation.Shell.Editor
             return screen;
         }
 
+        private static GameObject CreateFundamentalsScreen(
+            Transform parent,
+            out ChatbotFundamentalsPresenter fundamentalsPresenter)
+        {
+            var screen = CreatePanel(
+                "Chatbot Fundamentals Screen",
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(0.99f, 0.985f, 0.94f)).gameObject;
+
+            ConfigureFundamentalsScreenLayout(screen);
+
+            var progressText = CreateLabel(
+                "Fundamentals Progress",
+                screen.transform,
+                "Fundamentals",
+                18,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.30f, 0.25f, 0.38f),
+                22f);
+            var titleText = CreateLabel(
+                "Fundamentals Title",
+                screen.transform,
+                "Ghost's Voice Basics",
+                32,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.15f, 0.10f, 0.24f),
+                40f);
+
+            var ghostPanel = CreateCompactSubPanel(
+                "Fundamentals Ghost Problem Panel",
+                screen.transform,
+                "Ghost's problem",
+                new Color(0.94f, 0.98f, 1f));
+            var ghostProblemText = CreateLabel(
+                "Fundamentals Ghost Problem Text",
+                ghostPanel,
+                "Ghost is waiting.",
+                15,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.24f, 0.24f, 0.34f),
+                36f);
+
+            var explanationText = CreateLabel(
+                "Fundamentals Lily Explanation Text",
+                screen.transform,
+                "Lily explains the idea in a short line.",
+                17,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.23f, 0.36f),
+                42f);
+            var actionPromptText = CreateLabel(
+                "Fundamentals Action Prompt",
+                screen.transform,
+                "Try a small action.",
+                16,
+                FontStyle.Italic,
+                TextAnchor.MiddleLeft,
+                new Color(0.34f, 0.29f, 0.42f),
+                26f);
+
+            var actionButtonRoot = CreateDynamicButtonRoot("Fundamentals Action Buttons", screen.transform, 46f, true);
+            var componentButtonRoot = CreateDynamicButtonRoot("Fundamentals Component Buttons", screen.transform, 46f, true);
+            var challengeButtonRoot = CreateDynamicButtonRoot("Fundamentals Challenge Buttons", screen.transform, 46f, true);
+
+            var componentChainText = CreateLabel(
+                "Fundamentals Component Chain",
+                screen.transform,
+                string.Empty,
+                16,
+                FontStyle.Bold,
+                TextAnchor.UpperLeft,
+                new Color(0.16f, 0.22f, 0.32f),
+                30f);
+            var backendLinkText = CreateLabel(
+                "Fundamentals Backend Link",
+                screen.transform,
+                string.Empty,
+                15,
+                FontStyle.Italic,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.32f, 0.40f),
+                24f);
+
+            var resultRow = CreateSplitRow("Fundamentals Result Row", screen.transform, 112f);
+            var consequencePanel = CreateCompactSubPanel(
+                "Fundamentals Consequence Panel",
+                resultRow,
+                "Visible consequence",
+                new Color(1f, 0.98f, 0.91f));
+            var consequenceText = CreateLabel(
+                "Fundamentals Consequence Text",
+                consequencePanel,
+                "Ghost is waiting for a visible result.",
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.23f, 0.34f),
+                62f);
+
+            var ghostStatusPanel = CreateCompactSubPanel(
+                "Fundamentals Ghost Status Panel",
+                resultRow,
+                "Ghost reaction",
+                new Color(0.95f, 1f, 0.96f));
+            var ghostStatusText = CreateLabel(
+                "Fundamentals Ghost Status Text",
+                ghostStatusPanel,
+                "Ghost is watching the repair.",
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.22f, 0.30f, 0.26f),
+                62f);
+
+            var feedbackText = CreateLabel(
+                "Fundamentals Feedback Text",
+                screen.transform,
+                "Small action required.",
+                16,
+                FontStyle.Italic,
+                TextAnchor.MiddleLeft,
+                new Color(0.28f, 0.25f, 0.38f),
+                24f);
+
+            var navRow = CreateButtonRow("Fundamentals Navigation Row", screen.transform, 42f);
+            var previousButton = CreateButton("Fundamentals Previous Button", navRow, "Previous", 130f, 42f);
+            var nextButton = CreateButton("Fundamentals Next Button", navRow, "Next", 130f, 42f);
+            var skipButton = CreateButton("Fundamentals Skip Button", navRow, "Skip overview", 170f, 42f);
+
+            fundamentalsPresenter = screen.AddComponent<ChatbotFundamentalsPresenter>();
+            fundamentalsPresenter.Configure(
+                progressText,
+                titleText,
+                ghostProblemText,
+                explanationText,
+                actionPromptText,
+                consequenceText,
+                ghostStatusText,
+                componentChainText,
+                backendLinkText,
+                feedbackText,
+                actionButtonRoot,
+                componentButtonRoot,
+                challengeButtonRoot,
+                previousButton,
+                nextButton,
+                skipButton,
+                null);
+
+            return screen;
+        }
+
         private static GameObject CreateActHubScreen(
             Transform parent,
+            out Button fundamentalsButton,
             out Button act1Button,
             out Button act2Button,
             out Button act3Button,
@@ -313,6 +485,8 @@ namespace Ghost.Presentation.Shell.Editor
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.30f, 0.40f),
                 62f);
+
+            fundamentalsButton = CreateFundamentalsHubCard(screen.transform);
 
             var actCardRow = CreateActCardRow(screen.transform);
 
@@ -348,6 +522,68 @@ namespace Ghost.Presentation.Shell.Editor
 
             backToTitleButton = CreateButton("Back To Title Button", screen.transform, "Back to Title", 190f, 46f);
             return screen;
+        }
+
+        private static Button CreateFundamentalsHubCard(Transform parent)
+        {
+            var card = CreatePanel(
+                "Fundamentals Hub Card",
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(1f, 0.98f, 0.90f));
+
+            var layoutElement = card.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = 92f;
+            layoutElement.preferredHeight = 92f;
+
+            var outline = card.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.70f, 0.68f, 0.86f, 0.72f);
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            var layout = card.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(16, 16, 12, 12);
+            layout.spacing = 14f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            var textColumn = new GameObject("Fundamentals Hub Text", typeof(RectTransform)).transform;
+            textColumn.SetParent(card, false);
+            var textColumnElement = textColumn.gameObject.AddComponent<LayoutElement>();
+            textColumnElement.flexibleWidth = 1f;
+            textColumnElement.minHeight = 64f;
+
+            var textLayout = textColumn.gameObject.AddComponent<VerticalLayoutGroup>();
+            textLayout.spacing = 4f;
+            textLayout.childControlWidth = true;
+            textLayout.childControlHeight = true;
+            textLayout.childForceExpandWidth = true;
+            textLayout.childForceExpandHeight = false;
+
+            CreateLabel(
+                "Fundamentals Hub Title",
+                textColumn,
+                "Ghost's Voice Basics",
+                23,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.15f, 0.11f, 0.24f),
+                30f);
+            CreateLabel(
+                "Fundamentals Hub Copy",
+                textColumn,
+                "A short playable overview: what a chatbot is, how its parts connect, and why Ghost gets confused.",
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.29f, 0.25f, 0.36f),
+                32f);
+
+            return CreateButton("Start Fundamentals Button", card, "Start Basics", 170f, 42f);
         }
 
         private static Transform CreateActCardRow(Transform parent)
@@ -412,6 +648,37 @@ namespace Ghost.Presentation.Shell.Editor
                 34f);
 
             return CreateButton(buttonName, card, buttonText, 180f, 38f);
+        }
+
+        private static Transform CreateDynamicButtonRoot(string name, Transform parent, float height, bool horizontal)
+        {
+            var root = new GameObject(name, typeof(RectTransform)).transform;
+            root.SetParent(parent, false);
+
+            var layoutElement = root.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
+
+            if (horizontal)
+            {
+                var layout = root.gameObject.AddComponent<HorizontalLayoutGroup>();
+                layout.spacing = 10f;
+                layout.childControlWidth = true;
+                layout.childControlHeight = true;
+                layout.childForceExpandWidth = true;
+                layout.childForceExpandHeight = false;
+            }
+            else
+            {
+                var layout = root.gameObject.AddComponent<VerticalLayoutGroup>();
+                layout.spacing = 8f;
+                layout.childControlWidth = true;
+                layout.childControlHeight = true;
+                layout.childForceExpandWidth = true;
+                layout.childForceExpandHeight = false;
+            }
+
+            return root;
         }
 
         private static void CreatePresencePanel(Transform parent)
@@ -564,6 +831,20 @@ namespace Ghost.Presentation.Shell.Editor
             var layout = screen.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(26, 26, 24, 24);
             layout.spacing = spacing;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+        }
+
+        private static void ConfigureFundamentalsScreenLayout(GameObject screen)
+        {
+            var layoutElement = screen.AddComponent<LayoutElement>();
+            layoutElement.flexibleHeight = 1f;
+
+            var layout = screen.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(18, 18, 14, 14);
+            layout.spacing = 6f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
