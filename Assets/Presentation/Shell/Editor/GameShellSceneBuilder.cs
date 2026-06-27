@@ -131,7 +131,14 @@ namespace Ghost.Presentation.Shell.Editor
             var presenceColumn = CreateColumnPanel("Presence Panel", body, 0.32f, new Color(0.92f, 0.97f, 1f));
 
             var titleScreen = CreateTitleScreen(screenColumn);
-            var nameEntryScreen = CreateNameEntryScreen(screenColumn, out var playerNameInput, out var confirmNameButton);
+            var nameEntryScreen = CreateNameEntryScreen(
+                screenColumn,
+                out var playerNameInput,
+                out var confirmNameButton,
+                out var accountIdentifierInput,
+                out var createAccountButton,
+                out var useAccountButton,
+                out var accountStatusText);
             var hubScreen = CreateActHubScreen(
                 screenColumn,
                 out var act1Button,
@@ -154,6 +161,10 @@ namespace Ghost.Presentation.Shell.Editor
                 startButton,
                 playerNameInput,
                 confirmNameButton,
+                accountIdentifierInput,
+                createAccountButton,
+                useAccountButton,
+                accountStatusText,
                 act1Button,
                 act2Button,
                 act3Button,
@@ -196,7 +207,11 @@ namespace Ghost.Presentation.Shell.Editor
         private static GameObject CreateNameEntryScreen(
             Transform parent,
             out InputField playerNameInput,
-            out Button confirmNameButton)
+            out Button confirmNameButton,
+            out InputField accountIdentifierInput,
+            out Button createAccountButton,
+            out Button useAccountButton,
+            out Text accountStatusText)
         {
             var screen = CreatePanel(
                 "Name Entry Screen",
@@ -220,8 +235,52 @@ namespace Ghost.Presentation.Shell.Editor
                 new Color(0.28f, 0.22f, 0.36f),
                 76f);
 
-            playerNameInput = CreateInputField("Player Name Input", screen.transform, "Junior", 380f, 56f);
-            confirmNameButton = CreateButton("Confirm Name Button", screen.transform, "Help Ghost", 210f, 54f);
+            var accountChoiceRow = CreateSplitRow("Account Choice Row", screen.transform, 262f);
+            var guestPanel = CreateCompactSubPanel(
+                "Guest Name Panel",
+                accountChoiceRow,
+                "Display name",
+                new Color(1f, 0.985f, 0.94f));
+            var accountPanel = CreateCompactSubPanel(
+                "Account Recovery Panel",
+                accountChoiceRow,
+                "Optional account",
+                new Color(0.94f, 0.98f, 1f));
+
+            CreateLabel(
+                "Guest Name Copy",
+                guestPanel,
+                "This is what Lily and Ghost call you. Guest mode still works offline.",
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.34f, 0.28f, 0.42f),
+                44f);
+            playerNameInput = CreateInputField("Player Name Input", guestPanel, "Junior", 340f, 46f);
+            confirmNameButton = CreateButton("Confirm Name Button", guestPanel, "Continue as Guest", 230f, 42f);
+
+            CreateLabel(
+                "Account Copy",
+                accountPanel,
+                "No password yet. Create a username, or enter an existing username/account id to recover progress.",
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.34f, 0.28f, 0.42f),
+                52f);
+            accountIdentifierInput = CreateInputField("Account Identifier Input", accountPanel, "username or account id", 360f, 46f);
+            var accountButtonRow = CreateButtonRow("Account Button Row", accountPanel, 46f);
+            createAccountButton = CreateButton("Create Account Button", accountButtonRow, "Create Account", 168f, 40f);
+            useAccountButton = CreateButton("Use Account Button", accountButtonRow, "Use Account", 146f, 40f);
+            accountStatusText = CreateLabel(
+                "Account Status Text",
+                accountPanel,
+                "Optional: continue as guest, create an account, or use an existing one.",
+                14,
+                FontStyle.Italic,
+                TextAnchor.UpperLeft,
+                new Color(0.35f, 0.30f, 0.42f),
+                42f);
             return screen;
         }
 
@@ -607,6 +666,80 @@ namespace Ghost.Presentation.Shell.Editor
             text.raycastTarget = false;
 
             return button;
+        }
+
+        private static Transform CreateButtonRow(string name, Transform parent, float height)
+        {
+            var row = new GameObject(name, typeof(RectTransform)).transform;
+            row.SetParent(parent, false);
+
+            var layoutElement = row.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            return row;
+        }
+
+        private static Transform CreateSplitRow(string name, Transform parent, float height)
+        {
+            var row = new GameObject(name, typeof(RectTransform)).transform;
+            row.SetParent(parent, false);
+
+            var layoutElement = row.gameObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 16f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+            return row;
+        }
+
+        private static Transform CreateCompactSubPanel(string name, Transform parent, string heading, Color color)
+        {
+            var panel = CreatePanel(
+                name,
+                parent,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                color);
+
+            var outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.70f, 0.68f, 0.86f, 0.72f);
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            layoutElement.flexibleWidth = 1f;
+
+            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(14, 14, 12, 12);
+            layout.spacing = 7f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            CreateLabel(
+                name + " Heading",
+                panel,
+                heading,
+                20,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.17f, 0.11f, 0.25f),
+                28f);
+            return panel;
         }
 
         private static Text CreateFillText(

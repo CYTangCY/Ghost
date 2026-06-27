@@ -52,6 +52,112 @@ describe("Ghost backend", () => {
     expect(progress.body.narrativeState).toEqual({ pendingDebriefAct: "act1" });
   });
 
+  it("POST /accounts links a username to an existing profile and lookup restores progress", async () => {
+    const client = createTestClient();
+
+    const profile = await client.post("/profiles").send({}).expect(201);
+    const profileId = profile.body.id as string;
+
+    await client
+      .put(`/progress/${profileId}`)
+      .send({
+        actsCompleted: ["act1", "act2"],
+        levelsCompleted: ["act1:1", "act2:1"],
+        narrativeState: { playerName: "Chao" }
+      })
+      .expect(200);
+
+    const account = await client
+      .post("/accounts")
+      .send({
+        profileId,
+        userName: "chao_test",
+        displayName: "Chao"
+      })
+      .expect(201);
+
+    expect(account.body.accountId).toMatch(/^account_/);
+    expect(account.body.userName).toBe("chao_test");
+    expect(account.body.displayName).toBe("Chao");
+    expect(account.body.profileId).toBe(profileId);
+
+    const byUserName = await client
+      .post("/accounts/lookup")
+      .send({ identifier: "CHAO_TEST" })
+      .expect(200);
+
+    expect(byUserName.body.profileId).toBe(profileId);
+
+    const byAccountId = await client
+      .post("/accounts/lookup")
+      .send({ identifier: account.body.accountId })
+      .expect(200);
+
+    expect(byAccountId.body.userName).toBe("chao_test");
+
+    const progress = await client.get(`/progress/${byAccountId.body.profileId}`).expect(200);
+    expect(progress.body.actsCompleted).toEqual(["act1", "act2"]);
+    expect(progress.body.narrativeState).toEqual({ playerName: "Chao" });
+  });
+
+  it("POST /accounts rejects duplicate usernames", async () => {
+    const client = createTestClient();
+
+    await client
+      .post("/accounts")
+      .send({ userName: "same_name", displayName: "One" })
+      .expect(201);
+
+    await client
+      .post("/accounts")
+      .send({ userName: "SAME_NAME", displayName: "Two" })
+      .expect(409);
+  });
+
+  it("POST /accounts creates a separate account when the current profile already has one", async () => {
+    const client = createTestClient();
+    const profile = await client.post("/profiles").send({}).expect(201);
+
+    const firstAccount = await client
+      .post("/accounts")
+      .send({
+        profileId: profile.body.id,
+        userName: "first_name",
+        displayName: "First"
+      })
+      .expect(201);
+
+    const secondAccount = await client
+      .post("/accounts")
+      .send({
+        profileId: profile.body.id,
+        userName: "second_name",
+        displayName: "Second"
+      })
+      .expect(201);
+
+    expect(secondAccount.body.accountId).not.toBe(firstAccount.body.accountId);
+    expect(secondAccount.body.profileId).not.toBe(profile.body.id);
+    expect(secondAccount.body.userName).toBe("second_name");
+    expect(secondAccount.body.displayName).toBe("Second");
+
+    const firstLookup = await client
+      .post("/accounts/lookup")
+      .send({ identifier: "first_name" })
+      .expect(200);
+
+    expect(firstLookup.body.accountId).toBe(firstAccount.body.accountId);
+    expect(firstLookup.body.profileId).toBe(profile.body.id);
+
+    const secondLookup = await client
+      .post("/accounts/lookup")
+      .send({ identifier: "second_name" })
+      .expect(200);
+
+    expect(secondLookup.body.accountId).toBe(secondAccount.body.accountId);
+    expect(secondLookup.body.profileId).toBe(secondAccount.body.profileId);
+  });
+
   it("POST /attempts inserts an attempt log", async () => {
     const client = createTestClient();
     const profile = await client.post("/profiles").send({}).expect(201);

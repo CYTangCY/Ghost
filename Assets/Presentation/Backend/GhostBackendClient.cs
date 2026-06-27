@@ -99,6 +99,72 @@ namespace Ghost.Presentation.Backend
             });
         }
 
+        public static void CreateAccount(
+            string userName,
+            string displayName,
+            Action<GhostBackendResponse<AccountResponse>> callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                callback?.Invoke(GhostBackendResponse<AccountResponse>.Failed("Account username is required."));
+                return;
+            }
+
+            EnsureProfile(profileResponse =>
+            {
+                if (!profileResponse.Succeeded || profileResponse.Value == null)
+                {
+                    callback?.Invoke(GhostBackendResponse<AccountResponse>.Failed("No backend profile id is available."));
+                    return;
+                }
+
+                var payload = new AccountRequest
+                {
+                    profileId = profileResponse.Value.id,
+                    userName = userName.Trim(),
+                    displayName = string.IsNullOrWhiteSpace(displayName)
+                        ? GhostNarrativeState.PlayerName
+                        : displayName.Trim()
+                };
+
+                Run(SendRequest<AccountResponse>(
+                    "POST",
+                    "/accounts",
+                    JsonUtility.ToJson(payload),
+                    response =>
+                    {
+                        ApplyAccountResponse(response);
+                        callback?.Invoke(response);
+                    }));
+            });
+        }
+
+        public static void LookupAccount(
+            string identifier,
+            Action<GhostBackendResponse<AccountResponse>> callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(identifier))
+            {
+                callback?.Invoke(GhostBackendResponse<AccountResponse>.Failed("Account id or username is required."));
+                return;
+            }
+
+            var payload = new AccountLookupRequest
+            {
+                identifier = identifier.Trim()
+            };
+
+            Run(SendRequest<AccountResponse>(
+                "POST",
+                "/accounts/lookup",
+                JsonUtility.ToJson(payload),
+                response =>
+                {
+                    ApplyAccountResponse(response);
+                    callback?.Invoke(response);
+                }));
+        }
+
         public static void PostAttempt(
             string actId,
             string result,
@@ -393,6 +459,21 @@ namespace Ghost.Presentation.Backend
             }
         }
 
+        private static void ApplyAccountResponse(GhostBackendResponse<AccountResponse> response)
+        {
+            if (!response.Succeeded || response.Value == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(response.Value.profileId))
+            {
+                GhostNarrativeState.SetBackendProfileId(response.Value.profileId);
+            }
+
+            GhostNarrativeState.SetBackendAccount(response.Value.accountId, response.Value.userName);
+        }
+
         private static void Run(IEnumerator routine)
         {
             EnsureRunner().StartCoroutine(routine);
@@ -485,6 +566,30 @@ namespace Ghost.Presentation.Backend
     public sealed class NarrativeStatePayload
     {
         public string playerName;
+    }
+
+    [Serializable]
+    public sealed class AccountRequest
+    {
+        public string profileId;
+        public string userName;
+        public string displayName;
+    }
+
+    [Serializable]
+    public sealed class AccountLookupRequest
+    {
+        public string identifier;
+    }
+
+    [Serializable]
+    public sealed class AccountResponse
+    {
+        public string accountId;
+        public string userName;
+        public string displayName;
+        public string profileId;
+        public string createdAt;
     }
 
     [Serializable]

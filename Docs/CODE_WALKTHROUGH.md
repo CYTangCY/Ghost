@@ -1492,6 +1492,43 @@ From `Backend/`, run `npm install`, `npm run build`, and `npm test`. Use `npm ru
 
 ---
 
+## M0-T28 Run 002 No-Password Account Recovery
+
+### Component Name
+
+Prototype account recovery (`Backend/src/database.ts`, `Backend/src/app.ts`, `GhostBackendClient.cs`, `GameShellPresenter.cs`)
+
+### Purpose
+
+Adds an optional no-password account layer on top of the existing pseudonymous profile/progress system. A tester can create a readable username or later enter either that username or the generated `account_...` id to recover the same backend profile and progress. This is prototype progress recovery, not secure authentication.
+
+### Runtime Role
+
+The backend stores an `accounts` row that links one `userName` and generated `accountId` to one existing or newly created `profileId`. Unity keeps the existing guest path, but the shell name-entry screen can now create or use an account before entering the act hub. When an account is found, Unity stores the returned profile id, loads `/progress/:profileId`, and applies the restored player name/completed acts. If the current local profile already has an account, `Create Account` creates a separate new profile/account when the requested username is not already used by another profile, so multiple prototype accounts can coexist.
+
+### Important Files
+
+- `Backend/src/database.ts`: creates the `accounts` table and implements `createAccount(...)` / `findAccount(...)`.
+- `Backend/src/app.ts`: exposes `POST /accounts` and `POST /accounts/lookup`.
+- `Backend/tests/app.test.ts`: covers account creation, lookup by username/account id, progress recovery, and duplicate username rejection.
+- `Assets/Presentation/Backend/GhostBackendClient.cs`: adds `CreateAccount(...)` and `LookupAccount(...)` UnityWebRequest wrappers.
+- `Assets/Presentation/Shell/GhostNarrativeState.cs`: stores optional backend account id / username in PlayerPrefs and supports replacing local progress when restoring an account.
+- `Assets/Presentation/Shell/GameShellPresenter.cs`: handles create/use account button clicks and progress loading.
+- `Assets/Presentation/Shell/Editor/GameShellSceneBuilder.cs`: regenerates the shell name-entry UI with a compact two-column name/account layout, the account input, and the create/use buttons.
+
+### Failure Cases
+
+- Backend unavailable: account create/use fails with a shell status message; `Continue as Guest` still works.
+- Duplicate username owned by another profile: backend returns `409`; Unity asks the player to use that account or choose a different username.
+- Creating a new username while already on an account switches Unity to a new profile/account instead of overwriting the old account.
+- No password: anyone with the username or account id can load that prototype progress on the same backend. This is intentional until password/auth design is approved.
+
+### Unity Test
+
+Run `Ghost > Build Game Shell Scene` after code changes so the scene contains the current generated account controls. Start the backend, enter Play Mode in the shell, type a player name and username, click `Create Account`, complete/return from an act, then restart and use the same username via `Use Account`. Confirm the hub restores the name/completed-act state. Stop the backend and confirm `Continue as Guest` still enters the hub.
+
+---
+
 ## M0-T33 Constrained Lily Chat
 
 ### Component Name

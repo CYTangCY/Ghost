@@ -7,6 +7,7 @@ Local Node.js + TypeScript REST service for the Ghost vertical-slice backend/dat
 - Express REST API.
 - SQLite database via `better-sqlite3`.
 - Local pseudonymous profiles.
+- Optional no-password account names for prototype progress recovery.
 - Progress and attempt-log storage.
 - Seeded Act 1-3 reference content mirrored from the Unity sample data.
 - LLM-backed Lily hints, Lily chat, and Ghost response text through local Ollama + Granite, with static fallback.
@@ -183,6 +184,8 @@ Chat turns are logged to `hint_logs` with `kind:"chat"` and `trigger:"chat_messa
 - `GET /health` -> `{ ok: true }`
 - `GET /content` -> seeded acts, levels, and puzzle content
 - `POST /profiles` -> create a pseudonymous local profile
+- `POST /accounts` -> create a no-password account name and link it to a profile
+- `POST /accounts/lookup` -> recover an account by username or account id
 - `GET /progress/:profileId` -> read progress
 - `PUT /progress/:profileId` -> upsert progress
 - `POST /attempts` -> insert an attempt log
@@ -191,3 +194,67 @@ Chat turns are logged to `hint_logs` with `kind:"chat"` and `trigger:"chat_messa
 - `POST /chat` -> constrained Lily chat reply, `{ reply, source: "llm" | "static" }`
 
 There is intentionally no scoring endpoint. Deterministic correctness remains in the Unity client.
+
+## Prototype Account Recovery
+
+This is a **no-password prototype account**, not secure authentication. It exists so a tester can attach a
+readable username to the same backend profile/progress row and recover that progress later on the same local backend.
+Password-based login can be added later after the security model is agreed.
+
+Allowed usernames are 3-32 characters and may use letters, numbers, underscores, or hyphens.
+
+### Create an Account
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:3000/accounts" `
+  -ContentType "application/json" `
+  -Body '{"userName":"chao_test","displayName":"Chao"}'
+```
+
+Response shape:
+
+```json
+{
+  "accountId": "account_...",
+  "userName": "chao_test",
+  "displayName": "Chao",
+  "profileId": "profile_...",
+  "createdAt": "2026-06-26T..."
+}
+```
+
+If Unity already has a backend profile id, the Unity client sends it while creating the account so existing guest
+progress can be attached to that profile. If that profile already has an account and the requested username is not
+used by another profile, the backend creates a separate new profile/account instead of overwriting the old account.
+
+### Recover by Username or Account ID
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:3000/accounts/lookup" `
+  -ContentType "application/json" `
+  -Body '{"identifier":"chao_test"}'
+```
+
+You can also pass the generated `account_...` id:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:3000/accounts/lookup" `
+  -ContentType "application/json" `
+  -Body '{"identifier":"account_REPLACE_WITH_ID"}'
+```
+
+Then read the returned profile's progress:
+
+```powershell
+Invoke-RestMethod "http://localhost:3000/progress/profile_REPLACE_WITH_ID"
+```

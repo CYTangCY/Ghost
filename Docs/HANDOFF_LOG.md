@@ -424,6 +424,20 @@ not re-render the image PDF but cross-checked the outline against `CONFIRMED §4
 accepted; scope clean (2 docs only). Archive: `Docs/completed_tasks/M0-T34_ibm_course_coverage_map.md`.
 Next: M0-T35 (Chatbot Fundamentals Teaching Pass).
 
+### 2026-06-26 — M0-T28 follow-on: no-password account management — Completed (off-track from M0-T35; accepted)
+Codex runs M0-T28_002–008 added a no-password account/profile system on the M0-T28 backend: account
+creation, username-based recovery of a profile, an entry gate, account-conflict handling (409
+`account_exists`), button/UI layout fixes, and multiple-account coexistence (`createAccount`:
+same-profile → return existing; other-profile → `account_exists`; current profile already has a
+different account + unused name → new profile). Files: Backend (`database.ts`/`app.ts`/`tests`/README),
+Shell (`GhostBackendClient`, `GameShellPresenter`, `GameShellSceneBuilder`, `GhostNarrativeState`),
+regenerated `GameShellPrototype.unity`, docs. Claude ran backend build + test → 10/10 pass; scope clean
+(no puzzle logic/validators/ProjectSettings; deterministic rule intact — accounts are identity/storage,
+not scoring). Run logs honest (Unity "Not run"; risks: no-password recovery, multi-user not a final
+design). NOTE: this was OFF the stated `CURRENT_TASK` (M0-T35 fundamentals) — an accepted user-directed
+detour; future Codex runs should track `CURRENT_TASK`. Residual: Unity Editor verification of the
+account UI (the iterative UI-fix runs imply in-Editor testing). `CURRENT_TASK` remains M0-T35 (next).
+
 ---
 
 ## Entry Template

@@ -12,6 +12,12 @@ export type ProgressPayload = {
   narrativeState?: Record<string, unknown>;
 };
 
+export type AccountPayload = {
+  userName: string;
+  displayName?: string;
+  profileId?: string;
+};
+
 export type AttemptPayload = {
   profileId: string;
   actId: string;
@@ -51,6 +57,14 @@ type PuzzleRow = {
 
 type ProfileRow = {
   id: string;
+  created_at: string;
+};
+
+type AccountRow = {
+  id: string;
+  user_name: string;
+  display_name: string;
+  profile_id: string;
   created_at: string;
 };
 
@@ -134,6 +148,82 @@ export class GhostDatabase {
       .run(id, createdAt);
 
     return { id, createdAt };
+  }
+
+  public createAccount(payload: AccountPayload) {
+    const userName = sanitizeUserName(payload.userName);
+    if (userName == null) {
+      return { error: "invalid_user_name" };
+    }
+
+    const normalizedUserName = normalizeAccountIdentifier(userName);
+    let profileId = typeof payload.profileId === "string" && this.profileExists(payload.profileId)
+      ? payload.profileId
+      : `profile_${randomUUID()}`;
+    const existingAccount = this.findAccount(userName);
+    if (existingAccount != null) {
+      return existingAccount.profileId === profileId
+        ? existingAccount
+        : { error: "account_exists" };
+    }
+
+    const accountId = `account_${randomUUID()}`;
+    const createdAt = nowIso();
+    const displayName = sanitizeDisplayName(payload.displayName, userName);
+
+    const createAccount = this.db.transaction(() => {
+      const profileAccount = this.db
+        .prepare("SELECT id, user_name, display_name, profile_id, created_at FROM accounts WHERE profile_id = ?")
+        .get(profileId) as AccountRow | undefined;
+      if (profileAccount != null) {
+        profileId = `profile_${randomUUID()}`;
+      }
+
+      if (!this.profileExists(profileId)) {
+        this.db
+          .prepare("INSERT INTO profiles (id, created_at) VALUES (?, ?)")
+          .run(profileId, createdAt);
+      }
+
+      this.db
+        .prepare(
+          `INSERT INTO accounts
+            (id, user_name, user_name_normalized, display_name, profile_id, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        )
+        .run(accountId, userName, normalizedUserName, displayName, profileId, createdAt);
+
+      return {
+        accountId,
+        userName,
+        displayName,
+        profileId,
+        createdAt
+      };
+    });
+
+    return createAccount();
+  }
+
+  public findAccount(identifier: string) {
+    const normalizedIdentifier = normalizeAccountIdentifier(identifier);
+    if (normalizedIdentifier.length === 0) {
+      return null;
+    }
+
+    const row = this.db
+      .prepare(
+        `SELECT id, user_name, display_name, profile_id, created_at
+         FROM accounts
+         WHERE id = ? OR user_name_normalized = ?`
+      )
+      .get(identifier.trim(), normalizedIdentifier) as AccountRow | undefined;
+
+    if (row == null) {
+      return null;
+    }
+
+    return accountFromRow(row);
   }
 
   public profileExists(profileId: string): boolean {
@@ -302,6 +392,16 @@ export class GhostDatabase {
         created_at TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS accounts (
+        id TEXT PRIMARY KEY,
+        user_name TEXT NOT NULL,
+        user_name_normalized TEXT NOT NULL UNIQUE,
+        display_name TEXT NOT NULL,
+        profile_id TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+      );
+
       CREATE TABLE IF NOT EXISTS progress (
         profile_id TEXT PRIMARY KEY,
         acts_completed_json TEXT NOT NULL,
@@ -399,6 +499,16 @@ export class GhostDatabase {
   }
 }
 
+function accountFromRow(row: AccountRow) {
+  return {
+    accountId: row.id,
+    userName: row.user_name,
+    displayName: row.display_name,
+    profileId: row.profile_id,
+    createdAt: row.created_at
+  };
+}
+
 export function createGhostDatabase(dbPath = process.env.GHOST_DB_PATH ?? path.join("data", "ghost.sqlite")) {
   return new GhostDatabase(dbPath);
 }
@@ -423,6 +533,32 @@ function parseJson<T>(value: string, fallback: T): T {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function sanitizeUserName(value: string): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!/^[A-Za-z0-9_-]{3,32}$/.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function sanitizeDisplayName(value: string | undefined, fallback: string): string {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (trimmed.length === 0) {
+    return fallback;
+  }
+
+  return trimmed.length > 48 ? trimmed.slice(0, 48) : trimmed;
+}
+
+function normalizeAccountIdentifier(value: string): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 function ensureDatabaseDirectory(dbPath: string): void {

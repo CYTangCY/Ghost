@@ -11,6 +11,8 @@ namespace Ghost.Presentation.Shell
         public const string Act3Id = "act3";
         public const string DefaultPlayerName = "Junior";
         public const string BackendProfileIdPlayerPrefsKey = "Ghost.Backend.ProfileId";
+        public const string BackendAccountIdPlayerPrefsKey = "Ghost.Backend.AccountId";
+        public const string BackendUserNamePlayerPrefsKey = "Ghost.Backend.UserName";
 
         private static readonly HashSet<string> CompletedActIds = new HashSet<string>(StringComparer.Ordinal);
         private static string playerName = string.Empty;
@@ -27,6 +29,10 @@ namespace Ghost.Presentation.Shell
         public static string PendingDebriefActId => pendingDebriefActId;
 
         public static string BackendProfileId => PlayerPrefs.GetString(BackendProfileIdPlayerPrefsKey, string.Empty);
+
+        public static string BackendAccountId => PlayerPrefs.GetString(BackendAccountIdPlayerPrefsKey, string.Empty);
+
+        public static string BackendUserName => PlayerPrefs.GetString(BackendUserNamePlayerPrefsKey, string.Empty);
 
         public static void SetPlayerName(string value)
         {
@@ -81,14 +87,46 @@ namespace Ghost.Presentation.Shell
             PlayerPrefs.Save();
         }
 
+        public static void SetBackendAccount(string accountId, string userName)
+        {
+            if (string.IsNullOrWhiteSpace(accountId))
+            {
+                PlayerPrefs.DeleteKey(BackendAccountIdPlayerPrefsKey);
+            }
+            else
+            {
+                PlayerPrefs.SetString(BackendAccountIdPlayerPrefsKey, accountId.Trim());
+            }
+
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                PlayerPrefs.DeleteKey(BackendUserNamePlayerPrefsKey);
+            }
+            else
+            {
+                PlayerPrefs.SetString(BackendUserNamePlayerPrefsKey, userName.Trim());
+            }
+
+            PlayerPrefs.Save();
+        }
+
         public static void ApplyBackendProgress(
             string backendPlayerName,
             IEnumerable<string> completedActIds,
-            bool notify)
+            bool notify,
+            bool replaceExisting = false)
         {
             var changed = false;
 
-            if (!HasPlayerName && !string.IsNullOrWhiteSpace(backendPlayerName))
+            if (replaceExisting)
+            {
+                CompletedActIds.Clear();
+                playerName = string.IsNullOrWhiteSpace(backendPlayerName)
+                    ? DefaultPlayerName
+                    : backendPlayerName.Trim();
+                changed = true;
+            }
+            else if (!HasPlayerName && !string.IsNullOrWhiteSpace(backendPlayerName))
             {
                 playerName = backendPlayerName.Trim();
                 changed = true;

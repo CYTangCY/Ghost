@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import { ChatRequestBody, createGhostResponse, createLilyChatReply, createLilyHint, LlmRequestBody } from "./llmOrchestration";
 import { OllamaClient, OllamaTextClient } from "./ollamaClient";
-import { GhostDatabase, ProgressPayload } from "./database";
+import { AccountPayload, GhostDatabase, ProgressPayload } from "./database";
 
 export function createApp(database: GhostDatabase, ollamaClient: OllamaTextClient = new OllamaClient()) {
   const app = express();
@@ -18,6 +18,46 @@ export function createApp(database: GhostDatabase, ollamaClient: OllamaTextClien
 
   app.post("/profiles", (_request: Request, response: Response) => {
     response.status(201).json(database.createProfile());
+  });
+
+  app.post("/accounts", (request: Request, response: Response) => {
+    const payload = readObjectBody<AccountPayload>(request);
+    const account = database.createAccount(payload);
+
+    if ("error" in account) {
+      if (account.error === "account_exists") {
+        response.status(409).json({ error: "account already exists" });
+        return;
+      }
+
+      if (account.error === "profile_already_linked") {
+        response.status(409).json({ error: "profile already has an account" });
+        return;
+      }
+
+      response.status(400).json({
+        error: "userName is required and must be 3-32 characters using letters, numbers, underscores, or hyphens"
+      });
+      return;
+    }
+
+    response.status(201).json(account);
+  });
+
+  app.post("/accounts/lookup", (request: Request, response: Response) => {
+    const payload = readObjectBody<{ identifier?: string }>(request);
+    if (isMissing(payload.identifier)) {
+      response.status(400).json({ error: "identifier is required" });
+      return;
+    }
+
+    const account = database.findAccount(payload.identifier);
+    if (account == null) {
+      response.status(404).json({ error: "account not found" });
+      return;
+    }
+
+    response.json(account);
   });
 
   app.get("/progress/:profileId", (request: Request, response: Response) => {

@@ -1281,6 +1281,80 @@ No manual Inspector setup is required. `AmbientBanterHook` creates the `Ask Lily
 
 ---
 
+## M0-T28 Run 002: No-Password Account Recovery
+
+### Backend Automated Check
+
+1. Open a terminal in `Backend/`.
+2. Run `npm run build`.
+3. Run `npm test`.
+4. Expected account tests:
+   - `POST /accounts links a username to an existing profile and lookup restores progress`
+   - `POST /accounts rejects duplicate usernames`
+5. Confirm existing content/profile/progress/attempt/hint/chat tests still pass.
+
+### CMD / REST Manual Check
+
+1. Start the backend with `npm run dev`.
+2. Create a no-password account:
+   ```powershell
+   Invoke-RestMethod `
+     -Method Post `
+     -Uri "http://localhost:3000/accounts" `
+     -ContentType "application/json" `
+     -Body '{"userName":"chao_test","displayName":"Chao"}'
+   ```
+3. Copy the returned `accountId` and `profileId`.
+4. Recover by username:
+   ```powershell
+   Invoke-RestMethod `
+     -Method Post `
+     -Uri "http://localhost:3000/accounts/lookup" `
+     -ContentType "application/json" `
+     -Body '{"identifier":"chao_test"}'
+   ```
+5. Recover by account id:
+   ```powershell
+   Invoke-RestMethod `
+     -Method Post `
+     -Uri "http://localhost:3000/accounts/lookup" `
+     -ContentType "application/json" `
+     -Body '{"identifier":"account_REPLACE_WITH_ID"}'
+   ```
+6. Read progress with `GET /progress/:profileId` and confirm it is the same profile id.
+
+### Unity UI Play Mode Check
+
+1. Run `Ghost > Build Game Shell Scene` so the name-entry UI includes account controls.
+2. Start the backend with `npm run dev`.
+3. Open `Assets/Scenes/GameShellPrototype.unity` and enter Play Mode.
+4. Click `Start / Continue`.
+5. Confirm the name-entry screen shows `Continue as Guest`, `Create Account`, and `Use Account`.
+6. Enter a player display name.
+7. Enter a username, for example `chao_test`.
+8. Click `Create Account`.
+9. Confirm the shell reaches the hub and the status reports the username/account id.
+10. Complete/return from at least one act so progress is saved.
+11. Restart Play Mode.
+12. Click `Start / Continue`, enter the same username, and click `Use Account`.
+13. Confirm the restored profile/name/completed acts appear.
+14. On the same local profile, enter a new unused username and click `Create Account`; confirm it creates a second account/profile instead of overwriting the old account.
+15. Use SQLite or `/accounts/lookup` to confirm the old username and new username both still exist.
+16. Try a username that belongs to another profile and confirm Unity shows a clear duplicate-name message.
+17. Stop the backend and confirm `Continue as Guest` still reaches the hub.
+
+### Security / Scope Check
+
+1. Confirm this is no-password prototype recovery only, not secure authentication.
+2. Confirm no puzzle validators/sessions/rules changed.
+3. Confirm no ProjectSettings, Packages, Build Settings, scenes, or `.meta` files were intentionally edited.
+
+### Inspector Setup
+
+No manual Inspector setup is required after running `Ghost > Build Game Shell Scene`. The builder wires the player-name input, account identifier input, `Create Account`, `Use Account`, status text, and guest continue button into `GameShellPresenter`.
+
+---
+
 ## M0-T33: Constrained Lily Chat Window
 
 ### Backend Automated Check

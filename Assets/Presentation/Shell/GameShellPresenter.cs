@@ -15,6 +15,10 @@ namespace Ghost.Presentation.Shell
         [SerializeField] private Button startButton;
         [SerializeField] private InputField playerNameInput;
         [SerializeField] private Button confirmNameButton;
+        [SerializeField] private InputField accountIdentifierInput;
+        [SerializeField] private Button createAccountButton;
+        [SerializeField] private Button useAccountButton;
+        [SerializeField] private Text accountStatusText;
         [SerializeField] private Button act1Button;
         [SerializeField] private Button act2Button;
         [SerializeField] private Button act3Button;
@@ -34,7 +38,7 @@ namespace Ghost.Presentation.Shell
             Button act3,
             Button back)
         {
-            Configure(title, null, hub, dialogueFrame, start, null, null, act1, act2, act3, null, back);
+            Configure(title, null, hub, dialogueFrame, start, null, null, null, null, null, null, act1, act2, act3, null, back);
         }
 
         public void Configure(
@@ -45,6 +49,10 @@ namespace Ghost.Presentation.Shell
             Button start,
             InputField nameInput,
             Button confirmName,
+            InputField accountInput,
+            Button createAccount,
+            Button useAccount,
+            Text accountStatus,
             Button act1,
             Button act2,
             Button act3,
@@ -58,6 +66,10 @@ namespace Ghost.Presentation.Shell
             startButton = start;
             playerNameInput = nameInput;
             confirmNameButton = confirmName;
+            accountIdentifierInput = accountInput;
+            createAccountButton = createAccount;
+            useAccountButton = useAccount;
+            accountStatusText = accountStatus;
             act1Button = act1;
             act2Button = act2;
             act3Button = act3;
@@ -71,6 +83,8 @@ namespace Ghost.Presentation.Shell
 
             WireButton(startButton, ShowNameEntryOrHub);
             WireButton(confirmNameButton, ConfirmPlayerNameAndShowHub);
+            WireButton(createAccountButton, CreateAccountAndShowHub);
+            WireButton(useAccountButton, UseAccountAndShowHub);
             WireButton(act1Button, () => ShowActIntro(GhostNarrativeState.Act1Id));
             WireButton(act2Button, () => ShowActIntro(GhostNarrativeState.Act2Id));
             WireButton(act3Button, () => ShowActIntro(GhostNarrativeState.Act3Id));
@@ -98,7 +112,7 @@ namespace Ghost.Presentation.Shell
 
         public void ShowNameEntryOrHub()
         {
-            if (GhostNarrativeState.HasPlayerName || nameEntryScreen == null)
+            if (nameEntryScreen == null)
             {
                 ShowActHub();
                 return;
@@ -113,6 +127,7 @@ namespace Ghost.Presentation.Shell
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, true);
             SetScreenActive(actHubScreen, false);
+            PrepareAccountFields();
             ShowDialogue(ShellDialogueData.NameEntryScreenId);
         }
 
@@ -129,6 +144,63 @@ namespace Ghost.Presentation.Shell
         {
             GhostNarrativeState.SetPlayerName(playerNameInput == null ? null : playerNameInput.text);
             ShowActHub();
+        }
+
+        public void CreateAccountAndShowHub()
+        {
+            var userName = ReadAccountIdentifier();
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                SetAccountStatus("Enter a username first. No password is used in this prototype.");
+                return;
+            }
+
+            var displayName = ReadPlayerName();
+            SetAccountButtonsInteractable(false);
+            SetAccountStatus("Creating account...");
+
+            GhostBackendClient.CreateAccount(userName, displayName, response =>
+            {
+                SetAccountButtonsInteractable(true);
+
+                if (!response.Succeeded || response.Value == null)
+                {
+                    SetAccountStatus(response.StatusCode == 409
+                        ? "That username already exists. Use Account, or choose a different username."
+                        : "Account was not created. Check the backend, or use a 3-32 character username.");
+                    return;
+                }
+
+                GhostNarrativeState.SetPlayerName(response.Value.displayName);
+                BackendSync.PushProgress();
+                SetAccountStatus("Account ready: " + response.Value.userName + " / " + response.Value.accountId);
+                ShowActHub();
+            });
+        }
+
+        public void UseAccountAndShowHub()
+        {
+            var identifier = ReadAccountIdentifier();
+            if (string.IsNullOrWhiteSpace(identifier))
+            {
+                SetAccountStatus("Enter an account id or username first.");
+                return;
+            }
+
+            SetAccountButtonsInteractable(false);
+            SetAccountStatus("Looking up account...");
+
+            GhostBackendClient.LookupAccount(identifier, response =>
+            {
+                if (!response.Succeeded || response.Value == null || string.IsNullOrWhiteSpace(response.Value.profileId))
+                {
+                    SetAccountButtonsInteractable(true);
+                    SetAccountStatus("Account not found. Check the username/account id and backend server.");
+                    return;
+                }
+
+                LoadAccountProgressAndShowHub(response.Value);
+            });
         }
 
         public void ShowActIntro(string actId)
@@ -228,6 +300,86 @@ namespace Ghost.Presentation.Shell
                 case GhostNarrativeState.Act3Id:
                     StartAct3();
                     return;
+            }
+        }
+
+        private void LoadAccountProgressAndShowHub(AccountResponse account)
+        {
+            GhostBackendClient.GetProgress(account.profileId, progressResponse =>
+            {
+                SetAccountButtonsInteractable(true);
+
+                if (progressResponse.Succeeded && progressResponse.Value != null)
+                {
+                    var restoredName = progressResponse.Value.narrativeState == null ||
+                        string.IsNullOrWhiteSpace(progressResponse.Value.narrativeState.playerName)
+                            ? account.displayName
+                            : progressResponse.Value.narrativeState.playerName;
+
+                    GhostNarrativeState.ApplyBackendProgress(
+                        restoredName,
+                        progressResponse.Value.actsCompleted,
+                        true,
+                        true);
+                    SetAccountStatus("Loaded account: " + account.userName);
+                    ShowActHub();
+                    return;
+                }
+
+                GhostNarrativeState.ApplyBackendProgress(account.displayName, new string[0], true, true);
+                SetAccountStatus("Account found, but progress could not be loaded. Starting from an empty local state.");
+                ShowActHub();
+            });
+        }
+
+        private void PrepareAccountFields()
+        {
+            if (playerNameInput != null && string.IsNullOrWhiteSpace(playerNameInput.text))
+            {
+                playerNameInput.text = GhostNarrativeState.PlayerName;
+            }
+
+            if (accountIdentifierInput != null && string.IsNullOrWhiteSpace(accountIdentifierInput.text))
+            {
+                accountIdentifierInput.text = string.IsNullOrWhiteSpace(GhostNarrativeState.BackendUserName)
+                    ? GhostNarrativeState.BackendAccountId
+                    : GhostNarrativeState.BackendUserName;
+            }
+
+            SetAccountStatus(string.IsNullOrWhiteSpace(GhostNarrativeState.BackendUserName)
+                ? "Optional: create or use an account to recover progress on this backend."
+                : "Current account: " + GhostNarrativeState.BackendUserName);
+        }
+
+        private string ReadPlayerName()
+        {
+            var value = playerNameInput == null ? string.Empty : playerNameInput.text;
+            return string.IsNullOrWhiteSpace(value) ? GhostNarrativeState.DefaultPlayerName : value.Trim();
+        }
+
+        private string ReadAccountIdentifier()
+        {
+            return accountIdentifierInput == null ? string.Empty : (accountIdentifierInput.text ?? string.Empty).Trim();
+        }
+
+        private void SetAccountStatus(string message)
+        {
+            if (accountStatusText != null)
+            {
+                accountStatusText.text = message ?? string.Empty;
+            }
+        }
+
+        private void SetAccountButtonsInteractable(bool interactable)
+        {
+            if (createAccountButton != null)
+            {
+                createAccountButton.interactable = interactable;
+            }
+
+            if (useAccountButton != null)
+            {
+                useAccountButton.interactable = interactable;
             }
         }
 
