@@ -127,14 +127,16 @@ may hint, explain, or generate natural language, but is never the source of trut
 
 Extend the same node graph rather than building unrelated puzzle systems, where possible:
 
-- Act 4: Confidence and Fallback (thresholds, disambiguation, fallback nodes).
+- Act 4: Confidence and Fallback (thresholds, disambiguation, fallback nodes, sentiment-based
+  routing/escalation — sentiment as a routing signal, not a scoring signal).
 - Act 5: Testing and Debugging (run test conversations through the graph; find/fix faults).
 - Act 6: Integration / Backend Action / Response Generation (backend/action/response nodes) — builds
   on the Phase D backend/LLM foundation.
 
 ## Phase F — NLP Pipeline Lab and Capstone (if time allows)
 
-- Act 7: NLP Pipeline Lab (tokenisation, POS tagging, NER, sentiment) — the former optional Act *.
+- Act 7: NLP Pipeline Lab (POS tagging, sentiment, machine translation) — the former optional Act *;
+  tokenisation and NER are taught in Act 2, so Act 7 covers the remaining subtasks.
 - Act 8: Capstone / "Repair Ghost's Voice" integration demo — reuses the former Act 0 five-component
   pipeline idea as the final integration puzzle.
 

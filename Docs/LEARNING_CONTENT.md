@@ -38,14 +38,16 @@ systems.
   to Acts 1–2: intents trigger nodes and entities fill slots/conditions. The node graph is the
   flagship mechanic, reused/extended in Acts 4–6.
 - **Act 4 — Confidence and Fallback.** Player tunes thresholds and adds fallback/disambiguation
-  nodes in the graph. Teaches confidence scoring and graceful failure. Extends the Act 3 graph.
+  nodes in the graph, including sentiment-based routing/escalation (sentiment as a routing signal, not
+  scoring). Teaches confidence scoring and graceful failure. Extends the Act 3 graph.
 - **Act 5 — Testing and Debugging.** Player runs test conversations through the graph and fixes
   faults. Teaches chatbot testing/debugging. Extends the Act 3 graph.
 - **Act 6 — Integration / Backend Action / Response Generation.** Player adds backend/action and
   response-generation nodes. Teaches how a bot fetches data and forms a reply. Extends the Act 3
   graph.
-- **Act 7 — NLP Pipeline Lab.** Tokenisation, POS tagging, NER, sentiment (the former optional
-  Act *). Supplementary lab that supports the concepts behind earlier Acts.
+- **Act 7 — NLP Pipeline Lab.** POS tagging, sentiment, machine translation (the former optional
+  Act *); tokenisation and NER are taught in Act 2, so Act 7 covers the remaining subtasks.
+  Supplementary lab that supports the concepts behind earlier Acts.
 - **Act 8 — Capstone / "Repair Ghost's Voice".** Player reconnects the five chatbot components into
   a working pipeline (the former Act 0 mechanic). Teaches how the whole system fits together; the
   integration demo that ties every prior Act's concept into one playable whole.

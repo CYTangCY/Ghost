@@ -293,9 +293,14 @@ Goal:
 Extend the graph so the player handles uncertainty and failed understanding:
 - fallback design;
 - disambiguation;
-- handoff/escalation for complex or unresolved cases.
+- handoff/escalation for complex or unresolved cases;
+- sentiment-based routing/escalation (negative or frustrated tone routes toward fallback/handoff).
 
-This also helps teach chatbot challenges: misunderstanding, unstructured input, and context loss.
+This also helps teach chatbot challenges: misunderstanding, unstructured input, and context loss, and
+introduces sentiment analysis (§1.6) as a routing signal — never as a correctness/scoring signal.
+
+(Refinement, 2026-06-27, user-confirmed: sentiment is used here for routing/escalation, per §1.6; the
+NLP-subtask treatment of sentiment is revisited in Act 7.)
 
 ### M0-T41 - Act 5 Testing and Debugging
 
@@ -319,13 +324,16 @@ The existing backend can support this technically, but the concept must be made 
 ### M0-T43 - Act 7 NLP Pipeline Lab
 
 Goal:
-Add a playable NLP pipeline lab covering:
-- tokenization;
+Add a playable NLP pipeline lab covering the subtasks NOT already taught in earlier Acts:
 - POS tagging;
-- NER;
-- sentiment analysis.
+- sentiment analysis (revisited as an NLP subtask, after its Act 4 routing use);
+- machine translation (lightweight; may stay optional if time is short).
 
-Machine translation can be noted as future/out of scope unless time allows.
+Tokenization and NER are taught in Act 2 (M0-T37), so Act 7 does not repeat them and focuses on the
+remaining subtasks.
+
+(Refinement, 2026-06-27, user-confirmed: dedup — tokenization/NER live in Act 2; Act 7 = POS / sentiment /
+machine translation.)
 
 ### M0-T44 - Act 8 Five-Component Capstone
 
