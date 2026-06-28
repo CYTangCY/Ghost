@@ -209,7 +209,11 @@ High.
 
 ### Learning Objective
 
-The player should understand that different messages can share the same intent if they express the same purpose.
+The player should understand that intent means the speaker's purpose: what the speaker wants, not the
+exact words used. Different messages can share one intent when they express the same purpose, and the
+differently worded cards inside an intent group are training examples / example utterances a chatbot
+could use to learn that intent. Grouping intents also previews the chatbot-planning step of identifying
+common visitor requests / key topics.
 
 ### Cute Ghost Communication Problem
 
@@ -224,10 +228,13 @@ Drag-and-drop classification.
 ### Player Action
 
 The player groups message cards by intent — what the speaker wants (their purpose) — not by exact wording.
+The differently worded cards gathered into each group are treated as that intent's training examples.
 
 ### Success Consequence
 
-Ghost understands the intended purpose and gives a more appropriate cute response.
+Ghost understands the intended purpose and gives a more appropriate cute response. The feedback makes
+the learning explicit: each group is one shared purpose, and the varied message wordings in that group
+are training examples a chatbot could learn from.
 
 ### Failure Consequence
 
@@ -235,7 +242,9 @@ Ghost responds to the wrong purpose in a cute but confused way.
 
 ### Lily Hint Style
 
-Lily should guide the player toward purpose-based grouping.
+Lily should guide the player toward purpose-based grouping, varied wording, and training examples
+without solving the card placements. She can lightly connect the result to planning by noting that
+grouping common requests helps choose a chatbot's key topics.
 
 Example:
 "Um... maybe don't look at the exact words first. What does the person want Ghost to do?"
@@ -243,6 +252,16 @@ Example:
 ### Implementation Priority
 
 High.
+
+### M0-T36 Teaching Implementation Note
+
+Act 1 now teaches intent classification, not only practices it. The Act 1 presentation starts with a
+visually distinct but compact Lily intent-note panel that frames Ghost's exact-word problem and
+explains that intent is purpose rather than exact wording. Intent group titles and hints are phrased
+as visitor purposes, and correct validation feedback changes into a visible success-teaching state
+explaining that the grouped cards are multiple example phrasings / training examples for the intents,
+with a small Ghost success reaction and one Lily planning-link line. The teaching UI is kept compact so
+the existing card groups, validation controls, and banter remain inside a 1080p Play Mode view.
 
 ---
 

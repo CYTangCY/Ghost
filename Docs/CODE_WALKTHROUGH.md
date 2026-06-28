@@ -296,7 +296,7 @@ Act1IntentClassificationInteractionController.cs
 
 ### Purpose
 
-Owns the Act 1 presentation interaction state for click and drag assignment. It coordinates the pure `IntentClassificationSession`, selected card id, assignment, unassignment, validation, and simple state/feedback notifications. The feedback strings are player-facing UI copy, not puzzle-rule logic.
+Owns the Act 1 presentation interaction state for click and drag assignment. It coordinates the pure `IntentClassificationSession`, selected card id, assignment, unassignment, validation, and simple state/feedback notifications. The feedback strings are player-facing UI copy, not puzzle-rule logic. M0-T36 expands the correct feedback so success teaches why the grouping is right: different wordings can share one purpose, and the grouped cards are training examples for the intents.
 
 ### Attached GameObject
 
@@ -322,7 +322,9 @@ Internal state:
 - `AssignSelectedCardToIntent(string intentId)`: assigns the selected card to the clicked intent group, clears selection, and sends neutral feedback.
 - `AssignCardToIntent(string cardId, string intentId)`: assigns a specific dragged card to the dropped intent group through the same session assignment path.
 - `MoveAssignedCardToUnassigned(string cardId)`: moves an assigned card back to unassigned and sends neutral feedback. The presenter uses this for both `Back:` row clicks and assigned-card drops onto the left message-card area.
-- `ValidateCurrentGrouping()`: validates through `IntentClassificationSession.ValidateCurrentState()` and sends player-facing correct/incorrect feedback.
+- `ValidateCurrentGrouping()`: validates through `IntentClassificationSession.ValidateCurrentState()` and sends player-facing correct/incorrect feedback. The correct path builds a teaching message from the existing card data, including the number of example phrasings and intent ids represented, without changing or hardcoding the answer key.
+- `BuildCorrectFeedbackMessage()`: creates the successful Ghost reaction plus Lily's planning-link line.
+- `BuildTrainingExampleSummary()`: counts the actual card messages and intent ids from the current card list so success feedback explains training examples without duplicating sample-data constants.
 - `GetAssignedGroupId(string cardId)`: exposes assignment state for card highlighting.
 - `GetAssignedCardIds(string groupId)`: exposes group contents for rendering.
 - `StateChanged`: event used by the presenter to refresh visuals.
@@ -334,7 +336,7 @@ Plain C# method calls from the presenter in response to UI clicks and drop-targe
 
 ### Output
 
-Updated interaction/session state plus simple callbacks. It does not create UI objects directly. Feedback wording explains that the player is grouping by speaker intent, confirms when all messages are grouped by intent, and suggests comparing what the speaker wants when the grouping is incorrect.
+Updated interaction/session state plus simple callbacks. It does not create UI objects directly. Feedback wording explains that the player is grouping by speaker intent, confirms that correct groups are shared purposes, explains that the varied message cards are training examples a chatbot could use to learn the intents, and suggests comparing what the speaker wants when the grouping is incorrect.
 
 ### Failure Cases
 
@@ -343,7 +345,7 @@ Updated interaction/session state plus simple callbacks. It does not create UI o
 
 ### Unity Test
 
-Manual Act 1 scene check. Confirm click assignment, drag assignment, drag-back-to-unassigned, `Back:` row clicks, and validation feedback still route through the controller.
+Manual Act 1 scene check. Confirm click assignment, drag assignment, drag-back-to-unassigned, `Back:` row clicks, and validation feedback still route through the controller. For a correct grouping, confirm the feedback shows Ghost's happy reaction, explains shared purpose, and names the grouped cards as training examples.
 
 ---
 
@@ -353,7 +355,7 @@ Act1IntentClassificationStaticPresenter.cs
 
 ### Purpose
 
-Renders the Act 1 sample intent-classification UI and connects UI events to `Act1IntentClassificationInteractionController`. It remains a placeholder presentation script with click assignment, minimal drag-to-assign, validation feedback, clearer placeholder instruction/visual hierarchy polish, and no scoring, save/load, or dialogue behaviour.
+Renders the Act 1 sample intent-classification UI and connects UI events to `Act1IntentClassificationInteractionController`. It remains a placeholder presentation script with click assignment, minimal drag-to-assign, validation feedback, clearer placeholder instruction/visual hierarchy polish, and no scoring, save/load, or dialogue behaviour. M0-T36 adds a visible but compact teaching layer: a highlighted Lily intent-note panel, purpose-based group titles and hints, and a state-changing validation strip for the correct teaching feedback.
 
 ### Attached GameObject
 
@@ -381,7 +383,9 @@ Internal runtime state:
 ### Important Methods
 
 - `RenderSampleData()`: clears existing rendered children, creates a fresh interaction controller from sample data, displays the nine sample cards, and displays the `find_item`, `ask_location`, and `ask_identity` group areas.
-- `EnsureInstructionText()`: updates the title, instruction copy, column headings, and soft panel surfaces so the prototype explains grouping by intent, click/drag assignment, correction by dragging back or between groups, and Validate.
+- `EnsureInstructionText()`: updates the title, compact action instruction, teaching panel, column headings, and soft panel surfaces so the prototype explains that intent means purpose rather than exact wording, plus click/drag assignment, correction by dragging back or between groups, and Validate.
+- `ConfigureRootLayout()`, `ConfigureColumnPanelLayout(...)`, and `ConfigureListRoot(...)`: tighten runtime spacing/padding so the added teaching layer does not push the card lists, validation controls, or ambient banter below the 1080p viewport.
+- `EnsureTeachingPanel(...)`: creates or updates the highlighted `Lily Intent Teaching Panel` under the subtitle at runtime, so older generated scenes still receive a visibly separate teaching note without hand-editing scene YAML.
 - `UpdateVisualState()`: reads controller state to update card colors, group colors, and assigned-card text lists.
 - `ConfigureCardDrag(...)`: attaches `Act1IntentClassificationDraggableCard` to left-side message cards and right-side assigned-card rows.
 - `ConfigureIntentGroupDropTarget(...)`: attaches `Act1IntentClassificationDropTarget` to each intent group area and its assigned-card scroll viewport so dropping anywhere in the group panel is more forgiving.
@@ -390,8 +394,10 @@ Internal runtime state:
 - `MoveDraggedCardToUnassigned(...)`: forwards assigned-card drops on the left message-card list to the controller/session unassign path.
 - `EnsureAssignmentRoot(...)`: builds or upgrades each intent group's assigned-card area into a vertical `ScrollRect`.
 - `CreateAssignedCardRow(...)`: renders assigned cards as compact draggable rows/chips in the group list, not as free-positioned objects.
-- `EnsureValidationControls()`: creates or reuses the Validate button and feedback text under the intent group column.
-- `ApplyValidationFeedback(...)`: displays feedback produced by the controller.
+- `EnsureValidationControls()`: creates or reuses the Validate button and feedback text under the intent group column. The validation strip is tall enough for the M0-T36 correct-feedback teaching lines and stores its Image / Outline so feedback can restyle the panel.
+- `ApplyValidationFeedback(...)`: displays feedback produced by the controller and changes the validation strip colour/outline for correct and incorrect states.
+- `GetIntentDescription(...)`: maps intent ids to purpose-style group hints, such as visitors wanting Ghost to help find something, know where Ghost is, or know who Ghost is.
+- `GetIntentTitle(...)`: maps internal intent ids to player-facing purpose labels while keeping the underlying ids unchanged for drag/drop and validation.
 - `ConfigureExistingLabel(...)`: updates existing generated text labels without requiring scene YAML edits.
 - `ConfigurePanelSurface(...)`: softens the left and right panel backgrounds.
 - `SetOutline(...)`: applies selected, assigned, ready-drop, and panel outline cues.
@@ -407,17 +413,19 @@ Internal runtime state:
 ### Output
 
 UGUI objects showing:
-- title and instructions explaining that cards should be grouped by speaker intent rather than exact wording
+- title and compact action instructions
+- a highlighted compact Lily intent-note panel explaining Ghost's exact-word problem, intent as purpose, and training examples
 - labelled `Unassigned Messages` and `Intent Groups` columns
 - nine sample message cards
-- three intent group areas
-- short intent-purpose descriptions
+- three intent group areas with purpose labels instead of raw intent ids
+- short intent-purpose descriptions phrased as what the visitors want Ghost to do or answer
 - selected-card highlight using a warmer fill and stronger outline
 - compact assigned-card rows listed inside each intent group area
 - assigned-card row/chip styling distinct from left-side unassigned cards
 - scrollable assigned-card lists so assigning many cards to one group does not silently hide them
 - a single opaque temporary drag preview while a message card or assigned-card row is being dragged
-- basic validation feedback for correct or incorrect grouping inside a small feedback panel
+- validation feedback for correct or incorrect grouping inside a feedback panel; correct feedback changes the panel into a green success-teaching state and teaches shared purpose, training examples, and the planning link
+- compact runtime layout spacing so the full Act 1 teaching UI should remain visible in a 1080p Play Mode window
 
 ### Failure Cases
 
@@ -431,11 +439,11 @@ UGUI objects showing:
 - After M0-T11, Unity must import the new `Ghost.Presentation` assembly definitions before the presentation scripts compile in their explicit assembly boundary.
 - If drag-to-assign or drag-back-to-unassigned does not work after importing M0-T12, confirm the scene has an `EventSystem` with `InputSystemUIInputModule`, then rerun the menu builder or enter Play Mode so the presenter attaches the draggable card and drop target behaviours.
 - If drag previews remain visible after a drop, confirm the imported `Act1IntentClassificationDropTarget` calls `CompleteDragVisuals()` before invoking assignment callbacks.
-- If the title, instruction copy, or column labels still show older wording after presentation changes, enter Play Mode so `RenderSampleData()` applies the updated labels, or rerun the Unity menu builder if a refreshed saved scene preview is needed.
+- If the title, instruction copy, Lily teaching panel, group-purpose labels/hints, or validation strip still show older wording after presentation changes, enter Play Mode so `RenderSampleData()` applies the updated labels, or rerun the Unity menu builder if a refreshed saved scene preview is needed.
 
 ### Unity Test
 
-Manual Act 1 scene check. Open the prototype scene after running the menu builder if needed, enter Play Mode, and repeat the M0-T12 behaviour checks. Also confirm the instruction text explains intent grouping, click/drag assignment, mistake correction, and Validate, and that unassigned cards, intent group panels, assigned chips, selected state, drop-ready group state, and validation feedback are visually distinct.
+Manual Act 1 scene check. Open the prototype scene after running the menu builder if needed, enter Play Mode, and repeat the M0-T12 behaviour checks. Also confirm the highlighted Lily teaching panel explains intent as purpose rather than exact wording, group titles/hints read as visitor purposes, correct validation feedback changes into a visible success-teaching panel that teaches shared intent plus training examples, the bottom Validate/banter area remains inside the game view, and unassigned cards, intent group panels, assigned chips, selected state, drop-ready group state, and validation feedback are visually distinct.
 
 ---
 

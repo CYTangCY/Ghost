@@ -9,18 +9,22 @@ namespace Ghost.Presentation.Act1IntentClassification
 {
     public sealed class Act1IntentClassificationStaticPresenter : MonoBehaviour
     {
-        private const float CardPreferredHeight = 72f;
-        private const float MessageTextPreferredHeight = 48f;
-        private const float GroupPreferredHeight = 200f;
-        private const float AssignmentViewportPreferredHeight = 72f;
-        private const float AssignedRowPreferredHeight = 24f;
-        private const float AssignedPlaceholderPreferredHeight = 20f;
-        private const float ValidationControlsPreferredHeight = 64f;
+        private const float CardPreferredHeight = 58f;
+        private const float MessageTextPreferredHeight = 38f;
+        private const float GroupPreferredHeight = 166f;
+        private const float AssignmentViewportPreferredHeight = 52f;
+        private const float AssignedRowPreferredHeight = 20f;
+        private const float AssignedPlaceholderPreferredHeight = 18f;
+        private const float ValidationControlsPreferredHeight = 108f;
+        private const float TeachingPanelPreferredHeight = 76f;
 
         private const string TitleText = "Act 1: Intent Sorting";
         private const string InstructionText =
-            "Group messages by speaker intent, not exact wording.\n" +
-            "Click or drag a card into an intent group. Drag assigned cards back or between groups to fix mistakes. Click Validate when ready.";
+            "Group cards by what each visitor wants. Drag mistakes back or between groups, then Validate.";
+        private const string TeachingPanelTitleText = "Lily's Intent Note";
+        private const string TeachingPanelBodyText =
+            "Ghost problem: Ghost is matching exact words, so replies miss the purpose.\n" +
+            "Lily: Um... intent means what the visitor wants. Different phrasings in one group become training examples.";
 
         private static readonly Color CardDefaultColor = new Color(1f, 0.99f, 0.94f);
         private static readonly Color CardSelectedColor = new Color(1f, 0.91f, 0.48f);
@@ -34,11 +38,15 @@ namespace Ghost.Presentation.Act1IntentClassification
         private static readonly Color GroupOutlineReadyColor = new Color(0.28f, 0.54f, 0.95f, 0.90f);
         private static readonly Color AssignmentViewportColor = new Color(1f, 1f, 1f, 0.46f);
         private static readonly Color ValidationPanelColor = new Color(1f, 0.99f, 0.94f, 0.92f);
+        private static readonly Color ValidationPanelCorrectColor = new Color(0.89f, 1f, 0.91f, 0.96f);
+        private static readonly Color ValidationPanelIncorrectColor = new Color(1f, 0.93f, 0.90f, 0.96f);
         private static readonly Color FeedbackDefaultColor = new Color(0.24f, 0.22f, 0.30f);
         private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
         private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
         private static readonly Color AssignedRowColor = new Color(1f, 0.98f, 0.93f);
         private static readonly Color AssignedRowOutlineColor = new Color(0.76f, 0.70f, 0.88f, 0.55f);
+        private static readonly Color TeachingPanelColor = new Color(1f, 0.96f, 0.82f, 0.96f);
+        private static readonly Color TeachingPanelOutlineColor = new Color(0.86f, 0.58f, 0.22f, 0.95f);
 
         [SerializeField] private RectTransform cardListRoot;
         [SerializeField] private RectTransform intentGroupListRoot;
@@ -56,6 +64,8 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private Act1IntentClassificationInteractionController controller;
         private Text validationFeedbackText;
+        private Image validationPanelImage;
+        private Outline validationPanelOutline;
 
         private static readonly string[] IntentIds =
         {
@@ -145,8 +155,24 @@ namespace Ghost.Presentation.Act1IntentClassification
             view.SetActive(true);
 
             ConfigureIntentGroupContainer(view, intentId);
-            SetChildText(view.transform, "IntentTitleText", intentId);
-            SetChildText(view.transform, "IntentHintText", GetIntentDescription(intentId));
+            ConfigureExistingLabel(
+                view.transform,
+                "IntentTitleText",
+                GetIntentTitle(intentId),
+                21,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.10f, 0.20f, 0.32f),
+                30f);
+            ConfigureExistingLabel(
+                view.transform,
+                "IntentHintText",
+                GetIntentDescription(intentId),
+                15,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.34f, 0.44f),
+                34f);
 
             var assignmentRoot = EnsureAssignmentRoot(view.transform);
             ConfigureAssignmentViewportClick(assignmentRoot, intentId);
@@ -175,6 +201,8 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private void EnsureInstructionText()
         {
+            ConfigureRootLayout();
+
             ConfigureExistingLabel(
                 transform,
                 "Title",
@@ -183,7 +211,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
-                70f);
+                58f);
 
             ConfigureExistingLabel(
                 transform,
@@ -193,27 +221,34 @@ namespace Ghost.Presentation.Act1IntentClassification
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.26f, 0.21f, 0.35f),
-                86f);
+                38f);
+
+            EnsureTeachingPanel(transform);
+
+            ConfigureColumnPanelLayout(cardListRoot.parent);
+            ConfigureColumnPanelLayout(intentGroupListRoot.parent);
+            ConfigureListRoot(cardListRoot, 6f);
+            ConfigureListRoot(intentGroupListRoot, 8f);
 
             ConfigureExistingLabel(
                 cardListRoot.parent,
                 "Sample Message Cards",
                 "Unassigned Messages",
-                28,
+                24,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
-                44f);
+                34f);
 
             ConfigureExistingLabel(
                 intentGroupListRoot.parent,
                 "Intent Group Areas",
                 "Intent Groups",
-                28,
+                24,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
-                44f);
+                34f);
 
             ConfigurePanelSurface(
                 cardListRoot.parent,
@@ -224,6 +259,131 @@ namespace Ghost.Presentation.Act1IntentClassification
                 intentGroupListRoot.parent,
                 new Color(0.94f, 0.975f, 1f),
                 new Color(0.60f, 0.72f, 0.90f, 0.90f));
+        }
+
+        private void ConfigureRootLayout()
+        {
+            var layout = transform.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.padding = new RectOffset(40, 40, 24, 24);
+            layout.spacing = 12f;
+        }
+
+        private static void ConfigureColumnPanelLayout(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var layout = root.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.padding = new RectOffset(20, 20, 18, 18);
+            layout.spacing = 12f;
+        }
+
+        private static void ConfigureListRoot(RectTransform root, float spacing)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var layout = root.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.spacing = spacing;
+        }
+
+        private static void EnsureTeachingPanel(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var panel = root.Find("Lily Intent Teaching Panel") as RectTransform;
+            if (panel == null)
+            {
+                panel = new GameObject("Lily Intent Teaching Panel", typeof(RectTransform)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+            }
+
+            var subtitle = root.Find("Subtitle");
+            if (subtitle != null)
+            {
+                panel.SetSiblingIndex(subtitle.GetSiblingIndex() + 1);
+            }
+
+            var image = panel.GetComponent<Image>();
+            if (image == null)
+            {
+                image = panel.gameObject.AddComponent<Image>();
+            }
+
+            image.color = TeachingPanelColor;
+            image.raycastTarget = false;
+
+            var outline = panel.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = panel.gameObject.AddComponent<Outline>();
+            }
+
+            SetOutline(outline, TeachingPanelOutlineColor, new Vector2(2f, -2f));
+
+            var layoutElement = panel.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = TeachingPanelPreferredHeight;
+            layoutElement.preferredHeight = TeachingPanelPreferredHeight;
+
+            var layout = panel.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(16, 16, 7, 7);
+            layout.spacing = 2f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            ConfigureOrCreateLabel(
+                panel,
+                "Teaching Panel Title",
+                TeachingPanelTitleText,
+                15,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.30f, 0.20f, 0.08f),
+                20f);
+
+            ConfigureOrCreateLabel(
+                panel,
+                "Teaching Panel Body",
+                TeachingPanelBodyText,
+                15,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.25f, 0.20f, 0.18f),
+                38f);
         }
 
         private void UpdateVisualState()
@@ -356,7 +516,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = view.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(18, 18, 10, 10);
+            layout.padding = new RectOffset(14, 14, 7, 7);
             layout.spacing = 0f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -413,8 +573,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = view.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(18, 18, 14, 12);
-            layout.spacing = 8f;
+            layout.padding = new RectOffset(14, 14, 10, 9);
+            layout.spacing = 5f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -516,7 +676,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             text.text = messageText;
             text.font = GetBuiltinFont();
-            text.fontSize = 20;
+            text.fontSize = 18;
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleLeft;
             text.color = new Color(0.12f, 0.09f, 0.18f);
@@ -709,7 +869,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             var layout = row.AddComponent<HorizontalLayoutGroup>();
             layout.padding = new RectOffset(6, 6, 1, 1);
-            layout.spacing = 3f;
+            layout.spacing = 2f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -755,6 +915,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             image.color = ValidationPanelColor;
             image.raycastTarget = false;
+            validationPanelImage = image;
 
             var outline = controls.GetComponent<Outline>();
             if (outline == null)
@@ -763,6 +924,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             SetOutline(outline, CardOutlineDefaultColor, new Vector2(1.5f, -1.5f));
+            validationPanelOutline = outline;
 
             var layoutElement = controls.GetComponent<LayoutElement>();
             if (layoutElement == null)
@@ -904,14 +1066,33 @@ namespace Ghost.Presentation.Act1IntentClassification
             {
                 case Act1IntentClassificationFeedbackKind.Correct:
                     validationFeedbackText.color = FeedbackCorrectColor;
+                    validationFeedbackText.fontSize = 17;
+                    validationFeedbackText.fontStyle = FontStyle.Bold;
+                    SetValidationPanelStyle(ValidationPanelCorrectColor, new Color(0.20f, 0.62f, 0.30f, 0.95f));
                     break;
                 case Act1IntentClassificationFeedbackKind.Incorrect:
                     validationFeedbackText.color = FeedbackIncorrectColor;
+                    validationFeedbackText.fontSize = 16;
+                    validationFeedbackText.fontStyle = FontStyle.Normal;
+                    SetValidationPanelStyle(ValidationPanelIncorrectColor, new Color(0.78f, 0.28f, 0.18f, 0.90f));
                     break;
                 default:
                     validationFeedbackText.color = FeedbackDefaultColor;
+                    validationFeedbackText.fontSize = 16;
+                    validationFeedbackText.fontStyle = FontStyle.Normal;
+                    SetValidationPanelStyle(ValidationPanelColor, CardOutlineDefaultColor);
                     break;
             }
+        }
+
+        private void SetValidationPanelStyle(Color panelColor, Color outlineColor)
+        {
+            if (validationPanelImage != null)
+            {
+                validationPanelImage.color = panelColor;
+            }
+
+            SetOutline(validationPanelOutline, outlineColor, new Vector2(1.5f, -1.5f));
         }
 
         private static void ClearChildren(Transform root)
@@ -999,6 +1180,54 @@ namespace Ghost.Presentation.Act1IntentClassification
             layoutElement.preferredHeight = preferredHeight;
         }
 
+        private static void ConfigureOrCreateLabel(
+            Transform root,
+            string childName,
+            string value,
+            int fontSize,
+            FontStyle fontStyle,
+            TextAnchor alignment,
+            Color color,
+            float preferredHeight)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var child = root.Find(childName) as RectTransform;
+            if (child == null)
+            {
+                child = new GameObject(childName, typeof(RectTransform)).GetComponent<RectTransform>();
+                child.SetParent(root, false);
+            }
+
+            var text = child.GetComponent<Text>();
+            if (text == null)
+            {
+                text = child.gameObject.AddComponent<Text>();
+            }
+
+            text.text = value;
+            text.font = GetBuiltinFont();
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.alignment = alignment;
+            text.color = color;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+
+            var layoutElement = child.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = child.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = preferredHeight;
+            layoutElement.preferredHeight = preferredHeight;
+        }
+
         private static void SetOutline(Outline outline, Color color, Vector2 distance)
         {
             if (outline == null)
@@ -1067,13 +1296,28 @@ namespace Ghost.Presentation.Act1IntentClassification
             switch (intentId)
             {
                 case Act1IntentClassificationSampleData.FindItemIntentId:
-                    return "Messages asking Ghost to help find something.";
+                    return "These visitors all want Ghost to help find something.";
                 case Act1IntentClassificationSampleData.AskLocationIntentId:
-                    return "Messages asking where Ghost is.";
+                    return "These visitors all want to know where Ghost is.";
                 case Act1IntentClassificationSampleData.AskIdentityIntentId:
-                    return "Messages asking who Ghost is.";
+                    return "These visitors all want to know who Ghost is or what to call Ghost.";
                 default:
-                    return "Messages with the same purpose belong together.";
+                    return "These visitors all want the same kind of help from Ghost.";
+            }
+        }
+
+        private static string GetIntentTitle(string intentId)
+        {
+            switch (intentId)
+            {
+                case Act1IntentClassificationSampleData.FindItemIntentId:
+                    return "Purpose: find something";
+                case Act1IntentClassificationSampleData.AskLocationIntentId:
+                    return "Purpose: locate Ghost";
+                case Act1IntentClassificationSampleData.AskIdentityIntentId:
+                    return "Purpose: identify Ghost";
+                default:
+                    return "Purpose: shared intent";
             }
         }
     }

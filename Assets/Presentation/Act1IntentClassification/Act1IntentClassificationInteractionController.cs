@@ -95,8 +95,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             if (result.IsCorrect)
             {
-                SetFeedback(Act1IntentClassificationFeedback.Correct(
-                    "All messages are grouped by intent."));
+                SetFeedback(Act1IntentClassificationFeedback.Correct(BuildCorrectFeedbackMessage()));
                 return;
             }
 
@@ -106,6 +105,47 @@ namespace Ghost.Presentation.Act1IntentClassification
                 GhostNarrativeState.Act1Id,
                 "after_incorrect_validate",
                 "The player validated an incorrect intent grouping. Error count: " + result.Errors.Count + ". Give a non-spoiler hint about grouping by purpose.");
+        }
+
+        private string BuildCorrectFeedbackMessage()
+        {
+            return "Ghost brightens: one purpose per group, even with different words.\n" +
+                BuildTrainingExampleSummary() + "\n" +
+                "Lily: Um... this is how we spot common requests before planning the chatbot.";
+        }
+
+        private string BuildTrainingExampleSummary()
+        {
+            var exampleCountsByIntent = new Dictionary<string, int>(StringComparer.Ordinal);
+            var totalExampleCount = 0;
+
+            foreach (var card in cards)
+            {
+                if (card == null ||
+                    string.IsNullOrWhiteSpace(card.IntentId) ||
+                    string.IsNullOrWhiteSpace(card.MessageText))
+                {
+                    continue;
+                }
+
+                if (!exampleCountsByIntent.ContainsKey(card.IntentId))
+                {
+                    exampleCountsByIntent.Add(card.IntentId, 0);
+                }
+
+                exampleCountsByIntent[card.IntentId]++;
+                totalExampleCount++;
+            }
+
+            if (exampleCountsByIntent.Count == 0 || totalExampleCount == 0)
+            {
+                return "Each intent group now has varied message phrasings, so those cards are the chatbot's training examples.";
+            }
+
+            var intentLabel = exampleCountsByIntent.Count == 1 ? "intent" : "intents";
+            var exampleLabel = totalExampleCount == 1 ? "example phrasing" : "example phrasings";
+            return "Training examples: these " + totalExampleCount + " " + exampleLabel +
+                " can teach a chatbot " + exampleCountsByIntent.Count + " " + intentLabel + ".";
         }
 
         private void SetFeedback(Act1IntentClassificationFeedback feedback)

@@ -455,6 +455,33 @@ ProjectSettings/Packages/Build Settings/existing `.meta`). The regenerated `Game
 shelved Game Shell scene side-effect and is excluded from the commit. Archive:
 `Docs/completed_tasks/M0-T35_fundamentals_teaching.md`. Next: M0-T36 (strengthen Act 1 intent teaching).
 
+### 2026-06-27 — Planning sync: Act 4 sentiment routing + Act 7 dedup; M0-T36 scope (no code)
+User-confirmed refinements recorded across ROADMAP / IBM_COURSE_CONTENT / LEARNING_CONTENT: Act 4
+(M0-T40) gains sentiment-based routing/escalation (sentiment as a routing signal, never scoring); Act 7
+(M0-T43) deduped to POS / sentiment / machine translation because tokenisation + NER are taught in Act 2
+(M0-T37). M0-T36 scope expanded to Act 1's two original facets — classification **and** training examples
+(`CONFIRMED_PROJECT_CONTEXT.md` §5 "Act 1: Intent — classification + training examples"). Docs only; the
+overall task plan (M0-T35 → T44) and course-content mapping are unchanged otherwise.
+
+### 2026-06-28 — M0-T36: Strengthen Act 1 as Intent teaching — Completed
+Codex runs 001 (teaching) + 002 (visual clarity) + 003 (layout fit) made Act 1 TEACH intent without
+touching the mechanic or validator. Added a runtime `Lily's Intent Note` panel (Ghost problem + Lily's
+stammered explanation that intent = the visitor's purpose and that varied phrasings become training
+examples); changed group titles from raw ids to purpose labels ("Purpose: find something/locate
+Ghost/identify Ghost") and rephrased hints as purposes; on correct Validate the feedback now teaches
+through the action — Ghost brightens, states "one purpose per group, even with different words"
+(classification), shows a training-examples count computed from the real card data, and adds a Lily
+planning-link line. Run 002 added a dedicated warm teaching panel + green success-teaching state; run 003
+reduced card/group/teaching/validation heights + tightened runtime root layout so the bottom
+validation/banter area fits 1920×1080. Correctness stays deterministic (`ValidateCurrentState()`; only the
+feedback string changed; LLM never scores). Run logs honest (Unity "Not run" each; all 3 retained). The
+user verified in Play Mode ("pass"): teaching panel + purpose labels + green success teaching visible, all
+9 cards/3 groups/validation/banter fit at 1080p, no Console errors. Claude reviewed scope (clean — empty
+diff over `Assets/Scripts/Puzzles`, `Act1.../Editor`, `Fundamentals`). The dirty `Act1...Prototype.unity`
+and `GameShellPrototype.unity` scenes are shelved side-effects, excluded from the commit. Archive:
+`Docs/completed_tasks/M0-T36_act1_intent_teaching.md`. Next: M0-T37 (strengthen Act 2 entity/NER +
+tokenization teaching).
+
 ---
 
 ## Entry Template

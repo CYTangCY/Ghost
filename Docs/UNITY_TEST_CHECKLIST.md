@@ -1441,3 +1441,64 @@ No manual Inspector setup is required. `AmbientBanterHook` creates the banter af
 ### Inspector Setup
 
 No manual Inspector setup is required after running `Ghost > Build Game Shell Scene`. The builder wires the fundamentals screen, presenter, dynamic button roots, navigation buttons, shared Lily dialogue frame, and hub entry button into `GameShellPresenter`.
+
+---
+
+## M0-T36: Act 1 Intent Teaching Layer
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationStaticPresenter.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationInteractionController.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Refresh Check
+
+M0-T36 updates the existing Act 1 presenter and should apply at Play Mode startup. If the saved scene
+preview looks stale:
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+2. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+3. Confirm the scene was generated through the builder, not by hand-editing scene YAML.
+
+### Play Mode Teaching Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity` directly, or enter it from the Game Shell.
+2. Enter Play Mode.
+3. Confirm a visually distinct `Lily's Intent Note` panel appears under the subtitle, with a warm background and outline rather than plain grey subtitle text.
+4. Confirm the Lily note explains Ghost's exact-word problem, intent as what the visitor wants, and varied phrasings as training examples.
+5. Confirm the full Act 1 layout fits inside the game view at 1920x1080: the bottom validation / banter area is visible without scrolling or resizing the window.
+6. Confirm all nine unassigned message cards fit in the left panel at the start of Play Mode.
+7. Confirm all three intent groups plus the validation controls fit in the right panel at the start of Play Mode.
+8. Confirm the three group titles are player-facing purpose labels, not raw intent ids:
+   - `Purpose: find something`
+   - `Purpose: locate Ghost`
+   - `Purpose: identify Ghost`
+9. Confirm the three group hints are phrased as visitor purposes:
+   - visitors want Ghost to help find something
+   - visitors want to know where Ghost is
+   - visitors want to know who Ghost is or what to call Ghost
+10. Confirm click-to-assign, drag-to-assign, drag back to unassigned, drag between groups, `Back:` row unassign, and `Validate` still work.
+11. Click `Validate` with an incomplete or wrong grouping.
+12. Confirm the incorrect-path feedback and Lily hint behaviour are unchanged, and the validation panel uses an incorrect-state colour.
+13. Assign all cards to the correct groups and click `Validate`.
+14. Confirm the validation panel changes into a green success-teaching state.
+15. Confirm the correct feedback shows a small happy Ghost reaction.
+16. Confirm the correct feedback explains that differently worded cards in a group share one intent / purpose.
+17. Confirm the correct feedback explains that the varied message cards are training examples / example phrasings for a chatbot to learn the intents.
+18. Confirm the correct feedback includes one Lily line connecting grouped intents and training examples to spotting common visitor requests before planning a chatbot.
+19. Confirm the ambient banter panel, if present, does not cover the teaching panel or make the success feedback unreadable.
+20. Confirm there are no Console errors.
+
+### Scope Check
+
+1. Confirm `IntentClassificationValidator`, `IntentClassificationSession`, `Act1IntentClassificationSampleData`, card wording, answer keys, and validation rules are unchanged.
+2. Confirm there is no quiz, new planning mechanic, Act 2/Act 3 change, backend scoring change, ProjectSettings edit, Packages edit, Build Settings edit, or `.meta` edit.
+
+### Inspector Setup
+
+No manual Inspector setup is required. The existing `Act1IntentClassificationStaticPresenter` continues
+to create and wire instruction text, intent groups, card lists, drag/drop affordances, Validate, and
+feedback from its existing serialized roots/templates.
