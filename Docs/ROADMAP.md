@@ -8,41 +8,33 @@
 
 ## Current Status
 
-> **Latest direction (2026-06-22, post Act 3 prototype):** Acts 1–3 prototypes are in place (intent,
-> entity, dialog node graph — all deterministic, Editor-verified). Per the user, the next milestone is
-> a **vertical slice / cohesive build**, not more new acts:
-> 1. **Full-system foundation** — backend + database + LLM (ROADMAP Phase D), wrapping the existing acts.
-> 2. **Narrative integration** — weave story, characters, Lily, and scene transitions into Acts 1–3.
-> 3. **Act 3 node-graph UX redesign** — make it fun with a clear objective and free-form connecting
->    (the M0-T24 build is functional but mechanical: fiddly From/To selection, allows self-loops,
->    unclear goal).
+> **As of 2026-07-03 (post M0-T36):** the vertical-slice milestone is **DONE** — Act 3 UX redesign
+> (M0-T30) + shell integration (M0-T31), narrative into Acts 1–3 (M0-T26) + ambient banter (M0-T32),
+> backend + database (M0-T27), client↔backend sync (M0-T28) + no-password accounts (M0-T28 follow-on),
+> LLM orchestration with static fallback (M0-T29), and the Lily chat window (M0-T33). The active
+> workstream is **IBM course content coverage** (section below): coverage map (M0-T34 ✓) →
+> fundamentals overview in the shell (M0-T35 ✓) → per-act teaching passes (M0-T36 Act 1 ✓;
+> **M0-T37 Act 2 = active task**; M0-T38 Act 3 next) → planning mini-level (M0-T39) → Acts 4–8
+> (M0-T40–T44).
 >
-> Acts 4–8 (graph extensions / NLP lab / capstone) resume only AFTER this vertical slice reaches a
-> certain completeness ("整個成形"). See `Docs/completed_tasks/M0-T24_act3_node_placement_connection.md`
-> for the Act 3 UX debt.
+> **Delivery constraint (user, 2026-07-03): dissertation deadline ≈ early August 2026.** Reserve the
+> final 1.5–2 weeks for writing; re-assess remaining scope after M0-T38. If time runs short, Acts 5–7
+> ship as design mappings (the M0-T34 coverage map already provides them) and implementation priority
+> goes to Act 4 — which also delivers the guaranteed-minimum **slider calibration** mechanic
+> (`CONFIRMED_PROJECT_CONTEXT.md` §6) — plus a possible Ghost-expressions + SFX presentation pass
+> (FR1/FR4 demo polish; the 2026-07-03 project review flagged Ghost's lack of visual presence as the
+> largest experience gap).
 
-Act 1 core gameplay is complete enough to be the first playable prototype milestone:
-
-- click-to-assign
-- drag-to-assign
-- drag an assigned card back to unassigned
-- drag an assigned card between groups
-- Back / unassign
-- Validate
-- validation feedback
-
-Decision: do not keep polishing Act 1 now. The next major step is to make the project feel like a
-game (a Ghost educational game), not only a mechanics demo.
-
-Progress (as of 2026-06-22):
-- Phase A — Game Shell: complete (M0-T13).
+Progress (as of 2026-07-03):
+- Phase A — Game Shell: complete (M0-T13); extended with narrative/name entry (M0-T26), accounts
+  (M0-T28 follow-on), and the fundamentals overview (M0-T35).
 - Phase B — Act 2 (Entity Extraction): complete and shell-integrated (M0-T14…M0-T19).
-- Phase C — Act 3 (Dialog Node Graph): prototype complete (M0-T20 design, M0-T21 core, M0-T22 session,
-  M0-T23 static UI, M0-T24 placement/connection [functional, UX debt]). Deterministic throughout.
-- **Active: the vertical-slice milestone (see note above). Next task: M0-T30 — Act 3 node-graph UX
-  redesign + wire Validate.** Then narrative (M0-T26), backend+DB (M0-T27), client integration
-  (M0-T28), LLM (M0-T29, static-hints-first). Acts 4–8 resume after the slice. See
-  `Docs/VERTICAL_SLICE_PLAN.md`.
+- Phase C — Act 3 (Dialog Node Graph): complete — prototype (M0-T20…M0-T24), UX redesign + wired
+  Validate (M0-T30), shell integration (M0-T31). Deterministic throughout.
+- Vertical slice (narrative / banter / backend / DB / client sync / accounts / LLM / Lily chat):
+  complete (M0-T26–M0-T33). See `Docs/VERTICAL_SLICE_PLAN.md` (now marked delivered).
+- IBM course content coverage: **in progress** — M0-T34 ✓ map, M0-T35 ✓ fundamentals, M0-T36 ✓ Act 1
+  teaching; M0-T37 (Act 2 teaching) active; then M0-T38, M0-T39, M0-T40–T44.
 
 ## Phase A — Game Shell / Lily / Act Select  ✓ DONE (M0-T13)
 
@@ -78,7 +70,7 @@ execution order is **M0-T30** Act 3 UX redesign → **M0-T26** narrative → **M
 **M0-T28** client↔backend → **M0-T29** LLM. Acts 4–8 (the phases below) resume after the slice reaches a
 certain completeness. Deterministic-correctness still holds throughout.
 
-### IBM Course Content Coverage (queued — after M0-T33; goal corrected 2026-06-25)
+### IBM Course Content Coverage (ACTIVE workstream — goal corrected 2026-06-25)
 
 **Goal (user-corrected): the game must TEACH the IBM course's content — players learn the course's
 chatbot/NLP curriculum by playing it.** This is pedagogical CONTENT COVERAGE, not the dissertation or
@@ -92,15 +84,14 @@ five components; the four challenges), nor the rest of the curriculum (confidenc
 integration, NLP subtasks: tokenisation / POS / NER / sentiment). Those are course content the game must
 deliver — so Acts 4–8 are part of coverage, not optional extras.
 
-Plan (after M0-T33):
-- **First — Curriculum coverage map:** extract the IBM course's actual teaching points from
-  `unorganized_data/Course_IBM_chatbot.pdf` (Codex/the user can render the image PDF; Claude cannot in
-  this environment) and map each teaching point → where the game currently teaches it (intro + practice)
-  → what is MISSING.
-- **Then — build the missing in-game teaching** as playable learning, prioritised by the map: the
-  fundamentals first (chatbot definition, rule-based vs AI-enabled, five components, four challenges,
-  taught in-game — the deferred "Act 0"), strengthen Acts 1–3 so they genuinely teach their concept (not
-  just run a puzzle), then cover the remaining curriculum (Acts 4–7) for breadth.
+Plan and status (2026-07-03):
+- **Curriculum coverage map — DONE (M0-T34):** `Docs/IBM_COURSE_CONTENT.md` maps every course teaching
+  point (page-cited) → where the game teaches it → gaps, and defines the task ladder M0-T35…T44.
+- **Build the missing in-game teaching — IN PROGRESS:** fundamentals overview in the shell done
+  (M0-T35, "Ghost's Voice Basics"); per-act teaching passes: Act 1 done (M0-T36, intent classification +
+  training examples), Act 2 active (M0-T37, entity/NER + system-custom + synonyms + tokenization link),
+  Act 3 next (M0-T38, dialogue management + rule-based flow). Then the planning mini-level (M0-T39) and
+  Acts 4–8 (M0-T40–T44), scope-checked against the early-August deadline after M0-T38.
 
 (This supersedes the earlier "alignment UI labels / dissertation framing" plan from
 `Docs/IBM_COURSE_ALIGNMENT_REVIEW.md`, which treated alignment as labelling/wording and missed the real

@@ -482,6 +482,26 @@ and `GameShellPrototype.unity` scenes are shelved side-effects, excluded from th
 `Docs/completed_tasks/M0-T36_act1_intent_teaching.md`. Next: M0-T37 (strengthen Act 2 entity/NER +
 tokenization teaching).
 
+### 2026-07-03 — Project review + docs sync (planning, no code; M0-T37 running in parallel)
+Claude ran a whole-project review against the grading basis (`CONFIRMED_PROJECT_CONTEXT.md` §9
+evaluation = ① curriculum-to-puzzle mapping ② prototype implementation check ③ LLM tutor response check;
+no user study; §10 RQ; 4th group-meeting slides). Verdict: all three evaluation axes already have
+evidence (coverage map / playable Acts 1–3 + tests + run logs / live LLM logs); weakest axes are visual
+UI/UX and game feel — Ghost has no in-game visual presence (FR1/FR4 currently satisfied via text only)
+and there is no audio; guaranteed-minimum mechanics still missing slider calibration (→ Act 4) and
+multiple choice (→ can ride M0-T39); WebGL build never smoke-tested (NFR3 risk). User decisions:
+deadline ≈ **early August 2026**; **keep the original task order** (T37→T38→T39→T40…); re-assess scope
+after M0-T38 (Acts 5–7 may ship as design mappings; Ghost-expressions+SFX pass is a candidate insert).
+Docs refreshed to current state: ROADMAP (Current Status rewritten to post-M0-T36 reality + deadline
+constraint; coverage section marked ACTIVE), ARCHITECTURE (new Implemented Architecture Snapshot;
+per-layer statuses; slice-id traceability note), DESIGN_RATIONALE (deduplicated the two repeated
+vertical-slice / Act 3 redesign sections; added rationales for course-content coverage, the shell
+fundamentals overview, and teaching-through-feedback), VERTICAL_SLICE_PLAN (marked DELIVERED).
+LEARNING_CONTENT / CODE_WALKTHROUGH / UNITY_TEST_CHECKLIST deliberately untouched — Codex is editing
+them in the in-flight M0-T37 run (avoid collision); LEARNING_CONTENT legacy-mojibake cleanup remains a
+small pending chore after M0-T37 lands. Next: review/close M0-T37 on Codex return + human Play Mode
+verification.
+
 ---
 
 ## Entry Template

@@ -104,35 +104,51 @@ project is really about — before adding infrastructure. The backend, database,
 proven core instead of being built speculatively against gameplay that might still change. This keeps
 early work small and explainable and avoids rework if a mechanic is revised.
 
-## Why a Vertical Slice Before More Acts (2026-06-22)
+## Why a Vertical Slice Before More Acts (2026-06-22; delivered by M0-T26–T33)
 
-Once three act prototypes existed, continuing to add new acts would have produced more thin,
-disconnected screens. Instead the project pivots to a vertical slice (see `Docs/VERTICAL_SLICE_PLAN.md`):
-weave narrative/characters into Acts 1–3, stand up the backend/database/LLM foundation, and redesign the
-Act 3 node graph — so one coherent, reasonably complete slice exists before the remaining acts are
-filled in. A cohesive slice is easier to demo, evaluate, and reason about than eight half-built acts.
+Once the Act 1–3 prototypes existed, continuing to add acts would have produced more thin, disconnected
+screens. The priority shifted to making the first three cohere as a game (see
+`Docs/VERTICAL_SLICE_PLAN.md`): weaving narrative (story, characters, Lily, scene transitions) through
+Acts 1–3, standing up the full-system foundation (backend/database/LLM), and redesigning the Act 3
+node-graph UX. A cohesive, reasonably complete slice is easier to demo, evaluate, and reason about than
+eight half-built acts. The LLM was integrated static-hints-first (deterministic validators stay
+authoritative), so the slice is fully playable without it. Delivered by M0-T30/T31 (Act 3 redesign +
+shell link) and M0-T26–M0-T33 (narrative, banter, backend+DB, client sync + accounts, LLM hints, Lily
+chat).
 
-## Why the Act 3 Node-Graph UX Is Being Redesigned
+## Why the Act 3 Node-Graph UX Was Redesigned (M0-T30)
 
 The first Act 3 interaction (M0-T24) worked mechanically but was not fun: connecting nodes via separate
 From/To selection + condition buttons felt clerical, allowed nonsense self-loops, and the level gave no
-in-story reason to build the graph. The redesign uses drag-a-wire port connecting with a clear in-story
-objective, and finally wires the deterministic Validate — so the flagship mechanic feels like assembling
-a conversation. Correctness stays deterministic (the validator/session are unchanged).
+in-story reason to build the graph. The redesign — drag-a-wire between node ports, a clear story
+objective, and a wired deterministic Validate — makes the flagship mechanic feel like assembling a
+conversation. This matters most for Act 3 because the node graph is reused and extended by Acts 4–6.
+Correctness stayed deterministic (the validator/session are unchanged).
 
-## Why a Vertical Slice of Acts 1–3 Before More Acts (2026-06-22)
+## Why the Game Teaches the IBM Course Content (2026-06-25)
 
-Once the Act 1–3 prototypes existed, the priority shifted from adding acts to making the first three
-cohere as a game: weaving narrative (story, characters, Lily, scene transitions) through them, standing
-up the full-system foundation (backend/database/LLM), and redesigning the Act 3 node-graph UX. Reaching
-a certain completeness on a vertical slice de-risks the design and yields a demonstrable whole before
-Acts 4–8 are built out. The LLM is integrated static-hints-first (deterministic validators stay
-authoritative), so the slice is fully playable without it. See `Docs/VERTICAL_SLICE_PLAN.md`.
+The user-corrected goal is that players LEARN the IBM SkillsBuild curriculum by playing — not that the
+dissertation merely "mirrors" the course, and not that mechanics get concept labels. The M0-T34
+coverage map (`Docs/IBM_COURSE_CONTENT.md`) made the gap measurable: Acts 1–3 let players DO
+intent/entity/dialog, but the game did not EXPLAIN them, and the course's fundamentals were absent.
+Coverage work therefore follows the course's own order — fundamentals first, then strengthening the
+acts that already exist, then breadth (Acts 4–8) — and every teaching addition keeps the playable
+pattern: Ghost problem → Lily explanation → player action → visible consequence.
 
-## Why Redesign the Act 3 Node-Graph UX
+## Why a Fundamentals Overview Lives in the Game Shell (M0-T35)
 
-The first Act 3 interaction (M0-T24) worked mechanically but was not fun: the connect flow (select
-From/To + a condition button) was fiddly, allowed nonsense self-loops, and the level gave no in-story
-reason to build the graph. The redesign — drag-a-wire between node ports, a clear story objective, and a
-working Validate — makes the flagship mechanic enjoyable and legible. This matters most for Act 3
-specifically because the node graph is reused and extended by Acts 4–6.
+The IBM course starts with fundamentals (chatbot definition, NLP+ML pillars, rule-based vs AI-enabled,
+benefits, five components, four challenges), so the game needs them BEFORE the acts practice the
+details. The shell hosts them as a short optional "Ghost's Voice Basics" sequence — six beats, each
+with a small player action and a visible Ghost consequence — rather than a lecture or a quiz. It is
+skippable so it never gates play, and it deliberately splits the former Act 0: the overview plants the
+five-component concept early, while Act 8's capstone makes the same pipeline playable at depth.
+
+## Why Acts Teach Through Their Own Feedback (M0-T36–T38)
+
+The per-act teaching passes attach explanation to the player's own action: a compact in-fiction note
+before the puzzle (Lily frames the concept) plus success feedback that explains WHY the solution is
+right (e.g. Act 1: differently-worded messages share one intent, and those wordings are the intent's
+training examples). Explaining at the moment of success lands better than front-loading a lecture,
+keeps the no-quiz rule intact, and costs no mechanic changes — validators and sessions stay untouched,
+so the deterministic-correctness guarantee is preserved.

@@ -1,11 +1,15 @@
 # VERTICAL_SLICE_PLAN.md
 
-> Status: blueprint for the vertical-slice milestone (2026-06-22, user-directed after the Act 3
-> prototype). Defines (A) the narrative frame for Acts 1–3, (B) the full-system architecture + data
-> contracts, (C) the Act 3 node-graph UX redesign direction, and (D) the task breakdown. The
-> deterministic-correctness rule holds throughout (validators / graph simulation / test cases decide
-> scoring; the LLM never does). Items marked ⚠️ need user confirmation before implementation
-> (`CONFIRMED_PROJECT_CONTEXT.md` §14).
+> Status: **DELIVERED (2026-07-03).** This was the blueprint for the vertical-slice milestone
+> (2026-06-22, user-directed after the Act 3 prototype); the slice has since shipped — M0-T30 Act 3 UX
+> redesign, M0-T31 shell integration, M0-T26 narrative, M0-T32 banter, M0-T27 backend+DB, M0-T28 client
+> sync (+ no-password accounts follow-on), M0-T29 LLM orchestration, M0-T33 Lily chat. The document is
+> retained as the design record; the active workstream is now IBM course content coverage (see
+> `Docs/ROADMAP.md` Current Status). Original scope: (A) the narrative frame for Acts 1–3, (B) the
+> full-system architecture + data contracts, (C) the Act 3 node-graph UX redesign direction, and
+> (D) the task breakdown. The deterministic-correctness rule holds throughout (validators / graph
+> simulation / test cases decide scoring; the LLM never does). Items marked ⚠️ were resolved during
+> M0-T26 (setting/protagonist) per `CONFIRMED_PROJECT_CONTEXT.md` §14.
 
 ## A. Narrative frame (Acts 1–3)
 

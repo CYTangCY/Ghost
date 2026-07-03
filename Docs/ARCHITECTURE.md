@@ -2,7 +2,36 @@
 
 ## Status
 
-Initial target architecture. This file should be updated after actual Unity implementation.
+Updated 2026-07-03. The original target architecture (below) is retained; the **Implemented
+Architecture Snapshot** section reflects what is actually built as of the vertical-slice completion +
+teaching passes (M0-T13…M0-T36). Per-layer status is marked in the layered-architecture section.
+
+## Implemented Architecture Snapshot (2026-07-03)
+
+Layering as actually built (file-level detail in `Docs/CODE_WALKTHROUGH.md`):
+
+- **Pure logic — `Ghost.Runtime` (no UnityEngine references):** per-act validators / sessions / sample
+  data — Act 1 intent (`IntentClassificationValidator`/`Session`), Act 2 entity
+  (`EntityExtractionValidator`/`Session`), Act 3 dialog graph
+  (`DialogGraphSimulator`/`DialogGraphValidator`/`DialogGraphSession`). EditMode-tested; deterministic.
+- **Presentation — `Ghost.Presentation`:** per-act static presenters + interaction controllers
+  (Act1/Act2/Act3 folders); Shell (`GameShellPresenter`, `ShellDialogueData`, `LilyDialogueFrame`,
+  `GhostNarrativeState`, return-to-hub overlay); Fundamentals (`ChatbotFundamentalsData`/`Presenter` —
+  the M0-T35 "Ghost's Voice Basics" overview); Banter (`AmbientBanterHook`/`Panel`, `LilyChatWindow`);
+  Backend client (`GhostBackendClient`, `BackendSync` — best-effort with graceful degradation, NFR5).
+- **Editor tooling — `Ghost.Presentation.*.Editor`:** one menu scene builder per prototype scene
+  (`Ghost > Build …`); generated scenes are regenerable artifacts (shelved side-effects, excluded from
+  task commits).
+- **Backend — `Backend/` (Node.js + TypeScript + Express + better-sqlite3):** `/health`, `/content`,
+  `/profiles`, `/progress/:id`, `/attempts`, account create/lookup (no-password prototype), `/hints`,
+  `/responses`, `/chat` (Ollama + IBM Granite, curriculum-aware no-spoiler prompts, static fallback,
+  `hint_logs`). `GET /content` omits answer keys and there is no scoring endpoint — correctness stays
+  client-side and deterministic (FR8).
+- **Database — SQLite:** `learning_content`, `puzzles`, `profiles`, `progress`, `attempts`,
+  `hint_logs` (+ account fields), seeded with Acts 1–3 reference content.
+- **Teaching layer (M0-T35+):** the shell fundamentals overview and the per-act teaching passes
+  (Act 1 done M0-T36; Act 2/3 under M0-T37/T38) add in-fiction teaching panels/text in the
+  presentation layer only — validators and sessions are unchanged.
 
 ## Main Principle
 
@@ -91,13 +120,13 @@ Possible approach:
 - Ghost and Lily text should come from data, not hardcoded everywhere.
 - Avoid complex event bus unless truly needed.
 
-## Future-Facing Layers (roadmap, not yet implemented)
+## Layered Architecture (status per layer)
 
 > Forward-looking notes added with the 2026-06-20 roadmap revision and extended on 2026-06-22 for the
 > full-system direction (backend, database, and LLM layers — see `Docs/ROADMAP.md` Phase D). They are
-> intentionally high-level; do not over-specify until each is the active task.
+> intentionally high-level; per-layer status updated 2026-07-03.
 
-### Game Shell Layer (Phase A — implemented in M0-T13)
+### Game Shell Layer (Phase A — implemented M0-T13; extended M0-T26 narrative, M0-T28 accounts, M0-T35 fundamentals)
 
 Responsibility: frame the prototype as one Ghost game and route the player between screens.
 
@@ -111,7 +140,7 @@ Conceptual pieces:
 Notes: keep the shell a thin routing/presentation layer; Acts stay self-contained scenes/screens.
 The Lily dialogue frame should read its text from data, not hardcode it per screen.
 
-### Node Graph System (Phase C — flagship, later)
+### Node Graph System (Phase C — implemented M0-T21…T24; UX redesigned M0-T30; shell-integrated M0-T31)
 
 Responsibility: represent and play dialog management as an editable graph; reused/extended in
 Acts 4–6.
@@ -172,7 +201,12 @@ conversation(s) with expected responses.
 - **M0-T26** — shell integration (Start Act 3 from the hub + Return to Hub + Build Settings), like
   M0-T19.
 
-### Backend Layer (Phase D — full-system foundation)
+> Traceability note (2026-07-03): the slice ids above were the M0-T20 planning names. As actually
+> delivered, M0-T21–T24 landed as planned; Validate wiring + the interaction redesign shipped together
+> as **M0-T30**, and shell integration as **M0-T31** (M0-T25 became the vertical-slice blueprint and
+> M0-T26 the narrative-integration task).
+
+### Backend Layer (Phase D — implemented M0-T27 service + M0-T28 client sync; see snapshot above)
 
 Responsibility: a server-side boundary the Unity/WebGL client talks to for content, progress, logs,
 and (later) LLM orchestration. Required for the final system; built after the gameplay skeleton is
@@ -188,7 +222,7 @@ Conceptual services (high-level, do not over-specify yet):
 - LLM orchestration service — brokers prompts/responses to the LLM (see LLM Layer); never decides
   puzzle correctness.
 
-### Database Layer (Phase D — full-system foundation)
+### Database Layer (Phase D — implemented M0-T27, SQLite; see snapshot above)
 
 Responsibility: persist the system's content and player data. Prototype store is SQLite
 (`Docs/CONFIRMED_PROJECT_CONTEXT.md` §8).
@@ -200,7 +234,7 @@ Conceptual data (high-level):
 - Player attempts (submissions and outcomes for analytics).
 - Dialogue/hint logs (if appropriate) — which hints fired and when.
 
-### LLM Layer (Phase D+ — required, but never the source of truth for scoring)
+### LLM Layer (Phase D+ — implemented M0-T29 hints/responses + M0-T33 Lily chat; static fallback; never scores)
 
 Responsibility: natural-language support around the deterministic gameplay. Required for the final
 system (Lily scaffolding + the capstone simulation); the static-hint fallback is risk mitigation, not
