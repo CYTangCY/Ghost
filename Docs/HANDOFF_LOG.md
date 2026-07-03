@@ -502,6 +502,29 @@ them in the in-flight M0-T37 run (avoid collision); LEARNING_CONTENT legacy-moji
 small pending chore after M0-T37 lands. Next: review/close M0-T37 on Codex return + human Play Mode
 verification.
 
+### 2026-07-03 — M0-T37 reviewed but NOT closed; teaching approach REJECTED → M0-T45 redesign
+Claude reviewed Codex M0-T37 run 001 (Act 2 teaching text layer): scope clean (only the 2 Act 2
+presentation files + 3 docs + run log; validators/session/sample data/Editor builder untouched),
+deterministic scoring unchanged, synonym line derived from real sample data, run log honest. But the
+user rejected the whole M0-T36/T37 teaching METHOD before Play Mode verification: the gameplay is
+identical to before with text bolted on — "the teaching content should BECOME the game; nothing is
+learned; both acts must be redone." Direction confirmed by the user: full interaction redesign
+(mechanics too, not just a consequence phase), BOTH acts in ONE task, plus a programmatic Ghost
+expression face (neutral/happy/confused/sad). New task **M0-T45 — Acts 1–2 teaching-as-gameplay
+redesign** written to `CURRENT_TASK.md` with the agreed design: Act 1 = watch Ghost fail → free-cluster
+the 9 messages into piles + assign purpose labels (key topics derived by the player) → "Teach Ghost" →
+Ghost classifies UNSEEN test messages by the majority-of-related-training-cards rule and answers
+right/wrong visibly → iterate; Act 2 = watch Ghost fail an errand → "Split" the sentence into tokens →
+drag tokens into typed WHAT/WHERE/WHEN action-card slots (same EntitySpan model) → "Go, Ghost!" runs
+the errand with authored success/cute-failure outcomes per slot correctness → laboratory/lab synonym
+resolution beat. Existing validators/sessions/sample data stay untouched and remain the single scoring
+source (new pure demo engines + authored demo data as NEW Ghost.Runtime files + EditMode tests);
+interactions stay within the confirmed §7 mechanic set. M0-T36/T37 text panels remain as flavour; the
+success-text teaching beats will be replaced. M0-T37 run 001 code stays in the tree as the substrate
+for the redesign (commit as an honestly-labelled checkpoint). The old M0-T38 (Act 3 teaching-text
+pass) is likely absorbed/reduced — Act 3 already teaches through test-case consequences; reassess
+after M0-T45. Next: Codex implements M0-T45 (run 001 = Ghost face + Act 1; run 002 = Act 2).
+
 ---
 
 ## Entry Template

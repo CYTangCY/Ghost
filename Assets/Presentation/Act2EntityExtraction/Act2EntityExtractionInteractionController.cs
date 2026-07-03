@@ -142,7 +142,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
                     "Entity extraction validation"));
 
             var feedbackMessage = result.IsCorrect
-                ? "All key details are tagged with the right entity types."
+                ? BuildCorrectFeedbackMessage()
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);
 
             FeedbackChanged?.Invoke(feedbackMessage, result.IsCorrect);
@@ -155,6 +155,54 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
 
             return result;
+        }
+
+        private static string BuildCorrectFeedbackMessage()
+        {
+            return "Ghost perks up: now the useful details glow.\n" +
+                "NER marks the key details a chatbot must act on.\n" +
+                "Synonyms: " + BuildRoomSynonymFeedback() + "\n" +
+                "Lily: chips are tokens; intent is the want, entities are the slot details.";
+        }
+
+        private static string BuildRoomSynonymFeedback()
+        {
+            var surfaceTexts = CollectSampleSurfaceTexts(
+                Act2EntityExtractionSampleData.RoomEntityTypeId,
+                EntityCategory.Custom);
+
+            if (surfaceTexts.Count >= 2)
+            {
+                return surfaceTexts[0] + "/" + surfaceTexts[1] + " are one room entity.";
+            }
+
+            return "different words can name one entity.";
+        }
+
+        private static List<string> CollectSampleSurfaceTexts(string entityTypeId, EntityCategory category)
+        {
+            var surfaceTexts = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var messages = Act2EntityExtractionSampleData.CreateMessages();
+
+            foreach (var message in messages)
+            {
+                foreach (var span in message.CorrectSpans)
+                {
+                    if (span.Type.Id != entityTypeId || span.Type.Category != category)
+                    {
+                        continue;
+                    }
+
+                    var surfaceText = span.GetText(message.MessageText);
+                    if (seen.Add(surfaceText))
+                    {
+                        surfaceTexts.Add(surfaceText);
+                    }
+                }
+            }
+
+            return surfaceTexts;
         }
 
         private void ClearSelectionIfNeeded()

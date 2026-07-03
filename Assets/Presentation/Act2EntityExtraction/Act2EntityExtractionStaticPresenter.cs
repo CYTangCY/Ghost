@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Ghost.Puzzles.EntityExtraction;
 using UnityEngine;
@@ -10,15 +11,20 @@ namespace Ghost.Presentation.Act2EntityExtraction
     public sealed class Act2EntityExtractionStaticPresenter : MonoBehaviour
     {
         private const float ChipPreferredHeight = 56f;
-        private const float PaletteItemPreferredHeight = 78f;
-        private const float ValidationControlsPreferredHeight = 82f;
+        private const float PaletteItemPreferredHeight = 94f;
+        private const float ValidationControlsPreferredHeight = 100f;
+        private const float TeachingPanelPreferredHeight = 76f;
 
         private const string TitleText = "Act 2: Entity Extraction";
         private const string InstructionText =
-            "Select a word chip, choose the entity type Ghost should notice, then Validate.\n" +
-            "Click a tagged chip to untag it and re-check the details.";
+            "Select a word token, choose the entity kind Ghost should notice, then Validate.\n" +
+            "Click a tagged token to untag it and re-check the details.";
+        private const string TeachingPanelTitleText = "Lily's Entity Note";
+        private const string TeachingPanelBodyText =
+            "Ghost problem: Ghost hears the whole sentence, but the useful details blur together.\n" +
+            "Lily: Um... entity extraction, or NER, spots those details. These chips are word tokens first.";
         private const string PlaceholderFeedbackText =
-            "Tag the important details, then press Validate spans.";
+            "Tag the key entity details, then press Validate spans.";
 
         private static readonly Color ChipColor = new Color(1f, 0.985f, 0.92f);
         private static readonly Color ChipOutlineColor = new Color(0.78f, 0.70f, 0.88f, 0.64f);
@@ -33,6 +39,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private static readonly Color FeedbackNeutralColor = new Color(0.36f, 0.31f, 0.42f);
         private static readonly Color FeedbackCorrectColor = new Color(0.14f, 0.46f, 0.24f);
         private static readonly Color FeedbackIncorrectColor = new Color(0.72f, 0.24f, 0.18f);
+        private static readonly Color TeachingPanelColor = new Color(1f, 0.96f, 0.82f, 0.96f);
+        private static readonly Color TeachingPanelOutlineColor = new Color(0.86f, 0.58f, 0.22f, 0.95f);
 
         [SerializeField] private RectTransform messageChipRoot;
         [SerializeField] private RectTransform entityPaletteRoot;
@@ -261,8 +269,24 @@ namespace Ghost.Presentation.Act2EntityExtraction
             view.SetActive(true);
 
             ConfigureEntityTypeContainer(view, entityType.Category);
-            SetChildText(view.transform, "EntityTypeText", entityType.Id);
-            SetChildText(view.transform, "EntityCategoryText", entityType.Category.ToString());
+            ConfigureExistingLabel(
+                view.transform,
+                "EntityTypeText",
+                entityType.Id,
+                21,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.10f, 0.18f, 0.30f),
+                28f);
+            ConfigureExistingLabel(
+                view.transform,
+                "EntityCategoryText",
+                GetEntityTeachingSubtitle(entityType),
+                14,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.28f, 0.34f, 0.44f),
+                42f);
             ConfigureEntityTypeButton(view, entityType);
         }
 
@@ -296,10 +320,14 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
             validationFeedbackText.text = message ?? string.Empty;
             validationFeedbackText.color = isCorrect ? FeedbackCorrectColor : FeedbackIncorrectColor;
+            validationFeedbackText.fontSize = isCorrect ? 13 : 16;
+            validationFeedbackText.fontStyle = isCorrect ? FontStyle.Normal : FontStyle.Italic;
         }
 
         private void EnsureInstructionText()
         {
+            ConfigureRootLayout();
+
             ConfigureExistingLabel(
                 transform,
                 "Title",
@@ -308,7 +336,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.16f, 0.10f, 0.24f),
-                70f);
+                58f);
 
             ConfigureExistingLabel(
                 transform,
@@ -318,12 +346,17 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.28f, 0.22f, 0.36f),
-                76f);
+                42f);
+
+            EnsureTeachingPanel(transform);
+            ConfigureColumnPanelLayout(messageChipRoot.parent);
+            ConfigureColumnPanelLayout(entityPaletteRoot.parent);
+            ConfigureListRoot(entityPaletteRoot, 10f);
 
             ConfigureExistingLabel(
                 messageChipRoot.parent,
                 "Message Panel Title",
-                "Message Word Chips",
+                "Message Word Tokens",
                 28,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
@@ -333,12 +366,137 @@ namespace Ghost.Presentation.Act2EntityExtraction
             ConfigureExistingLabel(
                 entityPaletteRoot.parent,
                 "Palette Panel Title",
-                "Entity Types",
+                "Entity Kinds",
                 28,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.12f, 0.17f, 0.28f),
                 44f);
+        }
+
+        private void ConfigureRootLayout()
+        {
+            var layout = transform.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.padding = new RectOffset(40, 40, 24, 30);
+            layout.spacing = 12f;
+        }
+
+        private static void ConfigureColumnPanelLayout(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var layout = root.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.padding = new RectOffset(20, 20, 16, 16);
+            layout.spacing = 12f;
+        }
+
+        private static void ConfigureListRoot(RectTransform root, float spacing)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var layout = root.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.spacing = spacing;
+        }
+
+        private static void EnsureTeachingPanel(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var panel = root.Find("Lily Entity Teaching Panel") as RectTransform;
+            if (panel == null)
+            {
+                panel = new GameObject("Lily Entity Teaching Panel", typeof(RectTransform)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+            }
+
+            var subtitle = root.Find("Subtitle");
+            if (subtitle != null)
+            {
+                panel.SetSiblingIndex(subtitle.GetSiblingIndex() + 1);
+            }
+
+            var image = panel.GetComponent<Image>();
+            if (image == null)
+            {
+                image = panel.gameObject.AddComponent<Image>();
+            }
+
+            image.color = TeachingPanelColor;
+            image.raycastTarget = false;
+
+            var outline = panel.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = panel.gameObject.AddComponent<Outline>();
+            }
+
+            SetOutline(outline, TeachingPanelOutlineColor, new Vector2(2f, -2f));
+
+            var layoutElement = panel.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = TeachingPanelPreferredHeight;
+            layoutElement.preferredHeight = TeachingPanelPreferredHeight;
+
+            var layout = panel.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(16, 16, 7, 7);
+            layout.spacing = 2f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            ConfigureOrCreateLabel(
+                panel,
+                "Teaching Panel Title",
+                TeachingPanelTitleText,
+                15,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.30f, 0.20f, 0.08f),
+                20f);
+
+            ConfigureOrCreateLabel(
+                panel,
+                "Teaching Panel Body",
+                TeachingPanelBodyText,
+                15,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.25f, 0.20f, 0.18f),
+                38f);
         }
 
         private void DetachController()
@@ -550,8 +708,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 layout = view.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(16, 16, 10, 10);
-            layout.spacing = 4f;
+            layout.padding = new RectOffset(14, 14, 8, 8);
+            layout.spacing = 2f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -609,8 +767,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
             outline.effectDistance = new Vector2(2f, -2f);
 
             var layoutElement = buttonRoot.AddComponent<LayoutElement>();
-            layoutElement.minWidth = 190f;
-            layoutElement.preferredWidth = 190f;
+            layoutElement.minWidth = 170f;
+            layoutElement.preferredWidth = 170f;
 
             var label = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
             label.SetParent(buttonRoot.transform, false);
@@ -713,6 +871,128 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
             layoutElement.minHeight = preferredHeight;
             layoutElement.preferredHeight = preferredHeight;
+        }
+
+        private static void ConfigureOrCreateLabel(
+            Transform root,
+            string childName,
+            string value,
+            int fontSize,
+            FontStyle fontStyle,
+            TextAnchor alignment,
+            Color color,
+            float preferredHeight)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var child = root.Find(childName) as RectTransform;
+            if (child == null)
+            {
+                child = new GameObject(childName, typeof(RectTransform)).GetComponent<RectTransform>();
+                child.SetParent(root, false);
+            }
+
+            var text = child.GetComponent<Text>();
+            if (text == null)
+            {
+                text = child.gameObject.AddComponent<Text>();
+            }
+
+            text.text = value;
+            text.font = GetBuiltinFont();
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.alignment = alignment;
+            text.color = color;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+
+            var layoutElement = child.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = child.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = preferredHeight;
+            layoutElement.preferredHeight = preferredHeight;
+        }
+
+        private static string GetEntityTeachingSubtitle(EntityType entityType)
+        {
+            if (entityType == null)
+            {
+                return "Entity kind: a key detail Ghost must notice.";
+            }
+
+            switch (entityType.Id)
+            {
+                case Act2EntityExtractionSampleData.TimeEntityTypeId:
+                    return "System entity: works everywhere, like times.";
+                case Act2EntityExtractionSampleData.RoomEntityTypeId:
+                    return "Custom entity: this lab's room words; " + BuildSynonymPairText(entityType) + ".";
+                case Act2EntityExtractionSampleData.ObjectEntityTypeId:
+                    return "Custom entity: this lab's own object words.";
+                default:
+                    return entityType.Category == EntityCategory.System
+                        ? "System entity: a common built-in kind."
+                        : "Custom entity: this lab's own kind.";
+            }
+        }
+
+        private static string BuildSynonymPairText(EntityType entityType)
+        {
+            var surfaceTexts = CollectSampleSurfaceTexts(entityType);
+            if (surfaceTexts.Count >= 2)
+            {
+                return surfaceTexts[0] + "/" + surfaceTexts[1] + " are synonyms";
+            }
+
+            return "different wordings can point to one entity";
+        }
+
+        private static List<string> CollectSampleSurfaceTexts(EntityType entityType)
+        {
+            var surfaceTexts = new List<string>();
+            if (entityType == null)
+            {
+                return surfaceTexts;
+            }
+
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var messages = Act2EntityExtractionSampleData.CreateMessages();
+            foreach (var message in messages)
+            {
+                foreach (var span in message.CorrectSpans)
+                {
+                    if (span.Type.Id != entityType.Id || span.Type.Category != entityType.Category)
+                    {
+                        continue;
+                    }
+
+                    var surfaceText = span.GetText(message.MessageText);
+                    if (seen.Add(surfaceText))
+                    {
+                        surfaceTexts.Add(surfaceText);
+                    }
+                }
+            }
+
+            return surfaceTexts;
+        }
+
+        private static void SetOutline(Outline outline, Color color, Vector2 distance)
+        {
+            if (outline == null)
+            {
+                return;
+            }
+
+            outline.effectColor = color;
+            outline.effectDistance = distance;
         }
 
         private static void ClearChildren(Transform root)

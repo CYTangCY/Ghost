@@ -1502,3 +1502,61 @@ preview looks stale:
 No manual Inspector setup is required. The existing `Act1IntentClassificationStaticPresenter` continues
 to create and wire instruction text, intent groups, card lists, drag/drop affordances, Validate, and
 feedback from its existing serialized roots/templates.
+
+---
+
+## M0-T37: Act 2 Entity Extraction Teaching Layer
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionInteractionController.cs`
+3. Confirm there are no Console compile errors.
+
+### Scene Refresh Check
+
+M0-T37 updates the existing Act 2 presenter and should apply at Play Mode startup. If the saved scene
+preview looks stale:
+
+1. Select `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+2. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+3. Confirm the scene was generated through the builder, not by hand-editing scene YAML.
+
+### Play Mode Teaching Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity` directly, or enter it from the Game Shell.
+2. Enter Play Mode with the Game view at 1920x1080.
+3. Confirm a visually distinct `Lily's Entity Note` panel appears under the subtitle with a warm background and outline.
+4. Confirm the Lily note explains Ghost hearing the whole sentence but missing useful details.
+5. Confirm the Lily note defines entity extraction / NER as spotting useful details and lightly says the chips are word tokens.
+6. Confirm the message area title reads `Message Word Tokens`.
+7. Confirm the palette title reads `Entity Kinds`.
+8. Confirm the `time` entry explains a System entity as a broadly usable kind, like time.
+9. Confirm the `room` entry explains a Custom entity as lab-specific room words and includes the real `lab` / `laboratory` synonym pair from sample data.
+10. Confirm the `object` entry explains a Custom entity as this lab's own object words.
+11. Confirm the chips, entity legend, validation controls, and ambient banter panel remain visible inside the 1920x1080 Game view without cropping.
+12. Select `lab`, assign `room`, select `9pm`, assign `time`, then click `Validate spans`.
+13. Confirm correct feedback appears as a compact teaching beat with:
+    - a cute Ghost reaction to noticing details
+    - an NER line about key details a chatbot must act on
+    - a synonym line using `lab` / `laboratory`
+    - a tokenization / Act 1 intent / Act 3 slots bridge
+14. Click `Validate spans` with no tags, partial tags, or a wrong/extra tag.
+15. Confirm the incorrect-path feedback remains the existing non-spoiler wording with the issue count and still requests a Lily hint.
+16. Confirm chip select, assign, untag, reassign, and multiple tagged chips still work.
+17. Confirm attempt logging still fires through the existing backend client path if that client is available.
+18. Confirm there are no Console errors.
+
+### Scope Check
+
+1. Confirm `EntityExtractionValidator`, `EntityExtractionSession`, `Act2EntityExtractionSampleData`, answer keys, span boundaries, and validation rules are unchanged.
+2. Confirm the Act 2 Editor scene builder, Act 1, Act 3, backend scoring, ProjectSettings, Packages, Build Settings, and `.meta` files are unchanged.
+3. Confirm there is no quiz, new tokenization mini-game, new Act structure, LLM scoring, save/load, or puzzle-rule change.
+
+### Inspector Setup
+
+No manual Inspector setup is required. The existing `Act2EntityExtractionStaticPresenter` creates the
+teaching note, token labels, entity-kind subtitles, chip buttons, palette buttons, Validate button, and
+feedback from its existing serialized roots/templates.

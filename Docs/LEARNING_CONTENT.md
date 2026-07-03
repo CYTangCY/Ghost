@@ -318,6 +318,19 @@ Example:
 
 High.
 
+### M0-T37 Teaching Implementation Note
+
+Act 2 now teaches entity extraction / NER rather than only practicing chip tagging. The Act 2
+presentation starts with a compact `Lily's Entity Note` panel that frames Ghost's problem as hearing a
+whole sentence but missing the useful details, then explains that entity extraction / NER spots those
+details after the message has been split into word tokens. The entity palette is labelled as entity
+kinds and defines system entities versus custom lab-specific entities, with the real sample-data
+`lab` / `laboratory` room synonym pair surfaced in the custom room entry. Correct validation feedback
+now makes the consequence explicit: the tagged spans are the message's key details, synonyms can map
+different wordings to one room entity, and the word chips are tokens that become the entity details
+inside an Act 1 intent and later slots. The deterministic validator, session, sample data, answer keys,
+and span-tagging mechanic remain unchanged.
+
 ---
 
 ## Act *: Supplementary NLP Pipeline (revised: Act 7 — NLP Pipeline Lab)

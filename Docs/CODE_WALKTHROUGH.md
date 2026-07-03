@@ -3025,7 +3025,7 @@ Act2EntityExtractionInteractionController.cs
 
 ### Purpose
 
-Owns the Act 2 prototype interaction state for chip selection, entity-type assignment, and deterministic validation feedback. It coordinates one `EntityExtractionSession`, the currently selected chip key, and the assigned type for each tagged chip. It delegates correctness to the session/validator and does not create UI objects.
+Owns the Act 2 prototype interaction state for chip selection, entity-type assignment, and deterministic validation feedback. It coordinates one `EntityExtractionSession`, the currently selected chip key, and the assigned type for each tagged chip. It delegates correctness to the session/validator and does not create UI objects; on correct validation it now builds a compact teaching beat about NER, key details, the sample-data synonym pair, tokenization, and the Act 1 intent / Act 3 slot bridge.
 
 ### Attached GameObject
 
@@ -3049,7 +3049,7 @@ Internal state:
 - `SelectChip(string chipKey)`: selects or deselects an untagged chip. Selecting a different untagged chip clears the previous selection.
 - `AssignSelectedChipToType(EntityType type)`: parses the selected chip key, creates the matching span through `EntityExtractionSession.AddSpan(...)`, records the assigned type, clears selection, and raises `StateChanged`.
 - `UntagChip(string chipKey)`: removes the assigned span through `EntityExtractionSession.RemoveSpan(...)`, clears the chip assignment, clears selection if needed, and raises `StateChanged`.
-- `ValidateCurrentState()`: calls `EntityExtractionSession.ValidateCurrentState()`, builds a short player-facing feedback message from `IsCorrect` and `Errors.Count`, raises `FeedbackChanged`, and returns the raw `EntityExtractionResult`.
+- `ValidateCurrentState()`: calls `EntityExtractionSession.ValidateCurrentState()`, keeps the existing non-spoiler incorrect feedback from `Errors.Count`, builds the correct teaching feedback from sample data, raises `FeedbackChanged`, and returns the raw `EntityExtractionResult`.
 - `GetAssignedType(string chipKey)`: exposes a chip's assigned type for rendering.
 - `IsSelected(string chipKey)`: exposes selected-chip state for rendering.
 - `CreateChipKey(int start, int length)`: creates the stable `Start:Length` key used by the presenter.
@@ -3072,7 +3072,7 @@ Updated presentation/session state plus `StateChanged` and `FeedbackChanged` cal
 
 ### Unity Test
 
-Manual Act 2 scene check. Select an untagged chip, click an entity type, confirm the chip shows a type badge and System/Custom color, click the tagged chip again to untag it, and confirm Validate reports incorrect feedback for partial/wrong tagging and correct feedback for the exact answer.
+Manual Act 2 scene check. Select an untagged chip, click an entity type, confirm the chip shows a type badge and System/Custom color, click the tagged chip again to untag it, and confirm Validate reports incorrect feedback for partial/wrong tagging and correct teaching feedback for the exact answer. The correct feedback should mention Ghost noticing useful details, NER, the `lab` / `laboratory` synonym pair, word-token chips, intent, and slots.
 
 ---
 
@@ -3082,7 +3082,7 @@ Act2EntityExtractionStaticPresenter.cs
 
 ### Purpose
 
-Renders the Act 2 span-annotation prototype and connects UI objects to `Act2EntityExtractionInteractionController` for chip selection, entity-type assignment, untagging, and deterministic validation feedback.
+Renders the Act 2 span-annotation prototype and connects UI objects to `Act2EntityExtractionInteractionController` for chip selection, entity-type assignment, untagging, and deterministic validation feedback. It also adds the M0-T37 in-fiction teaching layer: a compact Lily entity note, word-token wording, and entity-kind legend subtitles for system/custom entities and synonyms.
 
 ### Attached GameObject
 
@@ -3090,7 +3090,7 @@ Attached to the root UI object created by `Act2EntityExtractionPrototypeSceneBui
 
 ### Runtime Role
 
-On `Start`, when `renderOnStart` is true, it rebuilds the prototype UI from sample data, creates an interaction controller, wires chip/entity-type/Validate clicks, and refreshes chip visuals plus feedback from controller state. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
+On `Start`, when `renderOnStart` is true, it rebuilds the prototype UI from sample data, creates an interaction controller, wires chip/entity-type/Validate clicks, and refreshes chip visuals plus feedback from controller state. It creates the teaching panel at runtime so existing scenes do not need hand-edited YAML. The Editor scene builder also calls `RenderSampleData()` before saving the generated scene.
 
 ### Important Fields
 
@@ -3110,11 +3110,13 @@ Internal runtime state:
 
 - `Configure(...)`: wires generated UI roots/templates without using reflection.
 - `RenderSampleData()`: clears prior rendered UI, creates a fresh interaction controller, renders chips, renders entity types, wires click handlers, and renders validation controls.
+- `EnsureInstructionText()`: keeps the Act 2 title/subtitle compact, creates `Lily's Entity Note`, labels chips as word tokens, and labels the palette as entity kinds.
 - `ConfigureChipButton(...)`: forwards untagged chip clicks to selection and tagged chip clicks to untagging.
 - `ConfigureEntityTypeButton(...)`: forwards palette clicks to assignment through the selected chip.
 - `UpdateVisualState()`: reads controller state to apply selected-chip highlights, tagged-chip colors, and type badges.
 - `RenderValidationControls()`: creates an enabled Validate button and feedback text, then routes clicks to the controller.
 - `ApplyValidationFeedback(...)`: displays the controller's feedback message and colors it green for correct or warm red for incorrect.
+- `GetEntityTeachingSubtitle(...)`: derives the legend subtitles from the rendered sample entity types, including system/custom definitions and the room synonym pair collected from `Act2EntityExtractionSampleData`.
 - `EnsureChipBadge(...)`: creates the small per-chip type label used when a chip is tagged.
 - `CreateWordTokens(...)`: splits message text into whitespace-delimited word chips and trims surrounding punctuation so chip offsets match word characters.
 - `EnsureEventSystem()`: creates an `EventSystem` plus `InputSystemUIInputModule` when one is missing.
@@ -3127,11 +3129,13 @@ Sample data from `Act2EntityExtractionSampleData`, plus pointer clicks on render
 
 UGUI objects showing:
 - one sample message rendered as word chips
-- entity types `time`, `room`, and `object` with System/Custom categories
+- a compact `Lily's Entity Note` panel explaining Ghost's key-detail problem, NER, and word tokens
+- entity kinds `time`, `room`, and `object` with System/Custom teaching subtitles
+- the sample-data room synonym pair displayed in the custom room entry
 - selected-chip visual highlighting
 - tagged-chip System/Custom coloring and small type badges
 - an enabled Validate button
-- correct/incorrect validation feedback text from the deterministic validator path
+- correct/incorrect validation feedback text from the deterministic validator path, with the correct path teaching key details, synonyms, tokenization, intent, and slots
 
 ### Failure Cases
 
@@ -3143,7 +3147,7 @@ UGUI objects showing:
 
 ### Unity Test
 
-Run `Ghost > Build Act 2 Entity Extraction Prototype Scene` if the saved scene looks stale, open `Assets/Scenes/Act2EntityExtractionPrototype.unity`, and enter Play Mode. Confirm chip selection, type assignment, untagging, multiple tagged chips, incorrect feedback for partial/wrong tagging, correct feedback after tagging `lab` as `room` and `9pm` as `time`, feedback update after fixing mistakes, and no Console errors.
+Run `Ghost > Build Act 2 Entity Extraction Prototype Scene` if the saved scene looks stale, open `Assets/Scenes/Act2EntityExtractionPrototype.unity`, and enter Play Mode. Confirm the Lily entity note, word-token label, entity-kind legend subtitles, chip selection, type assignment, untagging, multiple tagged chips, unchanged incorrect feedback for partial/wrong tagging, correct teaching feedback after tagging `lab` as `room` and `9pm` as `time`, feedback update after fixing mistakes, 1920x1080 layout fit with validation/banter visible, and no Console errors.
 
 ---
 
