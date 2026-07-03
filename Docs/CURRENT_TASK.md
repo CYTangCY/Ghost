@@ -123,8 +123,24 @@ conversation/consequence panel.
 - All EditMode tests pass (existing + new demo-engine tests); no Console errors; 1080p fit.
 - Docs + run logs updated; honest "Not run" for anything not run in-session.
 
-## Run Slicing (guidance)
+## Run Slicing (status)
 
-- Run 001: shared Ghost face + conversation/demo panel components + full Act 1 redesign.
-- Run 002: full Act 2 redesign (reusing the shared components).
-- Run 003+: fixes from human Play Mode feedback.
+- Run 001 — DONE, accepted 2026-07-04: shared Ghost face (GhostMood/GhostFaceView) + full Act 1
+  redesign (intro failures → free piles + purpose labels → Teach Ghost generalization demo →
+  misleading-card highlights → completion via IntentClassificationValidator AND all demo messages
+  correct). User Play Mode verdict: "gameplay much better than before"; accepted with known UX issues.
+- Run 002 — NEXT: full Act 2 errand/token-slot redesign (reusing GhostFaceView). MUST include from the
+  start the Run-001 lessons: (a) a Lily "how this level works" intro step BEFORE interaction begins;
+  (b) a persistent objective strip showing the current phase + what to do next.
+- Run 003 — Act 1 clarity fixes (user-reported, accepted as deferred): unclear how to play — add a
+  Lily how-to beat before/at level start; unclear objective — add the persistent objective strip;
+  plus any Run 002 feedback.
+
+## Known Issues (accepted at Run 001 review, to fix in Run 003)
+
+- Act 1 lacks an upfront Lily explanation of how the level works (player enters the level without
+  knowing the pile → label → teach loop).
+- Act 1's objective is not persistently visible during play.
+- Residual verification: run the Unity EditMode Test Runner once in the Editor to confirm
+  Act1GhostGeneralizationEngineTests pass (dotnet test could not list Unity tests in the Codex
+  session; user Play Mode verification done, Test Runner status not yet recorded).

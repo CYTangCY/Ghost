@@ -263,6 +263,19 @@ explaining that the grouped cards are multiple example phrasings / training exam
 with a small Ghost success reaction and one Lily planning-link line. The teaching UI is kept compact so
 the existing card groups, validation controls, and banter remain inside a 1080p Play Mode view.
 
+### M0-T45 Run 001 Teaching-as-Gameplay Redesign Note
+
+The M0-T36 text-layer approach is superseded as the primary Act 1 teaching method. Act 1 is redesigned
+as `Train Ghost to Greet Visitors`: the player first watches Ghost fail by matching exact wording, then
+free-clusters the nine visitor transcript cards into training piles, assigns purpose labels to the
+piles, and presses `Teach Ghost` to test the piles on authored unseen visitor messages. Ghost's reply
+is chosen by a deterministic plurality rule over the player's related training cards, so scattered,
+unlabelled, or wrongly labelled piles visibly make Ghost confused or wrong; revising the piles and
+reteaching changes Ghost's behaviour. Completion still comes from the existing
+`IntentClassificationValidator`, while the new demo engine only shows the consequence of the player's
+training data. A shared programmatic Ghost face now shows neutral / happy / confused / sad moods for
+the teaching-as-gameplay demo phases.
+
 ---
 
 ## Act 2: Entity

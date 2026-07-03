@@ -1260,6 +1260,188 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T45 Run 001 Act 1 Teaching-as-Gameplay Redesign
+
+### Script Name
+
+Act1TeachingDemoData.cs
+
+### Purpose
+
+Provides authored Act 1 teaching demo data: intro failure beats, per-intent Ghost reply lines, and unseen
+test visitor messages tied to real card ids from `Act1IntentClassificationSampleData`.
+
+### Runtime Role
+
+Pure `Ghost.Runtime` data source. It does not score the puzzle; it feeds the generalization demo that
+shows how the player's training piles affect Ghost.
+
+### Unity Test
+
+Covered through `Act1GhostGeneralizationEngineTests.cs`.
+
+---
+
+### Script Name
+
+Act1GhostGeneralizationEngine.cs
+
+### Purpose
+
+Pure deterministic demo engine for Act 1. Given card-to-pile assignments, pile labels, and an unseen
+test message, it chooses the pile containing the plurality of related training cards. Ties, unassigned
+related cards, or unlabelled chosen piles produce confused outcomes. A labelled chosen pile produces an
+authored reply, and correctness is true only when that label matches the test message's true intent.
+
+### Runtime Role
+
+Used by `Act1IntentClassificationInteractionController` when the player presses `Teach Ghost`. It is a
+consequence/demo engine only; final completion still checks the existing `IntentClassificationValidator`.
+
+### Unity Test
+
+Run `Act1GhostGeneralizationEngineTests.cs` in EditMode.
+
+---
+
+### Script Name
+
+GhostMood.cs / GhostFaceView.cs
+
+### Purpose
+
+Defines a shared programmatic Ghost face with `Neutral`, `Happy`, `Confused`, and `Sad` moods. The view
+creates its face from Unity UI objects and built-in resources, with no external art assets.
+
+### Attached GameObject
+
+`GhostFaceView` is attached to a runtime-created `Ghost Face` UI object inside the Act 1 conversation
+panel. Future acts can reuse it.
+
+### Runtime Role
+
+`SetMood(GhostMood)` changes the face colour, eyes, mouth, and small confused mark so Ghost visibly
+reacts to intro failures and teaching-demo outcomes.
+
+### Unity Test
+
+In Play Mode, confirm the Act 1 conversation panel shows confused Ghost during intro failures, neutral
+Ghost while building piles, happy Ghost on correct demo replies, and confused Ghost on wrong/confused
+demo replies.
+
+---
+
+### Script Name
+
+Act1IntentClassificationLabelDragView.cs
+
+### Purpose
+
+Adds drag-preview behaviour for the three purpose-label chips in the rebuilt Act 1 UI.
+
+### Runtime Role
+
+The presenter attaches this to each label chip. Dragging a label onto a pile routes through
+`Act1IntentTeachingDropTarget`; clicking still selects the label for click-to-assign.
+
+### Unity Test
+
+In Act 1 Play Mode, drag `find something`, `where is Ghost`, or `who is Ghost` onto a training pile and
+confirm the pile label socket updates.
+
+---
+
+### Script Name
+
+Act1IntentTeachingDropTarget.cs
+
+### Purpose
+
+Drop target for the redesigned Act 1 training UI. It accepts transcript cards on the new-pile zone,
+existing piles, or the unpiled list, and accepts purpose labels on existing piles.
+
+### Runtime Role
+
+The presenter attaches this at runtime to the unpiled transcript list, new-pile zone, and each pile.
+It forwards drops to the interaction controller without deciding correctness.
+
+### Unity Test
+
+Drag a card to the new-pile zone, drag another card onto that pile, drag a piled card back to the
+transcript list, and drag a purpose label onto a pile.
+
+---
+
+### Script Name
+
+Act1IntentClassificationInteractionController.cs
+
+### Purpose
+
+Owns the rebuilt Act 1 teaching-as-gameplay state: intro phase, free training piles, selected card,
+selected purpose label, demo phase, highlighted misleading cards, and completion phase.
+
+### Runtime Role
+
+The controller maps free piles plus labels into the existing validator's submitted groups for final
+completion. During `Teach Ghost`, it calls `Act1GhostGeneralizationEngine` on authored unseen messages
+and exposes the current conversation beat and highlighted card ids to the presenter.
+
+### Important Methods
+
+- `AdvanceConversation()`: steps through intro failures or demo messages.
+- `MoveCardToNewPile(...)`, `MoveCardToPile(...)`, `MoveCardToUnpiled(...)`: update free training piles.
+- `AssignLabelToPile(...)`: attaches one purpose label to a pile, moving that label from any previous pile.
+- `TeachGhost()`: runs the unseen-message demo from the current piles.
+- `ReturnToBuild()`: returns from demo to pile editing.
+
+### Unity Test
+
+Use the M0-T45 checklist: watch intro failures, build piles, label piles, teach Ghost, revise, reteach,
+and complete only when the validator-correct pile structure also answers all unseen messages correctly.
+
+---
+
+### Script Name
+
+Act1IntentClassificationStaticPresenter.cs
+
+### Purpose
+
+Renders the new Act 1 teaching-as-gameplay UI. The screen now has a Ghost conversation/demo panel,
+transcript cards, purpose-label chips, free training piles, a new-pile drop zone, Teach/Revise controls,
+and misleading-card highlights.
+
+### Runtime Role
+
+On start, it creates the controller from existing sample cards, runtime-creates/reuses the compact Lily
+note and conversation panel, renders cards/piles/labels from controller state, and refreshes Ghost's face
+and feedback after every interaction.
+
+### Unity Test
+
+Open Act 1 at 1920x1080 and confirm the conversation panel, transcript list, label chips, piles, controls,
+and Ghost face fit without cropping.
+
+---
+
+### Script Name
+
+Act1IntentClassificationPrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor menu builder for the Act 1 prototype scene. M0-T45 updates its generated title, subtitle, and
+column proportions for the teaching-as-gameplay layout. Scene YAML is still generated through Unity, not
+hand-edited.
+
+### Unity Test
+
+Run `Ghost > Build Act 1 Intent Classification Prototype Scene`, open the generated scene, enter Play
+Mode, and run the M0-T45 checklist.
+
+---
+
 ## M0-T35 Chatbot Fundamentals Shell Sequence
 
 ### Script Name

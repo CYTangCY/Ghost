@@ -84,22 +84,22 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             CreateLabel(
                 "Title",
                 root,
-                "Act 1: Intent Classification",
+                "Act 1: Train Ghost to Greet Visitors",
                 44,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
-                80f);
+                62f);
 
             CreateLabel(
                 "Subtitle",
                 root,
-                "Group messages by what the speaker wants, not by exact wording.",
-                25,
+                "Cluster transcript cards, label each purpose, then teach Ghost on unseen visitors.",
+                21,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.27f, 0.22f, 0.36f),
-                56f);
+                40f);
 
             var body = CreatePanel(
                 "Prototype Body",
@@ -120,8 +120,8 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             bodyLayout.childForceExpandWidth = true;
             bodyLayout.childForceExpandHeight = true;
 
-            var cardsPanel = CreateColumnPanel("Sample Message Cards", body, 0.54f);
-            var groupsPanel = CreateColumnPanel("Intent Group Areas", body, 0.46f);
+            var cardsPanel = CreateColumnPanel("Sample Message Cards", body, 0.44f);
+            var groupsPanel = CreateColumnPanel("Intent Group Areas", body, 0.56f);
 
             var cardsRoot = CreateListRoot("Cards List", cardsPanel, 8f);
             var groupsRoot = CreateListRoot("Intent Groups List", groupsPanel, 12f);

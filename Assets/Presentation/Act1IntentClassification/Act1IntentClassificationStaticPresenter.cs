@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Ghost.Presentation.GhostAvatar;
 using Ghost.Puzzles.IntentClassification;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,44 +11,37 @@ namespace Ghost.Presentation.Act1IntentClassification
 {
     public sealed class Act1IntentClassificationStaticPresenter : MonoBehaviour
     {
-        private const float CardPreferredHeight = 58f;
-        private const float MessageTextPreferredHeight = 38f;
-        private const float GroupPreferredHeight = 166f;
-        private const float AssignmentViewportPreferredHeight = 52f;
-        private const float AssignedRowPreferredHeight = 20f;
-        private const float AssignedPlaceholderPreferredHeight = 18f;
-        private const float ValidationControlsPreferredHeight = 108f;
-        private const float TeachingPanelPreferredHeight = 76f;
+        private const float CardPreferredHeight = 52f;
+        private const float PilePreferredHeight = 128f;
+        private const float LabelChipHeight = 38f;
+        private const float ConversationPanelHeight = 150f;
+        private const float TeachingPanelPreferredHeight = 66f;
+        private const float ControlsPreferredHeight = 92f;
 
-        private const string TitleText = "Act 1: Intent Sorting";
+        private const string TitleText = "Act 1: Train Ghost to Greet Visitors";
         private const string InstructionText =
-            "Group cards by what each visitor wants. Drag mistakes back or between groups, then Validate.";
+            "Watch Ghost fail, cluster visitor transcripts into training piles, label each purpose, then teach Ghost.";
         private const string TeachingPanelTitleText = "Lily's Intent Note";
         private const string TeachingPanelBodyText =
-            "Ghost problem: Ghost is matching exact words, so replies miss the purpose.\n" +
-            "Lily: Um... intent means what the visitor wants. Different phrasings in one group become training examples.";
+            "Lily: Um... Ghost memorizes sentences. We need piles that show the visitor's purpose, not exact words.";
 
         private static readonly Color CardDefaultColor = new Color(1f, 0.99f, 0.94f);
-        private static readonly Color CardSelectedColor = new Color(1f, 0.91f, 0.48f);
-        private static readonly Color CardAssignedColor = new Color(0.88f, 1f, 0.90f);
+        private static readonly Color CardSelectedColor = new Color(1f, 0.91f, 0.52f);
+        private static readonly Color CardInPileColor = new Color(0.90f, 1f, 0.91f);
+        private static readonly Color CardMisleadingColor = new Color(1f, 0.89f, 0.78f);
         private static readonly Color CardOutlineDefaultColor = new Color(0.78f, 0.70f, 0.88f, 0.62f);
-        private static readonly Color CardOutlineSelectedColor = new Color(0.98f, 0.64f, 0.10f, 0.88f);
-        private static readonly Color CardOutlineAssignedColor = new Color(0.30f, 0.63f, 0.38f, 0.72f);
-        private static readonly Color GroupDefaultColor = new Color(0.93f, 0.97f, 1f);
-        private static readonly Color GroupReadyColor = new Color(0.82f, 0.93f, 1f);
-        private static readonly Color GroupOutlineDefaultColor = new Color(0.62f, 0.70f, 0.86f, 0.75f);
-        private static readonly Color GroupOutlineReadyColor = new Color(0.28f, 0.54f, 0.95f, 0.90f);
-        private static readonly Color AssignmentViewportColor = new Color(1f, 1f, 1f, 0.46f);
-        private static readonly Color ValidationPanelColor = new Color(1f, 0.99f, 0.94f, 0.92f);
-        private static readonly Color ValidationPanelCorrectColor = new Color(0.89f, 1f, 0.91f, 0.96f);
-        private static readonly Color ValidationPanelIncorrectColor = new Color(1f, 0.93f, 0.90f, 0.96f);
-        private static readonly Color FeedbackDefaultColor = new Color(0.24f, 0.22f, 0.30f);
-        private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
-        private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
-        private static readonly Color AssignedRowColor = new Color(1f, 0.98f, 0.93f);
-        private static readonly Color AssignedRowOutlineColor = new Color(0.76f, 0.70f, 0.88f, 0.55f);
+        private static readonly Color CardOutlineSelectedColor = new Color(0.98f, 0.64f, 0.10f, 0.90f);
+        private static readonly Color CardOutlineMisleadingColor = new Color(0.88f, 0.26f, 0.12f, 0.95f);
+        private static readonly Color PanelColor = new Color(0.98f, 0.985f, 1f);
+        private static readonly Color PileColor = new Color(0.92f, 0.97f, 1f);
+        private static readonly Color PileReadyColor = new Color(0.84f, 0.93f, 1f);
+        private static readonly Color LabelColor = new Color(0.88f, 0.95f, 1f);
+        private static readonly Color LabelSelectedColor = new Color(1f, 0.92f, 0.62f);
         private static readonly Color TeachingPanelColor = new Color(1f, 0.96f, 0.82f, 0.96f);
         private static readonly Color TeachingPanelOutlineColor = new Color(0.86f, 0.58f, 0.22f, 0.95f);
+        private static readonly Color FeedbackNeutralColor = new Color(0.24f, 0.22f, 0.30f);
+        private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
+        private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
 
         [SerializeField] private RectTransform cardListRoot;
         [SerializeField] private RectTransform intentGroupListRoot;
@@ -54,18 +49,24 @@ namespace Ghost.Presentation.Act1IntentClassification
         [SerializeField] private GameObject intentGroupTemplate;
         [SerializeField] private bool renderOnStart = true;
 
-        private readonly Dictionary<string, IntentCard> cardsById = new Dictionary<string, IntentCard>();
         private readonly Dictionary<string, GameObject> cardViewsById = new Dictionary<string, GameObject>();
         private readonly Dictionary<string, Image> cardImagesById = new Dictionary<string, Image>();
         private readonly Dictionary<string, Outline> cardOutlinesById = new Dictionary<string, Outline>();
-        private readonly Dictionary<string, Image> groupImagesById = new Dictionary<string, Image>();
-        private readonly Dictionary<string, Outline> groupOutlinesById = new Dictionary<string, Outline>();
-        private readonly Dictionary<string, RectTransform> assignmentRootsByIntentId = new Dictionary<string, RectTransform>();
+        private readonly Dictionary<string, Image> labelImagesByIntentId = new Dictionary<string, Image>();
 
         private Act1IntentClassificationInteractionController controller;
-        private Text validationFeedbackText;
-        private Image validationPanelImage;
-        private Outline validationPanelOutline;
+        private Canvas rootCanvas;
+        private RectTransform conversationPanel;
+        private GhostFaceView ghostFaceView;
+        private Text visitorText;
+        private Text ghostReplyText;
+        private Text conversationNoteText;
+        private Button conversationAdvanceButton;
+        private Text conversationAdvanceButtonText;
+        private RectTransform controlsRoot;
+        private Button teachButton;
+        private Button reviseButton;
+        private Text feedbackText;
 
         private static readonly string[] IntentIds =
         {
@@ -82,6 +83,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
         }
 
+        private void OnDestroy()
+        {
+            DetachController();
+        }
+
         public void RenderSampleData()
         {
             if (cardListRoot == null ||
@@ -92,99 +98,554 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
+            rootCanvas = GetComponentInParent<Canvas>();
             EnsureEventSystem();
             EnsureInstructionText();
+            EnsureConversationPanel();
+            EnsureControls();
+            DetachController();
+
+            controller = new Act1IntentClassificationInteractionController(
+                Act1IntentClassificationSampleData.CreateCards());
+            controller.StateChanged += RefreshAll;
+            controller.FeedbackChanged += ApplyFeedback;
+
+            RefreshAll();
+        }
+
+        private void RefreshAll()
+        {
             ClearRenderedState();
+            ConfigureUnpiledDropTarget(cardListRoot.gameObject);
+            RenderUnpiledCards();
+            RenderLabelPaletteAndPiles();
+            UpdateConversationPanel();
+            UpdateControls();
+            ApplyFeedback(controller.CurrentFeedback);
 
-            var cards = Act1IntentClassificationSampleData.CreateCards();
-            controller = new Act1IntentClassificationInteractionController(cards);
-            controller.StateChanged += UpdateVisualState;
-            controller.FeedbackChanged += ApplyValidationFeedback;
-            ConfigureUnassignedDropTarget(cardListRoot.gameObject);
-
-            foreach (var card in controller.Cards)
-            {
-                cardsById.Add(card.Id, card);
-                CreateCardView(card);
-            }
-
-            foreach (var intentId in IntentIds)
-            {
-                CreateIntentGroupView(intentId);
-            }
-
-            EnsureValidationControls();
-            ApplyValidationFeedback(controller.CurrentFeedback);
-            UpdateVisualState();
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cardListRoot);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(intentGroupListRoot);
         }
 
         private void ClearRenderedState()
         {
-            DetachController();
-            cardsById.Clear();
             cardViewsById.Clear();
             cardImagesById.Clear();
             cardOutlinesById.Clear();
-            groupImagesById.Clear();
-            groupOutlinesById.Clear();
-            assignmentRootsByIntentId.Clear();
+            labelImagesByIntentId.Clear();
             ClearChildren(cardListRoot);
             ClearChildren(intentGroupListRoot);
         }
 
-        private void CreateCardView(IntentCard card)
+        private void RenderUnpiledCards()
         {
-            var view = Instantiate(cardTemplate, cardListRoot);
+            ConfigureExistingLabel(
+                cardListRoot.parent,
+                "Sample Message Cards",
+                "Transcript Cards",
+                22,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.18f, 0.12f, 0.28f),
+                30f);
+
+            foreach (var cardId in controller.UnpiledCardIds)
+            {
+                CreateCardView(cardListRoot, controller.GetCard(cardId), false);
+            }
+
+            if (controller.UnpiledCardIds.Count == 0)
+            {
+                CreatePlaceholder(cardListRoot, "All transcripts are in piles. Drag one back here to remove it.", 44f);
+            }
+        }
+
+        private void RenderLabelPaletteAndPiles()
+        {
+            ConfigureExistingLabel(
+                intentGroupListRoot.parent,
+                "Intent Group Areas",
+                "Training Piles",
+                22,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.18f, 0.12f, 0.28f),
+                30f);
+
+            CreateLabelPalette(intentGroupListRoot);
+            CreateNewPileDropZone(intentGroupListRoot);
+
+            foreach (var pile in controller.Piles)
+            {
+                CreatePileView(intentGroupListRoot, pile);
+            }
+
+            if (controller.Piles.Count == 0)
+            {
+                CreatePlaceholder(intentGroupListRoot, "Drag a transcript to the new-pile zone to start Ghost's training data.", 40f);
+            }
+        }
+
+        private void CreateLabelPalette(Transform parent)
+        {
+            var palette = CreatePanel("Purpose Label Chips", parent, new Color(1f, 1f, 1f, 0f));
+            var paletteLayoutElement = palette.gameObject.AddComponent<LayoutElement>();
+            paletteLayoutElement.minHeight = 88f;
+            paletteLayoutElement.preferredHeight = 88f;
+
+            var layout = palette.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            CreateSmallText(palette, "Purpose labels", 13, FontStyle.Bold, TextAnchor.MiddleLeft, 18f);
+
+            var row = new GameObject("Purpose Label Row", typeof(RectTransform)).GetComponent<RectTransform>();
+            row.SetParent(palette, false);
+            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 8f;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = true;
+            rowLayout.childForceExpandHeight = false;
+
+            var rowElement = row.gameObject.AddComponent<LayoutElement>();
+            rowElement.minHeight = LabelChipHeight;
+            rowElement.preferredHeight = LabelChipHeight;
+
+            foreach (var intentId in IntentIds)
+            {
+                CreateLabelChip(row, intentId);
+            }
+        }
+
+        private void CreateLabelChip(Transform parent, string intentId)
+        {
+            var chip = CreatePanel("Purpose Label - " + intentId, parent, LabelColor);
+            ConfigureLayoutElement(chip.gameObject, 110f, LabelChipHeight, 1f);
+
+            var image = chip.GetComponent<Image>();
+            labelImagesByIntentId[intentId] = image;
+            var isSelected = controller != null && controller.SelectedLabelIntentId == intentId;
+            image.color = isSelected ? LabelSelectedColor : LabelColor;
+
+            var outline = chip.gameObject.AddComponent<Outline>();
+            SetOutline(outline, isSelected ? CardOutlineSelectedColor : CardOutlineDefaultColor, new Vector2(1.5f, -1.5f));
+
+            var button = chip.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() => controller.SelectLabel(intentId));
+
+            var drag = chip.gameObject.AddComponent<Act1IntentClassificationLabelDragView>();
+            drag.Initialize(intentId, rootCanvas);
+
+            var label = CreateFillText(chip, GetPurposeLabel(intentId), 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            label.color = new Color(0.10f, 0.18f, 0.30f);
+        }
+
+        private void CreateNewPileDropZone(Transform parent)
+        {
+            var zone = CreatePanel("New Pile Drop Zone", parent, new Color(1f, 0.985f, 0.90f));
+            ConfigureLayoutElement(zone.gameObject, 0f, 48f, 0f);
+            var outline = zone.gameObject.AddComponent<Outline>();
+            SetOutline(outline, new Color(0.86f, 0.58f, 0.22f, 0.95f), new Vector2(1.5f, -1.5f));
+
+            var button = zone.gameObject.AddComponent<Button>();
+            button.targetGraphic = zone.GetComponent<Image>();
+            button.onClick.AddListener(() => controller.MoveSelectedCardToNewPile());
+
+            var drop = zone.gameObject.AddComponent<Act1IntentTeachingDropTarget>();
+            drop.InitializeNewPile(controller.MoveCardToNewPile);
+
+            var text = CreateFillText(zone, "Drop a transcript here to start a new training pile", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
+            text.color = new Color(0.34f, 0.25f, 0.14f);
+        }
+
+        private void CreatePileView(Transform parent, Act1IntentPileState pile)
+        {
+            var pileView = CreatePanel("Training Pile - " + pile.Id, parent, PileColor);
+            ConfigureLayoutElement(pileView.gameObject, 0f, PilePreferredHeight, 0f);
+
+            var image = pileView.GetComponent<Image>();
+            image.color = controller.HasSelectedCard || controller.HasSelectedLabel ? PileReadyColor : PileColor;
+
+            var outline = pileView.gameObject.AddComponent<Outline>();
+            SetOutline(outline, new Color(0.58f, 0.68f, 0.84f, 0.82f), new Vector2(1.5f, -1.5f));
+
+            var layout = pileView.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(12, 12, 8, 8);
+            layout.spacing = 6f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var button = pileView.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() =>
+            {
+                if (controller.HasSelectedCard)
+                {
+                    controller.MoveSelectedCardToPile(pile.Id);
+                }
+                else if (controller.HasSelectedLabel)
+                {
+                    controller.AssignSelectedLabelToPile(pile.Id);
+                }
+            });
+
+            var drop = pileView.gameObject.AddComponent<Act1IntentTeachingDropTarget>();
+            drop.InitializePile(pile.Id, controller.MoveCardToPile, controller.AssignLabelToPile);
+
+            CreatePileHeader(pileView, pile);
+            CreatePileCards(pileView, pile);
+        }
+
+        private void CreatePileHeader(Transform parent, Act1IntentPileState pile)
+        {
+            var header = new GameObject("Pile Header", typeof(RectTransform)).GetComponent<RectTransform>();
+            header.SetParent(parent, false);
+            ConfigureLayoutElement(header.gameObject, 0f, 32f, 0f);
+
+            var layout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            var socket = CreatePanel("Label Socket", header, string.IsNullOrEmpty(pile.IntentLabelId) ? new Color(1f, 1f, 1f, 0.55f) : LabelColor);
+            ConfigureLayoutElement(socket.gameObject, 0f, 30f, 1f);
+            var socketButton = socket.gameObject.AddComponent<Button>();
+            socketButton.targetGraphic = socket.GetComponent<Image>();
+            socketButton.onClick.AddListener(() => controller.AssignSelectedLabelToPile(pile.Id));
+            var socketText = CreateFillText(
+                socket,
+                string.IsNullOrEmpty(pile.IntentLabelId) ? "Drop purpose label here" : GetPurposeLabel(pile.IntentLabelId),
+                13,
+                string.IsNullOrEmpty(pile.IntentLabelId) ? FontStyle.Italic : FontStyle.Bold,
+                TextAnchor.MiddleCenter);
+            socketText.color = new Color(0.12f, 0.18f, 0.30f);
+
+            var clear = CreatePanel("Clear Label", header, new Color(1f, 0.94f, 0.90f));
+            ConfigureLayoutElement(clear.gameObject, 72f, 30f, 0f);
+            var clearButton = clear.gameObject.AddComponent<Button>();
+            clearButton.targetGraphic = clear.GetComponent<Image>();
+            clearButton.onClick.AddListener(() => controller.ClearPileLabel(pile.Id));
+            var clearText = CreateFillText(clear, "Clear", 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+            clearText.color = new Color(0.34f, 0.14f, 0.12f);
+        }
+
+        private void CreatePileCards(Transform parent, Act1IntentPileState pile)
+        {
+            var cardRoot = new GameObject("Pile Cards", typeof(RectTransform)).GetComponent<RectTransform>();
+            cardRoot.SetParent(parent, false);
+            ConfigureLayoutElement(cardRoot.gameObject, 0f, 74f, 1f);
+
+            var layout = cardRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            if (pile.CardIds.Count == 0)
+            {
+                CreatePlaceholder(cardRoot, "Drop matching transcripts here.", 30f);
+                return;
+            }
+
+            foreach (var cardId in pile.CardIds)
+            {
+                CreateCardView(cardRoot, controller.GetCard(cardId), true);
+            }
+        }
+
+        private void CreateCardView(Transform parent, IntentCard card, bool isInPile)
+        {
+            var view = Instantiate(cardTemplate, parent);
             view.name = "Card - " + card.Id;
             view.SetActive(true);
 
-            ConfigureCardContainer(view, card.Id);
-            ConfigureCardMessageText(view.transform, card.MessageText);
+            ConfigureCardContainer(view, card.Id, isInPile);
+            SetChildText(view.transform, "MessageText", card.MessageText);
             SetChildActive(view.transform, "CardIdText", false);
             SetChildActive(view.transform, "IntentHintText", false);
 
-            cardViewsById.Add(card.Id, view);
-            cardImagesById.Add(card.Id, view.GetComponent<Image>());
-            cardOutlinesById.Add(card.Id, view.GetComponent<Outline>());
+            cardViewsById[card.Id] = view;
+            cardImagesById[card.Id] = view.GetComponent<Image>();
+            cardOutlinesById[card.Id] = view.GetComponent<Outline>();
         }
 
-        private void CreateIntentGroupView(string intentId)
+        private void ConfigureCardContainer(GameObject view, string cardId, bool isInPile)
         {
-            var view = Instantiate(intentGroupTemplate, intentGroupListRoot);
-            view.name = "Intent Group - " + intentId;
-            view.SetActive(true);
-
-            ConfigureIntentGroupContainer(view, intentId);
-            ConfigureExistingLabel(
-                view.transform,
-                "IntentTitleText",
-                GetIntentTitle(intentId),
-                21,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                new Color(0.10f, 0.20f, 0.32f),
-                30f);
-            ConfigureExistingLabel(
-                view.transform,
-                "IntentHintText",
-                GetIntentDescription(intentId),
-                15,
-                FontStyle.Normal,
-                TextAnchor.UpperLeft,
-                new Color(0.28f, 0.34f, 0.44f),
-                34f);
-
-            var assignmentRoot = EnsureAssignmentRoot(view.transform);
-            ConfigureAssignmentViewportClick(assignmentRoot, intentId);
-            var assignmentViewport = assignmentRoot.parent;
-            if (assignmentViewport != null)
+            var image = view.GetComponent<Image>();
+            if (image == null)
             {
-                ConfigureIntentGroupDropTarget(assignmentViewport.gameObject, intentId);
+                image = view.AddComponent<Image>();
             }
 
-            assignmentRootsByIntentId.Add(intentId, assignmentRoot);
-            groupImagesById.Add(intentId, view.GetComponent<Image>());
-            groupOutlinesById.Add(intentId, view.GetComponent<Outline>());
+            var isSelected = controller.SelectedCardId == cardId;
+            var isHighlighted = controller.IsCardHighlighted(cardId);
+            image.color = isHighlighted ? CardMisleadingColor : isSelected ? CardSelectedColor : isInPile ? CardInPileColor : CardDefaultColor;
+            image.raycastTarget = true;
+
+            var outline = view.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = view.AddComponent<Outline>();
+            }
+
+            SetOutline(
+                outline,
+                isHighlighted ? CardOutlineMisleadingColor : isSelected ? CardOutlineSelectedColor : CardOutlineDefaultColor,
+                isHighlighted || isSelected ? new Vector2(2.5f, -2.5f) : new Vector2(1.2f, -1.2f));
+
+            var button = view.GetComponent<Button>();
+            if (button == null)
+            {
+                button = view.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => controller.SelectCard(cardId));
+
+            var draggable = view.GetComponent<Act1IntentClassificationDraggableCard>();
+            if (draggable == null)
+            {
+                draggable = view.AddComponent<Act1IntentClassificationDraggableCard>();
+            }
+
+            draggable.Initialize(cardId, rootCanvas);
+
+            ConfigureLayoutElement(view, 0f, CardPreferredHeight, 0f);
+
+            var layout = view.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = view.AddComponent<VerticalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(12, 12, 6, 6);
+            layout.spacing = 0f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+        }
+
+        private void EnsureInstructionText()
+        {
+            ConfigureRootLayout();
+            ConfigureExistingLabel(
+                transform,
+                "Title",
+                TitleText,
+                40,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.18f, 0.12f, 0.28f),
+                50f);
+
+            ConfigureExistingLabel(
+                transform,
+                "Subtitle",
+                InstructionText,
+                18,
+                FontStyle.Normal,
+                TextAnchor.MiddleLeft,
+                new Color(0.26f, 0.21f, 0.35f),
+                32f);
+
+            EnsureTeachingPanel(transform);
+            ConfigureColumnPanelLayout(cardListRoot.parent);
+            ConfigureColumnPanelLayout(intentGroupListRoot.parent);
+            ConfigureListRoot(cardListRoot, 6f);
+            ConfigureListRoot(intentGroupListRoot, 8f);
+            ConfigurePanelSurface(cardListRoot.parent, new Color(1f, 0.985f, 0.94f), new Color(0.82f, 0.70f, 0.90f, 0.85f));
+            ConfigurePanelSurface(intentGroupListRoot.parent, PanelColor, new Color(0.60f, 0.72f, 0.90f, 0.90f));
+        }
+
+        private void EnsureConversationPanel()
+        {
+            conversationPanel = transform.Find("Ghost Conversation Demo") as RectTransform;
+            if (conversationPanel == null)
+            {
+                conversationPanel = new GameObject("Ghost Conversation Demo", typeof(RectTransform)).GetComponent<RectTransform>();
+                conversationPanel.SetParent(transform, false);
+            }
+
+            var teachingPanel = transform.Find("Lily Intent Teaching Panel");
+            if (teachingPanel != null)
+            {
+                conversationPanel.SetSiblingIndex(teachingPanel.GetSiblingIndex() + 1);
+            }
+
+            var image = conversationPanel.GetComponent<Image>();
+            if (image == null)
+            {
+                image = conversationPanel.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(0.94f, 0.975f, 1f, 0.96f);
+            image.raycastTarget = false;
+
+            var outline = conversationPanel.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = conversationPanel.gameObject.AddComponent<Outline>();
+            }
+
+            SetOutline(outline, new Color(0.54f, 0.66f, 0.86f, 0.90f), new Vector2(2f, -2f));
+
+            ConfigureLayoutElement(conversationPanel.gameObject, 0f, ConversationPanelHeight, 0f);
+
+            var layout = conversationPanel.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = conversationPanel.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(16, 14, 10, 10);
+            layout.spacing = 14f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            ghostFaceView = EnsureGhostFace(conversationPanel);
+            var textColumn = EnsureConversationTextColumn(conversationPanel);
+            visitorText = EnsureConversationText(textColumn, "Visitor Line", 17, FontStyle.Bold, 34f);
+            ghostReplyText = EnsureConversationText(textColumn, "Ghost Reply", 18, FontStyle.Bold, 42f);
+            conversationNoteText = EnsureConversationText(textColumn, "Conversation Note", 14, FontStyle.Italic, 32f);
+            conversationAdvanceButton = EnsureConversationButton(conversationPanel, out conversationAdvanceButtonText);
+            conversationAdvanceButton.onClick.RemoveAllListeners();
+            conversationAdvanceButton.onClick.AddListener(() => controller.AdvanceConversation());
+        }
+
+        private void EnsureControls()
+        {
+            var parent = intentGroupListRoot.parent;
+            controlsRoot = parent.Find("Validation Controls") as RectTransform;
+            if (controlsRoot == null)
+            {
+                controlsRoot = new GameObject("Validation Controls", typeof(RectTransform)).GetComponent<RectTransform>();
+                controlsRoot.SetParent(parent, false);
+            }
+
+            controlsRoot.SetAsLastSibling();
+
+            var image = controlsRoot.GetComponent<Image>();
+            if (image == null)
+            {
+                image = controlsRoot.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(1f, 0.99f, 0.94f, 0.94f);
+            image.raycastTarget = false;
+            ConfigureLayoutElement(controlsRoot.gameObject, 0f, ControlsPreferredHeight, 0f);
+
+            var layout = controlsRoot.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = controlsRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(10, 10, 8, 8);
+            layout.spacing = 10f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            teachButton = EnsureControlButton(controlsRoot, "Teach Ghost Button", "Teach Ghost", 140f);
+            teachButton.onClick.RemoveAllListeners();
+            teachButton.onClick.AddListener(() => controller.TeachGhost());
+
+            reviseButton = EnsureControlButton(controlsRoot, "Revise Piles Button", "Revise piles", 130f);
+            reviseButton.onClick.RemoveAllListeners();
+            reviseButton.onClick.AddListener(() => controller.ReturnToBuild());
+
+            feedbackText = EnsureFeedbackText(controlsRoot);
+        }
+
+        private void UpdateConversationPanel()
+        {
+            var beat = controller.GetCurrentConversationBeat();
+            visitorText.text = beat.VisitorLine;
+            ghostReplyText.text = beat.GhostReply;
+            conversationNoteText.text = beat.Note;
+            conversationAdvanceButton.gameObject.SetActive(beat.HasAdvanceButton);
+            conversationAdvanceButtonText.text = beat.AdvanceButtonText;
+            ghostFaceView.SetMood(GetGhostMood());
+        }
+
+        private void UpdateControls()
+        {
+            teachButton.gameObject.SetActive(controller.Phase == Act1TeachingPhase.Build);
+            reviseButton.gameObject.SetActive(controller.Phase == Act1TeachingPhase.Demo);
+        }
+
+        private GhostMood GetGhostMood()
+        {
+            if (controller.Phase == Act1TeachingPhase.Complete)
+            {
+                return GhostMood.Happy;
+            }
+
+            if (controller.Phase == Act1TeachingPhase.Intro)
+            {
+                return GhostMood.Confused;
+            }
+
+            if (controller.Phase == Act1TeachingPhase.Demo)
+            {
+                return controller.CurrentDemoResult != null && controller.CurrentDemoResult.IsCorrect
+                    ? GhostMood.Happy
+                    : GhostMood.Confused;
+            }
+
+            return GhostMood.Neutral;
+        }
+
+        private void ApplyFeedback(Act1IntentClassificationFeedback feedback)
+        {
+            if (feedbackText == null)
+            {
+                return;
+            }
+
+            feedbackText.text = feedback.Message;
+            switch (feedback.Kind)
+            {
+                case Act1IntentClassificationFeedbackKind.Correct:
+                    feedbackText.color = FeedbackCorrectColor;
+                    feedbackText.fontStyle = FontStyle.Bold;
+                    break;
+                case Act1IntentClassificationFeedbackKind.Incorrect:
+                    feedbackText.color = FeedbackIncorrectColor;
+                    feedbackText.fontStyle = FontStyle.Bold;
+                    break;
+                default:
+                    feedbackText.color = FeedbackNeutralColor;
+                    feedbackText.fontStyle = FontStyle.Normal;
+                    break;
+            }
+        }
+
+        private void ConfigureUnpiledDropTarget(GameObject view)
+        {
+            var target = view.GetComponent<Act1IntentTeachingDropTarget>();
+            if (target == null)
+            {
+                target = view.AddComponent<Act1IntentTeachingDropTarget>();
+            }
+
+            target.InitializeUnassigned(controller.MoveCardToUnpiled);
         }
 
         private void DetachController()
@@ -194,71 +655,9 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
-            controller.StateChanged -= UpdateVisualState;
-            controller.FeedbackChanged -= ApplyValidationFeedback;
+            controller.StateChanged -= RefreshAll;
+            controller.FeedbackChanged -= ApplyFeedback;
             controller = null;
-        }
-
-        private void EnsureInstructionText()
-        {
-            ConfigureRootLayout();
-
-            ConfigureExistingLabel(
-                transform,
-                "Title",
-                TitleText,
-                42,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
-                58f);
-
-            ConfigureExistingLabel(
-                transform,
-                "Subtitle",
-                InstructionText,
-                20,
-                FontStyle.Normal,
-                TextAnchor.MiddleLeft,
-                new Color(0.26f, 0.21f, 0.35f),
-                38f);
-
-            EnsureTeachingPanel(transform);
-
-            ConfigureColumnPanelLayout(cardListRoot.parent);
-            ConfigureColumnPanelLayout(intentGroupListRoot.parent);
-            ConfigureListRoot(cardListRoot, 6f);
-            ConfigureListRoot(intentGroupListRoot, 8f);
-
-            ConfigureExistingLabel(
-                cardListRoot.parent,
-                "Sample Message Cards",
-                "Unassigned Messages",
-                24,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
-                34f);
-
-            ConfigureExistingLabel(
-                intentGroupListRoot.parent,
-                "Intent Group Areas",
-                "Intent Groups",
-                24,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
-                34f);
-
-            ConfigurePanelSurface(
-                cardListRoot.parent,
-                new Color(1f, 0.985f, 0.94f),
-                new Color(0.82f, 0.70f, 0.90f, 0.85f));
-
-            ConfigurePanelSurface(
-                intentGroupListRoot.parent,
-                new Color(0.94f, 0.975f, 1f),
-                new Color(0.60f, 0.72f, 0.90f, 0.90f));
         }
 
         private void ConfigureRootLayout()
@@ -269,8 +668,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
-            layout.padding = new RectOffset(40, 40, 24, 24);
-            layout.spacing = 12f;
+            layout.padding = new RectOffset(36, 36, 22, 26);
+            layout.spacing = 10f;
         }
 
         private static void ConfigureColumnPanelLayout(Transform root)
@@ -286,8 +685,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
-            layout.padding = new RectOffset(20, 20, 18, 18);
-            layout.spacing = 12f;
+            layout.padding = new RectOffset(18, 18, 14, 14);
+            layout.spacing = 10f;
         }
 
         private static void ConfigureListRoot(RectTransform root, float spacing)
@@ -342,15 +741,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             SetOutline(outline, TeachingPanelOutlineColor, new Vector2(2f, -2f));
-
-            var layoutElement = panel.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = panel.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = TeachingPanelPreferredHeight;
-            layoutElement.preferredHeight = TeachingPanelPreferredHeight;
+            ConfigureLayoutElement(panel.gameObject, 0f, TeachingPanelPreferredHeight, 0f);
 
             var layout = panel.GetComponent<VerticalLayoutGroup>();
             if (layout == null)
@@ -358,7 +749,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(16, 16, 7, 7);
+            layout.padding = new RectOffset(16, 16, 6, 6);
             layout.spacing = 2f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -369,770 +760,280 @@ namespace Ghost.Presentation.Act1IntentClassification
                 panel,
                 "Teaching Panel Title",
                 TeachingPanelTitleText,
-                15,
+                14,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.30f, 0.20f, 0.08f),
-                20f);
+                18f);
 
             ConfigureOrCreateLabel(
                 panel,
                 "Teaching Panel Body",
                 TeachingPanelBodyText,
-                15,
+                14,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.20f, 0.18f),
-                38f);
+                34f);
         }
 
-        private void UpdateVisualState()
+        private static GhostFaceView EnsureGhostFace(Transform parent)
         {
-            UpdateCardVisuals();
-            UpdateIntentGroupVisuals();
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(cardListRoot);
-            foreach (var assignmentRoot in assignmentRootsByIntentId.Values)
+            var root = parent.Find("Ghost Face") as RectTransform;
+            if (root == null)
             {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(assignmentRoot);
+                root = new GameObject("Ghost Face", typeof(RectTransform)).GetComponent<RectTransform>();
+                root.SetParent(parent, false);
             }
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(intentGroupListRoot);
+            ConfigureLayoutElement(root.gameObject, 150f, 128f, 0f);
+            var view = root.GetComponent<GhostFaceView>();
+            if (view == null)
+            {
+                view = root.gameObject.AddComponent<GhostFaceView>();
+            }
+
+            return view;
         }
 
-        private void UpdateCardVisuals()
+        private static RectTransform EnsureConversationTextColumn(Transform parent)
         {
-            foreach (var pair in cardImagesById)
+            var column = parent.Find("Conversation Text Column") as RectTransform;
+            if (column == null)
             {
-                var cardId = pair.Key;
-                var image = pair.Value;
-                if (image == null)
-                {
-                    continue;
-                }
-
-                cardOutlinesById.TryGetValue(cardId, out var outline);
-                if (controller != null && cardId == controller.SelectedCardId)
-                {
-                    image.color = CardSelectedColor;
-                    SetOutline(outline, CardOutlineSelectedColor, new Vector2(3f, -3f));
-                }
-                else if (controller != null && controller.GetAssignedGroupId(cardId) != null)
-                {
-                    image.color = CardAssignedColor;
-                    SetOutline(outline, CardOutlineAssignedColor, new Vector2(2f, -2f));
-                }
-                else
-                {
-                    image.color = CardDefaultColor;
-                    SetOutline(outline, CardOutlineDefaultColor, new Vector2(1.5f, -1.5f));
-                }
-            }
-        }
-
-        private void UpdateIntentGroupVisuals()
-        {
-            foreach (var intentId in IntentIds)
-            {
-                if (groupImagesById.TryGetValue(intentId, out var groupImage) && groupImage != null)
-                {
-                    var isReadyDropArea = controller != null && controller.HasSelectedCard;
-                    groupImage.color = isReadyDropArea ? GroupReadyColor : GroupDefaultColor;
-
-                    groupOutlinesById.TryGetValue(intentId, out var groupOutline);
-                    SetOutline(
-                        groupOutline,
-                        isReadyDropArea ? GroupOutlineReadyColor : GroupOutlineDefaultColor,
-                        isReadyDropArea ? new Vector2(3f, -3f) : new Vector2(2f, -2f));
-                }
-
-                if (!assignmentRootsByIntentId.TryGetValue(intentId, out var assignmentRoot))
-                {
-                    continue;
-                }
-
-                ClearChildren(assignmentRoot);
-                IReadOnlyList<string> assignedCardIds = controller == null
-                    ? new string[0]
-                    : controller.GetAssignedCardIds(intentId);
-
-                if (assignedCardIds.Count == 0)
-                {
-                    CreateAssignedText(assignmentRoot, "Drop matching messages here.", true);
-                    continue;
-                }
-
-                foreach (var cardId in assignedCardIds)
-                {
-                    if (cardsById.TryGetValue(cardId, out var card))
-                    {
-                        CreateAssignedCardRow(assignmentRoot, card.Id, card.MessageText);
-                    }
-                }
-            }
-        }
-
-        private void ConfigureCardContainer(GameObject view, string cardId)
-        {
-            var image = view.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = CardDefaultColor;
-                image.raycastTarget = true;
+                column = new GameObject("Conversation Text Column", typeof(RectTransform)).GetComponent<RectTransform>();
+                column.SetParent(parent, false);
             }
 
-            var outline = view.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = view.AddComponent<Outline>();
-            }
-
-            SetOutline(outline, CardOutlineDefaultColor, new Vector2(1.5f, -1.5f));
-
-            var button = view.GetComponent<Button>();
-            if (button == null)
-            {
-                button = view.AddComponent<Button>();
-            }
-
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => controller?.SelectCard(cardId));
-            button.targetGraphic = image;
-
-            ConfigureCardDrag(view, cardId);
-
-            var layoutElement = view.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = view.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = CardPreferredHeight;
-            layoutElement.preferredHeight = CardPreferredHeight;
-
-            var layout = view.GetComponent<VerticalLayoutGroup>();
+            ConfigureLayoutElement(column.gameObject, 0f, 120f, 1f);
+            var layout = column.GetComponent<VerticalLayoutGroup>();
             if (layout == null)
             {
-                layout = view.AddComponent<VerticalLayoutGroup>();
+                layout = column.gameObject.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(14, 14, 7, 7);
-            layout.spacing = 0f;
+            layout.spacing = 4f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+            return column;
         }
 
-        private void ConfigureIntentGroupContainer(GameObject view, string intentId)
+        private static Text EnsureConversationText(
+            Transform parent,
+            string name,
+            int fontSize,
+            FontStyle fontStyle,
+            float preferredHeight)
         {
-            var image = view.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = GroupDefaultColor;
-                image.raycastTarget = true;
-            }
-
-            var outline = view.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = view.AddComponent<Outline>();
-            }
-
-            SetOutline(outline, GroupOutlineDefaultColor, new Vector2(2f, -2f));
-
-            var button = view.GetComponent<Button>();
-            if (button == null)
-            {
-                button = view.AddComponent<Button>();
-            }
-
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => controller?.AssignSelectedCardToIntent(intentId));
-            button.targetGraphic = image;
-
-            ConfigureIntentGroupDropTarget(view, intentId);
-
-            var layoutElement = view.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = view.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = GroupPreferredHeight;
-            layoutElement.preferredHeight = GroupPreferredHeight;
-
-            if (view.GetComponent<RectMask2D>() == null)
-            {
-                view.AddComponent<RectMask2D>();
-            }
-
-            var layout = view.GetComponent<VerticalLayoutGroup>();
-            if (layout == null)
-            {
-                layout = view.AddComponent<VerticalLayoutGroup>();
-            }
-
-            layout.padding = new RectOffset(14, 14, 10, 9);
-            layout.spacing = 5f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-        }
-
-        private void ConfigureCardDrag(GameObject view, string cardId)
-        {
-            var draggable = view.GetComponent<Act1IntentClassificationDraggableCard>();
-            if (draggable == null)
-            {
-                draggable = view.AddComponent<Act1IntentClassificationDraggableCard>();
-            }
-
-            draggable.Initialize(cardId, view.GetComponentInParent<Canvas>());
-        }
-
-        private void ConfigureIntentGroupDropTarget(GameObject view, string intentId)
-        {
-            var dropTarget = view.GetComponent<Act1IntentClassificationDropTarget>();
-            if (dropTarget == null)
-            {
-                dropTarget = view.AddComponent<Act1IntentClassificationDropTarget>();
-            }
-
-            EnsureRaycastTarget(view);
-            dropTarget.InitializeIntentGroup(intentId, AssignDraggedCardToIntent);
-        }
-
-        private void ConfigureUnassignedDropTarget(GameObject view)
-        {
-            var dropTarget = view.GetComponent<Act1IntentClassificationDropTarget>();
-            if (dropTarget == null)
-            {
-                dropTarget = view.AddComponent<Act1IntentClassificationDropTarget>();
-            }
-
-            EnsureRaycastTarget(view);
-            dropTarget.InitializeUnassigned(MoveDraggedCardToUnassigned);
-        }
-
-        private void AssignDraggedCardToIntent(string cardId, string intentId)
-        {
-            if (controller == null || string.IsNullOrEmpty(cardId))
-            {
-                return;
-            }
-
-            if (controller.GetAssignedGroupId(cardId) == intentId)
-            {
-                return;
-            }
-
-            controller.AssignCardToIntent(cardId, intentId);
-        }
-
-        private void MoveDraggedCardToUnassigned(string cardId)
-        {
-            if (controller == null || string.IsNullOrEmpty(cardId))
-            {
-                return;
-            }
-
-            if (controller.GetAssignedGroupId(cardId) == null)
-            {
-                return;
-            }
-
-            controller.MoveAssignedCardToUnassigned(cardId);
-        }
-
-        private static void EnsureRaycastTarget(GameObject view)
-        {
-            var image = view.GetComponent<Image>();
-            if (image == null)
-            {
-                image = view.AddComponent<Image>();
-                image.color = new Color(1f, 1f, 1f, 0f);
-            }
-
-            image.raycastTarget = true;
-        }
-
-        private static void ConfigureCardMessageText(Transform cardRoot, string messageText)
-        {
-            var messageTransform = cardRoot.Find("MessageText");
-            if (messageTransform == null)
-            {
-                var messageObject = new GameObject("MessageText", typeof(RectTransform));
-                messageTransform = messageObject.transform;
-                messageTransform.SetParent(cardRoot, false);
-            }
-
-            var text = messageTransform.GetComponent<Text>();
+            var text = parent.Find(name) as RectTransform;
             if (text == null)
             {
-                text = messageTransform.gameObject.AddComponent<Text>();
+                text = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+                text.SetParent(parent, false);
             }
 
-            text.text = messageText;
-            text.font = GetBuiltinFont();
-            text.fontSize = 18;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.MiddleLeft;
-            text.color = new Color(0.12f, 0.09f, 0.18f);
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-
-            var layoutElement = messageTransform.GetComponent<LayoutElement>();
-            if (layoutElement == null)
+            var label = text.GetComponent<Text>();
+            if (label == null)
             {
-                layoutElement = messageTransform.gameObject.AddComponent<LayoutElement>();
+                label = text.gameObject.AddComponent<Text>();
             }
 
-            layoutElement.minHeight = MessageTextPreferredHeight;
-            layoutElement.preferredHeight = MessageTextPreferredHeight;
-            layoutElement.flexibleHeight = 0f;
-        }
-
-        private static RectTransform EnsureAssignmentRoot(Transform groupRoot)
-        {
-            var viewport = groupRoot.Find("AssignedCardsScrollView") as RectTransform;
-            if (viewport == null)
-            {
-                viewport = new GameObject("AssignedCardsScrollView", typeof(RectTransform)).GetComponent<RectTransform>();
-                viewport.SetParent(groupRoot, false);
-            }
-
-            var assignmentRoot = viewport.Find("AssignedCardsRoot") as RectTransform;
-            var oldDirectRoot = groupRoot.Find("AssignedCardsRoot") as RectTransform;
-
-            if (assignmentRoot == null && oldDirectRoot != null)
-            {
-                assignmentRoot = oldDirectRoot;
-                assignmentRoot.SetParent(viewport, false);
-            }
-
-            if (assignmentRoot == null)
-            {
-                assignmentRoot = new GameObject("AssignedCardsRoot", typeof(RectTransform)).GetComponent<RectTransform>();
-                assignmentRoot.SetParent(viewport, false);
-            }
-
-            ConfigureAssignmentScrollView(viewport, assignmentRoot);
-            ConfigureAssignmentRoot(assignmentRoot);
-
-            return assignmentRoot;
-        }
-
-        private static void ConfigureAssignmentScrollView(RectTransform viewport, RectTransform content)
-        {
-            var layoutElement = viewport.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = viewport.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = AssignmentViewportPreferredHeight;
-            layoutElement.preferredHeight = AssignmentViewportPreferredHeight;
-            layoutElement.flexibleHeight = 1f;
-
-            var image = viewport.GetComponent<Image>();
-            if (image == null)
-            {
-                image = viewport.gameObject.AddComponent<Image>();
-            }
-
-            image.color = AssignmentViewportColor;
-            image.raycastTarget = true;
-
-            if (viewport.GetComponent<RectMask2D>() == null)
-            {
-                viewport.gameObject.AddComponent<RectMask2D>();
-            }
-
-            var scrollRect = viewport.GetComponent<ScrollRect>();
-            if (scrollRect == null)
-            {
-                scrollRect = viewport.gameObject.AddComponent<ScrollRect>();
-            }
-
-            scrollRect.viewport = viewport;
-            scrollRect.content = content;
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.inertia = true;
-
-            var button = viewport.GetComponent<Button>();
-            if (button == null)
-            {
-                button = viewport.gameObject.AddComponent<Button>();
-            }
-
-            button.targetGraphic = image;
-        }
-
-        private void ConfigureAssignmentViewportClick(RectTransform assignmentRoot, string intentId)
-        {
-            var viewport = assignmentRoot.parent;
-            if (viewport == null)
-            {
-                return;
-            }
-
-            var button = viewport.GetComponent<Button>();
-            if (button == null)
-            {
-                return;
-            }
-
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => controller?.AssignSelectedCardToIntent(intentId));
-        }
-
-        private static void ConfigureAssignmentRoot(RectTransform assignmentRoot)
-        {
-            assignmentRoot.anchorMin = new Vector2(0f, 1f);
-            assignmentRoot.anchorMax = new Vector2(1f, 1f);
-            assignmentRoot.pivot = new Vector2(0.5f, 1f);
-            assignmentRoot.anchoredPosition = Vector2.zero;
-            assignmentRoot.sizeDelta = Vector2.zero;
-
-            if (assignmentRoot.GetComponent<RectMask2D>() == null)
-            {
-                assignmentRoot.gameObject.AddComponent<RectMask2D>();
-            }
-
-            var layout = assignmentRoot.GetComponent<VerticalLayoutGroup>();
-            if (layout == null)
-            {
-                layout = assignmentRoot.gameObject.AddComponent<VerticalLayoutGroup>();
-            }
-
-            layout.spacing = 2f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            var fitter = assignmentRoot.GetComponent<ContentSizeFitter>();
-            if (fitter == null)
-            {
-                fitter = assignmentRoot.gameObject.AddComponent<ContentSizeFitter>();
-            }
-
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        }
-
-        private static void CreateAssignedText(Transform parent, string message, bool isPlaceholder)
-        {
-            var text = new GameObject(isPlaceholder ? "Assigned Placeholder" : "Assigned Card", typeof(RectTransform)).AddComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.text = isPlaceholder ? message : "- " + message;
-            text.font = GetBuiltinFont();
-            text.fontSize = isPlaceholder ? 13 : 12;
-            text.fontStyle = isPlaceholder ? FontStyle.Italic : FontStyle.Normal;
-            text.alignment = TextAnchor.MiddleLeft;
-            text.color = isPlaceholder ? new Color(0.42f, 0.47f, 0.56f) : new Color(0.12f, 0.20f, 0.30f);
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-
-            var layoutElement = text.gameObject.AddComponent<LayoutElement>();
-            var preferredHeight = isPlaceholder ? AssignedPlaceholderPreferredHeight : AssignedRowPreferredHeight;
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-        }
-
-        private void CreateAssignedCardRow(Transform parent, string cardId, string message)
-        {
-            var row = new GameObject("Assigned Card - " + cardId, typeof(RectTransform));
-            row.transform.SetParent(parent, false);
-
-            var image = row.AddComponent<Image>();
-            image.color = AssignedRowColor;
-            image.raycastTarget = true;
-
-            var outline = row.AddComponent<Outline>();
-            outline.effectColor = AssignedRowOutlineColor;
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var button = row.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(() => controller?.MoveAssignedCardToUnassigned(cardId));
-
-            var layoutElement = row.AddComponent<LayoutElement>();
-            layoutElement.minHeight = AssignedRowPreferredHeight;
-            layoutElement.preferredHeight = AssignedRowPreferredHeight;
-
-            var layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(6, 6, 1, 1);
-            layout.spacing = 2f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = true;
-
-            var label = new GameObject("Assigned Card Text", typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(row.transform, false);
-            label.text = "Back: " + message;
             label.font = GetBuiltinFont();
-            label.fontSize = 10;
-            label.fontStyle = FontStyle.Normal;
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
             label.alignment = TextAnchor.MiddleLeft;
-            label.color = new Color(0.12f, 0.20f, 0.30f);
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.color = new Color(0.14f, 0.16f, 0.24f);
             label.raycastTarget = false;
-
-            ConfigureCardDrag(row, cardId);
+            ConfigureLayoutElement(text.gameObject, 0f, preferredHeight, 0f);
+            return label;
         }
 
-        private void EnsureValidationControls()
+        private static Button EnsureConversationButton(Transform parent, out Text label)
         {
-            var parent = intentGroupListRoot.parent;
-            if (parent == null)
+            var root = parent.Find("Conversation Advance Button") as RectTransform;
+            if (root == null)
             {
-                return;
+                root = new GameObject("Conversation Advance Button", typeof(RectTransform)).GetComponent<RectTransform>();
+                root.SetParent(parent, false);
             }
 
-            var controls = parent.Find("Validation Controls") as RectTransform;
-            if (controls == null)
-            {
-                controls = new GameObject("Validation Controls", typeof(RectTransform)).GetComponent<RectTransform>();
-                controls.SetParent(parent, false);
-            }
-
-            controls.SetAsLastSibling();
-
-            var image = controls.GetComponent<Image>();
+            var image = root.GetComponent<Image>();
             if (image == null)
             {
-                image = controls.gameObject.AddComponent<Image>();
-            }
-
-            image.color = ValidationPanelColor;
-            image.raycastTarget = false;
-            validationPanelImage = image;
-
-            var outline = controls.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = controls.gameObject.AddComponent<Outline>();
-            }
-
-            SetOutline(outline, CardOutlineDefaultColor, new Vector2(1.5f, -1.5f));
-            validationPanelOutline = outline;
-
-            var layoutElement = controls.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = controls.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = ValidationControlsPreferredHeight;
-            layoutElement.preferredHeight = ValidationControlsPreferredHeight;
-
-            var layout = controls.GetComponent<HorizontalLayoutGroup>();
-            if (layout == null)
-            {
-                layout = controls.gameObject.AddComponent<HorizontalLayoutGroup>();
-            }
-
-            layout.spacing = 12f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
-            layout.padding = new RectOffset(12, 12, 8, 8);
-
-            var validateButton = EnsureValidateButton(controls);
-            validateButton.onClick.RemoveAllListeners();
-            validateButton.onClick.AddListener(() => controller?.ValidateCurrentGrouping());
-
-            validationFeedbackText = EnsureValidationFeedbackText(controls);
-        }
-
-        private static Button EnsureValidateButton(Transform parent)
-        {
-            var buttonTransform = parent.Find("Validate Button") as RectTransform;
-            if (buttonTransform == null)
-            {
-                buttonTransform = new GameObject("Validate Button", typeof(RectTransform)).GetComponent<RectTransform>();
-                buttonTransform.SetParent(parent, false);
-            }
-
-            var image = buttonTransform.GetComponent<Image>();
-            if (image == null)
-            {
-                image = buttonTransform.gameObject.AddComponent<Image>();
+                image = root.gameObject.AddComponent<Image>();
             }
 
             image.color = new Color(0.84f, 0.92f, 1f);
             image.raycastTarget = true;
+            ConfigureLayoutElement(root.gameObject, 128f, 42f, 0f);
 
-            var button = buttonTransform.GetComponent<Button>();
+            var button = root.GetComponent<Button>();
             if (button == null)
             {
-                button = buttonTransform.gameObject.AddComponent<Button>();
+                button = root.gameObject.AddComponent<Button>();
             }
 
             button.targetGraphic = image;
-
-            var layoutElement = buttonTransform.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = buttonTransform.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minWidth = 170f;
-            layoutElement.preferredWidth = 170f;
-
-            var label = buttonTransform.Find("Button Text") as RectTransform;
-            if (label == null)
-            {
-                label = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
-                label.SetParent(buttonTransform, false);
-            }
-
-            label.anchorMin = Vector2.zero;
-            label.anchorMax = Vector2.one;
-            label.offsetMin = Vector2.zero;
-            label.offsetMax = Vector2.zero;
-
-            var text = label.GetComponent<Text>();
-            if (text == null)
-            {
-                text = label.gameObject.AddComponent<Text>();
-            }
-
-            text.text = "Validate grouping";
-            text.font = GetBuiltinFont();
-            text.fontSize = 16;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = new Color(0.10f, 0.20f, 0.32f);
-            text.raycastTarget = false;
-
+            label = CreateFillText(root, "Next", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            label.color = new Color(0.12f, 0.18f, 0.30f);
             return button;
         }
 
-        private static Text EnsureValidationFeedbackText(Transform parent)
+        private static Button EnsureControlButton(Transform parent, string name, string text, float width)
         {
-            var feedbackTransform = parent.Find("Validation Feedback") as RectTransform;
-            if (feedbackTransform == null)
+            var root = parent.Find(name) as RectTransform;
+            if (root == null)
             {
-                feedbackTransform = new GameObject("Validation Feedback", typeof(RectTransform)).GetComponent<RectTransform>();
-                feedbackTransform.SetParent(parent, false);
+                root = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+                root.SetParent(parent, false);
             }
 
-            var layoutElement = feedbackTransform.GetComponent<LayoutElement>();
-            if (layoutElement == null)
+            var image = root.GetComponent<Image>();
+            if (image == null)
             {
-                layoutElement = feedbackTransform.gameObject.AddComponent<LayoutElement>();
+                image = root.gameObject.AddComponent<Image>();
             }
 
-            layoutElement.flexibleWidth = 1f;
+            image.color = new Color(0.84f, 0.92f, 1f);
+            image.raycastTarget = true;
+            ConfigureLayoutElement(root.gameObject, width, 42f, 0f);
 
-            var text = feedbackTransform.GetComponent<Text>();
+            var button = root.GetComponent<Button>();
+            if (button == null)
+            {
+                button = root.gameObject.AddComponent<Button>();
+            }
+
+            button.targetGraphic = image;
+            var label = CreateFillText(root, text, 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            label.color = new Color(0.12f, 0.18f, 0.30f);
+            return button;
+        }
+
+        private static Text EnsureFeedbackText(Transform parent)
+        {
+            var root = parent.Find("Training Feedback") as RectTransform;
+            if (root == null)
+            {
+                root = new GameObject("Training Feedback", typeof(RectTransform)).GetComponent<RectTransform>();
+                root.SetParent(parent, false);
+            }
+
+            ConfigureLayoutElement(root.gameObject, 0f, 58f, 1f);
+            var text = root.GetComponent<Text>();
             if (text == null)
             {
-                text = feedbackTransform.gameObject.AddComponent<Text>();
+                text = root.gameObject.AddComponent<Text>();
             }
 
             text.font = GetBuiltinFont();
-            text.fontSize = 16;
-            text.fontStyle = FontStyle.Normal;
+            text.fontSize = 14;
             text.alignment = TextAnchor.MiddleLeft;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
             text.raycastTarget = false;
-
             return text;
         }
 
-        private void ApplyValidationFeedback(Act1IntentClassificationFeedback feedback)
+        private static void CreatePlaceholder(Transform parent, string message, float height)
         {
-            if (validationFeedbackText == null)
-            {
-                return;
-            }
-
-            validationFeedbackText.text = feedback.Message;
-
-            switch (feedback.Kind)
-            {
-                case Act1IntentClassificationFeedbackKind.Correct:
-                    validationFeedbackText.color = FeedbackCorrectColor;
-                    validationFeedbackText.fontSize = 17;
-                    validationFeedbackText.fontStyle = FontStyle.Bold;
-                    SetValidationPanelStyle(ValidationPanelCorrectColor, new Color(0.20f, 0.62f, 0.30f, 0.95f));
-                    break;
-                case Act1IntentClassificationFeedbackKind.Incorrect:
-                    validationFeedbackText.color = FeedbackIncorrectColor;
-                    validationFeedbackText.fontSize = 16;
-                    validationFeedbackText.fontStyle = FontStyle.Normal;
-                    SetValidationPanelStyle(ValidationPanelIncorrectColor, new Color(0.78f, 0.28f, 0.18f, 0.90f));
-                    break;
-                default:
-                    validationFeedbackText.color = FeedbackDefaultColor;
-                    validationFeedbackText.fontSize = 16;
-                    validationFeedbackText.fontStyle = FontStyle.Normal;
-                    SetValidationPanelStyle(ValidationPanelColor, CardOutlineDefaultColor);
-                    break;
-            }
+            var text = new GameObject("Placeholder", typeof(RectTransform)).AddComponent<Text>();
+            text.transform.SetParent(parent, false);
+            text.text = message;
+            text.font = GetBuiltinFont();
+            text.fontSize = 13;
+            text.fontStyle = FontStyle.Italic;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = new Color(0.42f, 0.40f, 0.50f);
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+            ConfigureLayoutElement(text.gameObject, 0f, height, 0f);
         }
 
-        private void SetValidationPanelStyle(Color panelColor, Color outlineColor)
+        private static Text CreateSmallText(Transform parent, string message, int fontSize, FontStyle style, TextAnchor alignment, float height)
         {
-            if (validationPanelImage != null)
-            {
-                validationPanelImage.color = panelColor;
-            }
-
-            SetOutline(validationPanelOutline, outlineColor, new Vector2(1.5f, -1.5f));
+            var text = new GameObject("Small Text", typeof(RectTransform)).AddComponent<Text>();
+            text.transform.SetParent(parent, false);
+            text.text = message;
+            text.font = GetBuiltinFont();
+            text.fontSize = fontSize;
+            text.fontStyle = style;
+            text.alignment = alignment;
+            text.color = new Color(0.22f, 0.19f, 0.30f);
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+            ConfigureLayoutElement(text.gameObject, 0f, height, 0f);
+            return text;
         }
 
-        private static void ClearChildren(Transform root)
+        private static RectTransform CreatePanel(string name, Transform parent, Color color)
         {
-            var children = new List<GameObject>();
-
-            for (var i = 0; i < root.childCount; i++)
-            {
-                children.Add(root.GetChild(i).gameObject);
-            }
-
-            foreach (var child in children)
-            {
-                child.SetActive(false);
-
-                if (Application.isPlaying)
-                {
-                    Destroy(child);
-                }
-                else
-                {
-                    DestroyImmediate(child);
-                }
-            }
+            var panel = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+            panel.SetParent(parent, false);
+            var image = panel.gameObject.AddComponent<Image>();
+            image.color = color;
+            image.raycastTarget = true;
+            return panel;
         }
 
-        private static void SetChildText(Transform root, string childName, string value)
+        private static Text CreateFillText(Transform parent, string value, int fontSize, FontStyle fontStyle, TextAnchor alignment)
         {
-            var child = root.Find(childName);
-            if (child == null)
+            var textObject = parent.Find("Text") as RectTransform;
+            if (textObject == null)
             {
-                return;
+                textObject = new GameObject("Text", typeof(RectTransform)).GetComponent<RectTransform>();
+                textObject.SetParent(parent, false);
             }
 
-            var text = child.GetComponent<Text>();
-            if (text != null)
+            textObject.anchorMin = Vector2.zero;
+            textObject.anchorMax = Vector2.one;
+            textObject.offsetMin = new Vector2(6f, 2f);
+            textObject.offsetMax = new Vector2(-6f, -2f);
+
+            var text = textObject.GetComponent<Text>();
+            if (text == null)
             {
-                text.text = value;
-                text.raycastTarget = false;
+                text = textObject.gameObject.AddComponent<Text>();
             }
+
+            text.text = value;
+            text.font = GetBuiltinFont();
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.alignment = alignment;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private static void ConfigureLayoutElement(GameObject view, float preferredWidth, float preferredHeight, float flexibleWidth)
+        {
+            var layoutElement = view.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = view.AddComponent<LayoutElement>();
+            }
+
+            if (preferredWidth > 0f)
+            {
+                layoutElement.minWidth = preferredWidth;
+                layoutElement.preferredWidth = preferredWidth;
+            }
+
+            if (preferredHeight > 0f)
+            {
+                layoutElement.minHeight = preferredHeight;
+                layoutElement.preferredHeight = preferredHeight;
+            }
+
+            layoutElement.flexibleWidth = flexibleWidth;
         }
 
         private static void ConfigureExistingLabel(
@@ -1170,14 +1071,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 text.raycastTarget = false;
             }
 
-            var layoutElement = child.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = child.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
+            ConfigureLayoutElement(child.gameObject, 0f, preferredHeight, 0f);
         }
 
         private static void ConfigureOrCreateLabel(
@@ -1190,11 +1084,6 @@ namespace Ghost.Presentation.Act1IntentClassification
             Color color,
             float preferredHeight)
         {
-            if (root == null)
-            {
-                return;
-            }
-
             var child = root.Find(childName) as RectTransform;
             if (child == null)
             {
@@ -1217,26 +1106,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
             text.raycastTarget = false;
-
-            var layoutElement = child.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = child.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-        }
-
-        private static void SetOutline(Outline outline, Color color, Vector2 distance)
-        {
-            if (outline == null)
-            {
-                return;
-            }
-
-            outline.effectColor = color;
-            outline.effectDistance = distance;
+            ConfigureLayoutElement(child.gameObject, 0f, preferredHeight, 0f);
         }
 
         private static void ConfigurePanelSurface(Transform root, Color color, Color outlineColor)
@@ -1259,12 +1129,76 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
         }
 
+        private static void SetChildText(Transform root, string childName, string value)
+        {
+            var child = root.Find(childName);
+            if (child == null)
+            {
+                return;
+            }
+
+            var text = child.GetComponent<Text>();
+            if (text != null)
+            {
+                text.text = value;
+                text.raycastTarget = false;
+            }
+        }
+
         private static void SetChildActive(Transform root, string childName, bool isActive)
         {
             var child = root.Find(childName);
             if (child != null)
             {
                 child.gameObject.SetActive(isActive);
+            }
+        }
+
+        private static void SetOutline(Outline outline, Color color, Vector2 distance)
+        {
+            if (outline == null)
+            {
+                return;
+            }
+
+            outline.effectColor = color;
+            outline.effectDistance = distance;
+        }
+
+        private static string GetPurposeLabel(string intentId)
+        {
+            switch (intentId)
+            {
+                case Act1IntentClassificationSampleData.FindItemIntentId:
+                    return "find something";
+                case Act1IntentClassificationSampleData.AskLocationIntentId:
+                    return "where is Ghost";
+                case Act1IntentClassificationSampleData.AskIdentityIntentId:
+                    return "who is Ghost";
+                default:
+                    return "shared purpose";
+            }
+        }
+
+        private static void ClearChildren(Transform root)
+        {
+            var children = new List<GameObject>();
+            for (var i = 0; i < root.childCount; i++)
+            {
+                children.Add(root.GetChild(i).gameObject);
+            }
+
+            foreach (var child in children)
+            {
+                child.SetActive(false);
+                if (Application.isPlaying)
+                {
+                    Destroy(child);
+                }
+                else
+                {
+                    DestroyImmediate(child);
+                }
             }
         }
 
@@ -1289,36 +1223,6 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
-
-        private static string GetIntentDescription(string intentId)
-        {
-            switch (intentId)
-            {
-                case Act1IntentClassificationSampleData.FindItemIntentId:
-                    return "These visitors all want Ghost to help find something.";
-                case Act1IntentClassificationSampleData.AskLocationIntentId:
-                    return "These visitors all want to know where Ghost is.";
-                case Act1IntentClassificationSampleData.AskIdentityIntentId:
-                    return "These visitors all want to know who Ghost is or what to call Ghost.";
-                default:
-                    return "These visitors all want the same kind of help from Ghost.";
-            }
-        }
-
-        private static string GetIntentTitle(string intentId)
-        {
-            switch (intentId)
-            {
-                case Act1IntentClassificationSampleData.FindItemIntentId:
-                    return "Purpose: find something";
-                case Act1IntentClassificationSampleData.AskLocationIntentId:
-                    return "Purpose: locate Ghost";
-                case Act1IntentClassificationSampleData.AskIdentityIntentId:
-                    return "Purpose: identify Ghost";
-                default:
-                    return "Purpose: shared intent";
-            }
         }
     }
 }

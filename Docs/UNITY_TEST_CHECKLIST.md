@@ -1560,3 +1560,77 @@ preview looks stale:
 No manual Inspector setup is required. The existing `Act2EntityExtractionStaticPresenter` creates the
 teaching note, token labels, entity-kind subtitles, chip buttons, palette buttons, Validate button, and
 feedback from its existing serialized roots/templates.
+
+---
+
+## M0-T45 Run 001: Act 1 Teaching-as-Gameplay + Ghost Face
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/IntentClassification/Act1TeachingDemoData.cs`
+   - `Assets/Scripts/Puzzles/IntentClassification/Act1GhostGeneralizationEngine.cs`
+   - `Assets/Tests/EditMode/Act1GhostGeneralizationEngineTests.cs`
+   - `Assets/Presentation/GhostAvatar/GhostMood.cs`
+   - `Assets/Presentation/GhostAvatar/GhostFaceView.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationLabelDragView.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentTeachingDropTarget.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationInteractionController.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationStaticPresenter.cs`
+   - `Assets/Presentation/Act1IntentClassification/Editor/Act1IntentClassificationPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### EditMode Test Check
+
+1. Open Unity Test Runner.
+2. Run all existing EditMode tests plus `Act1GhostGeneralizationEngineTests`.
+3. Confirm correct grouping makes all unseen test visitors correct.
+4. Confirm scattered, tied, and unlabelled pile cases produce the expected wrong/confused results.
+
+### Scene Refresh Check
+
+1. Select `Ghost > Build Act 1 Intent Classification Prototype Scene`.
+2. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity`.
+3. Confirm the scene was generated through the builder, not hand-edited scene YAML.
+
+### Play Mode Teaching Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity` directly, or enter it from the Game Shell.
+2. Enter Play Mode with the Game view at 1920x1080.
+3. Confirm the top conversation panel shows the shared Ghost face.
+4. Step through the intro failures with `Next`; confirm Ghost gives wrong scripted replies and the face is confused.
+5. Confirm Lily's short line explains that Ghost memorizes sentences but does not understand purpose.
+6. Click `Help Ghost` and confirm the build phase appears with transcript cards, purpose-label chips, a new-pile drop zone, and an empty pile area.
+7. Drag a transcript card to the new-pile zone and confirm a new training pile appears.
+8. Drag more transcript cards onto existing piles and confirm they join that pile.
+9. Drag a piled card back to the transcript list and confirm it becomes unpiled.
+10. Click a card, then click/drop it onto a pile or the new-pile zone and confirm click assignment also works.
+11. Drag or click a purpose-label chip (`find something`, `where is Ghost`, `who is Ghost`) onto a pile and confirm the label socket updates.
+12. Move a label from one pile to another and confirm the previous pile loses that label.
+13. Press `Teach Ghost` with incomplete, scattered, unlabelled, or wrongly labelled piles.
+14. Confirm unseen visitor messages play one at a time in the conversation panel.
+15. Confirm Ghost replies according to the current piles, not the answer key directly.
+16. Confirm wrong/confused demo outcomes show a confused Ghost face and highlight misleading training cards in the build area.
+17. Click `Revise piles`, fix the piles/labels, and press `Teach Ghost` again.
+18. Confirm fixing the piles changes Ghost's unseen-message replies.
+19. Build the three correct labelled piles and teach Ghost.
+20. Confirm every unseen visitor is answered correctly and Ghost reaches the completion state.
+21. Confirm completion only occurs when the existing validator-correct pile structure is also demo-correct.
+22. Confirm there is no success lecture wall replacing the behaviour demo.
+23. Confirm the full Act 1 screen fits inside 1920x1080: title, Lily note, conversation panel, cards, piles, Teach/Revise controls, and feedback are visible without cropping.
+24. Confirm there are no Console errors.
+
+### Scope Check
+
+1. Confirm existing `IntentClassificationValidator`, `IntentClassificationSession`, `Act1IntentClassificationSampleData`, answer keys, and existing Act 1 tests are unchanged.
+2. Confirm Act 2, Act 3, Fundamentals, Shell, Banter, Backend, ProjectSettings, Packages, Build Settings, and existing `.meta` files are unchanged by this run.
+3. Confirm there is no quiz, LLM scoring, backend scoring change, external art asset, audio, or Act 2 rebuild in Run 001.
+
+### Inspector Setup
+
+No manual Inspector setup is required if the scene is generated through
+`Ghost > Build Act 1 Intent Classification Prototype Scene`. The builder still wires the existing
+`Act1IntentClassificationStaticPresenter` roots/templates, and the presenter creates the conversation
+panel, shared Ghost face, label chips, free piles, drop targets, Teach/Revise buttons, and feedback at
+runtime.

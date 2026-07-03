@@ -525,6 +525,26 @@ for the redesign (commit as an honestly-labelled checkpoint). The old M0-T38 (Ac
 pass) is likely absorbed/reduced — Act 3 already teaches through test-case consequences; reassess
 after M0-T45. Next: Codex implements M0-T45 (run 001 = Ghost face + Act 1; run 002 = Act 2).
 
+### 2026-07-04 — M0-T45 Run 001: Ghost face + Act 1 teaching-as-gameplay — Accepted (task continues)
+Codex run 001 delivered the redesigned Act 1: pure `Act1TeachingDemoData` (3 scripted intro failures,
+per-intent reply lines keyed to real sample-data intent ids, 4 unseen test messages whose
+relatedCardIds Claude verified against `Act1IntentClassificationSampleData` — exact match) +
+`Act1GhostGeneralizationEngine` (deterministic plurality-of-related-cards rule; tie/unassigned/
+unlabelled-pile → Confused; misleading-card reporting) + 4 EditMode tests
+(correct/wrong-majority/tie/unlabelled); shared `GhostAvatar` (GhostMood, programmatic GhostFaceView:
+neutral/happy/confused/sad, built-in sprites only); Act 1 rebuilt as Intro → Build (free piles +
+purpose-label chips, new LabelDragView/TeachingDropTarget) → Teach/Demo (Ghost answers unseen visitors
+from the player's piles, wrong answers highlight misleading cards, revise-and-reteach) → Complete.
+Completion requires `IntentClassificationValidator` correct AND all demo messages correct (validator
+stays the deterministic authority; attempt logging kept). Claude review: scope clean (guards on
+validator/session/sample data, Act 2/3, Fundamentals, Shell, Backend, ProjectSettings, Packages all
+empty; the 3 dirty scenes are pre-existing shelved side-effects), run log honest (dotnet builds 0
+errors; dotnet test cannot see Unity tests — recorded, not claimed). User Play Mode verdict:
+"玩法比之前好很多" — ACCEPTED with known UX debt deferred to Run 003: no upfront Lily how-to-play
+beat, objective not persistently visible. Run 002 (Act 2 errand/token-slot redesign) must include the
+how-to intro + persistent objective strip from the start. Residual: run EditMode Test Runner once in
+the Editor for the new engine tests. M0-T45 remains the active task.
+
 ---
 
 ## Entry Template
