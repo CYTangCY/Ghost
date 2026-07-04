@@ -15,12 +15,14 @@
 > workstream is **IBM course content coverage** (section below): coverage map (M0-T34 ✓) →
 > fundamentals overview in the shell (M0-T35 ✓) → per-act teaching. **Direction revision
 > (2026-07-03, user):** the M0-T36/T37 text-layer teaching passes were rejected as the primary
-> method ("teaching must BECOME the game") — superseded by **M0-T45 (ACTIVE): Acts 1–2
-> teaching-as-gameplay redesign** (free-cluster + label piles + Ghost generalization demo; token →
-> action-card slots + errand consequences; shared Ghost expression face; validators unchanged).
-> M0-T38 (Act 3 teaching text) is reduced/absorbed — Act 3 already teaches via test-case
-> consequences. Then planning mini-level (M0-T39) → Acts 4–8 (M0-T40–T44), scope-checked against
-> the deadline.
+> method ("teaching must BECOME the game") — superseded by **M0-T45: Acts 1–2 teaching-as-gameplay
+> redesign — DONE 2026-07-04** (free-cluster + label piles + Ghost generalization demo; token →
+> action-card slots + errand consequences; shared Ghost expression face; floating Lily windows;
+> generated Lily portrait; validators unchanged; user-accepted after iterative Play Mode runs
+> 001–005). M0-T38 (Act 3 teaching text) is reduced/absorbed — Act 3 already teaches via test-case
+> consequences. **ACTIVE: M0-T39 planning mini-level (teaching-as-gameplay).** Then M0-T40 (Act 4
+> confidence/fallback — delivers the guaranteed-minimum slider mechanic) + an early WebGL build smoke
+> test; Acts 5–8 ship as design mappings if the early-August writing window arrives first.
 >
 > **Delivery constraint (user, 2026-07-03): dissertation deadline ≈ early August 2026.** Reserve the
 > final 1.5–2 weeks for writing; re-assess remaining scope after M0-T38. If time runs short, Acts 5–7

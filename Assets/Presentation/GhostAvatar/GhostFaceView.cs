@@ -13,6 +13,8 @@ namespace Ghost.Presentation.GhostAvatar
         private Text moodMarkText;
         private RectTransform leftEyeRect;
         private RectTransform rightEyeRect;
+        private static Texture2D generatedSpriteTexture;
+        private static Sprite generatedSprite;
 
         private void Awake()
         {
@@ -183,10 +185,25 @@ namespace Ghost.Presentation.GhostAvatar
 
         private static Sprite GetBuiltinSprite()
         {
-            var sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/UISprite.psd");
-            return sprite != null
-                ? sprite
-                : Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
+            if (generatedSprite != null)
+            {
+                return generatedSprite;
+            }
+
+            generatedSpriteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false)
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            generatedSpriteTexture.SetPixel(0, 0, Color.white);
+            generatedSpriteTexture.Apply(false, false);
+
+            generatedSprite = Sprite.Create(
+                generatedSpriteTexture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f),
+                1f);
+            generatedSprite.hideFlags = HideFlags.HideAndDontSave;
+            return generatedSprite;
         }
 
         private static Font GetBuiltinFont()

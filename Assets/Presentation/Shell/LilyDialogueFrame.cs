@@ -1,3 +1,4 @@
+using Ghost.Presentation.Characters;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -74,7 +75,7 @@ namespace Ghost.Presentation.Shell
                 return ghostPortrait;
             }
 
-            return lilyPortrait;
+            return lilyPortrait != null ? lilyPortrait : LilyPixelPortraitFactory.GetPortrait();
         }
     }
 }

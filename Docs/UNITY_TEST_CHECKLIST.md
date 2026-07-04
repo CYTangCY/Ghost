@@ -1634,3 +1634,213 @@ No manual Inspector setup is required if the scene is generated through
 `Act1IntentClassificationStaticPresenter` roots/templates, and the presenter creates the conversation
 panel, shared Ghost face, label chips, free piles, drop targets, Teach/Revise buttons, and feedback at
 runtime.
+
+---
+
+## M0-T45 Run 002: Act 2 Ghost's Errand Redesign
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Scripts/Puzzles/EntityExtraction/Act2ErrandDemoData.cs`
+   - `Assets/Scripts/Puzzles/EntityExtraction/Act2ErrandOutcomeEngine.cs`
+   - `Assets/Tests/EditMode/Act2ErrandOutcomeEngineTests.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionInteractionController.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityTokenDragView.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntitySlotDropTarget.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityTokenReturnDropTarget.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Editor/Act2EntityExtractionPrototypeSceneBuilder.cs`
+3. Confirm there are no Console compile errors.
+
+### EditMode Test Check
+
+1. Open Unity Test Runner.
+2. Run all existing EditMode tests plus `Act2ErrandOutcomeEngineTests`.
+3. Confirm all-correct errand spans succeed.
+4. Confirm missing WHEN and wrong WHAT return their authored failure outcomes.
+5. Confirm `laboratory` tagged as room succeeds and displays `laboratory -> lab room` resolution data.
+
+### Scene Refresh Check
+
+1. Select `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+2. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity`.
+3. Confirm the scene was generated through the builder, not by hand-editing scene YAML.
+
+### Play Mode Teaching Check
+
+1. Open `Assets/Scenes/Act2EntityExtractionPrototype.unity` directly, or enter it from the Game Shell.
+2. Set the Game view to 1920x1080 and enter Play Mode.
+3. Confirm the first visible interaction is Lily's short how-this-level-works beat with one
+   `Watch Ghost fail` button.
+4. Confirm the persistent objective strip is always visible and updates across onboarding, intro
+   failure, fill, run, and completion phases.
+5. Click `Watch Ghost fail` and confirm the conversation panel shows the current visitor note,
+   Ghost's authored wrong errand outcome, and a sad Ghost face.
+6. Confirm the message first appears as one solid sentence.
+7. Click `Split` and confirm the sentence becomes word-token chips.
+8. Confirm only slots required by the current errand appear on Ghost's action card.
+9. Confirm custom slots (WHAT / WHERE) and the system slot (WHEN) have visibly different slot chrome.
+10. Drag a token chip into a slot and confirm the slot fills, the token remains traceable, and the
+    underlying span is created through the existing session.
+11. Click a token then click a slot and confirm click assignment also works.
+12. Drag an assigned slot token back to the token area, or re-drop the same token into the same slot,
+    and confirm the slot clears.
+13. Press `Go, Ghost!` with missing or wrong slots and confirm Ghost shows the authored cute failure,
+    slot states mark Correct / Missing / Wrong, and the face becomes sad or confused.
+14. Click `Revise card`, fix the slots, and press `Go, Ghost!` again.
+15. Confirm a correct errand shows the authored success outcome and happy Ghost face.
+16. Continue to the `laboratory` errand, drop `laboratory` into WHERE, and confirm the slot shows
+    `laboratory -> lab room`.
+17. Complete all errands and confirm completion appears only after all errands validate through the
+    existing `EntityExtractionValidator`.
+18. Confirm the full Act 2 screen fits inside 1920x1080: title, objective strip, Lily note,
+    conversation panel, token area, action card, and bottom buttons are visible without cropping.
+19. Confirm there is no M0-T37 four-line success-teaching text replacing the errand outcome.
+20. Confirm there are no Console errors.
+
+### Scope Check
+
+1. Confirm existing `EntityExtractionValidator`, `EntityExtractionSession`,
+   `Act2EntityExtractionSampleData`, answer keys, span boundaries, and existing tests are unchanged.
+2. Confirm Act 1, Act 3, Fundamentals, Shell, Banter, Backend, ProjectSettings, Packages,
+   Build Settings, and existing `.meta` files are unchanged by this run.
+3. Confirm there is no quiz, LLM scoring, backend scoring change, external art asset, audio, or new
+   Act structure.
+
+### Inspector Setup
+
+No manual Inspector setup is required if the scene is generated through
+`Ghost > Build Act 2 Entity Extraction Prototype Scene`. The builder creates the canvas and presenter
+root; the presenter creates the onboarding panel, objective strip, shared Ghost face, token chips,
+drop targets, action-card slots, `Go, Ghost!`, revise, next-errand, and completion controls at
+runtime.
+
+---
+
+## M0-T45 Run 003: Play Mode Feedback Fixes
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Common/FloatingWindowDragHandle.cs`
+   - `Assets/Presentation/GhostAvatar/GhostFaceView.cs`
+   - `Assets/Presentation/Banter/LilyChatWindow.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationStaticPresenter.cs`
+3. Confirm there are no Console compile errors.
+
+### Ghost Face Console Check
+
+1. Open Act 1 or Act 2 in Play Mode.
+2. Confirm the shared Ghost face renders normally.
+3. Confirm the Console no longer logs missing `UI/Skin/UISprite.psd` or `UI/Skin/Knob.psd` resource errors.
+
+### Floating Lily Chat Check
+
+1. Enter any act that shows the ambient banter `Ask Lily` button.
+2. Click `Ask Lily`.
+3. Confirm the Lily chat opens near the right side of the Game view.
+4. Drag the chat header to another area of the screen.
+5. Confirm the window stays inside the Game view and no longer permanently blocks the puzzle area.
+6. Close the chat and confirm ambient banter resumes.
+
+### Act 1 Completion Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity` directly, or enter Act 1 from the Game Shell.
+2. Complete the level by building the three correct labelled training piles and teaching Ghost.
+3. Confirm the completion state shows a visible `Complete Act` button.
+4. Click `Complete Act`.
+5. Confirm the Game Shell loads and plays/handles the Act 1 debrief through the existing Shell flow.
+
+### Scope Check
+
+1. Confirm existing intent/entity validators, sessions, sample data, and answer keys are unchanged.
+2. Confirm ProjectSettings, Packages, Backend, Fundamentals, Act 3, and Build Settings are unchanged by this run.
+3. Confirm no quiz, LLM scoring, backend scoring change, external art asset, audio, or new Act structure was added.
+
+---
+
+## M0-T45 Run 004: Retry / Floating Banter / Lily Pixel Portrait
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Characters/LilyPixelPortraitFactory.cs`
+   - `Assets/Presentation/Banter/AmbientBanterHook.cs`
+   - `Assets/Presentation/Banter/AmbientBanterPanel.cs`
+   - `Assets/Presentation/Shell/LilyDialogueFrame.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionInteractionController.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityExtractionStaticPresenter.cs`
+3. Confirm there are no Console compile errors.
+
+### Act 2 Retry Check
+
+1. Open Act 2 in Play Mode and reach the token/slot fill phase.
+2. Put a wrong token into WHAT, WHERE, or WHEN, or leave a required slot empty.
+3. Press `Go, Ghost!`.
+4. Confirm Ghost shows the authored failure outcome and the relevant slot result remains visible.
+5. Confirm the slots and token chips are immediately editable again without needing a separate `Revise card` button.
+6. Confirm the action button reads `Try again`.
+7. Fix the slot and press `Try again`.
+8. Confirm a correct errand advances with `Next errand` / `Complete` as before.
+
+### Floating Ambient Banter Check
+
+1. Enter Act 1, Act 2, or Act 3 in Play Mode.
+2. Confirm the normal Lily/Ghost ambient banter panel appears as a floating window near the bottom or side.
+3. Drag the panel by its background/portrait/text area and confirm it moves inside the Game view.
+4. Confirm the panel no longer permanently covers bottom puzzle controls.
+5. Click `Ask Lily` and confirm the separate Lily chat still opens.
+6. Close Lily chat and confirm ambient banter resumes.
+
+### Lily Pixel Portrait Check
+
+1. Open the Game Shell and trigger a Lily dialogue line.
+2. Confirm the portrait area shows Lily's generated pixel portrait instead of the text-only `Lily` placeholder.
+3. Enter any act with ambient banter and wait for a Lily line.
+4. Confirm the ambient banter portrait also shows the generated Lily pixel portrait.
+
+### Scope Check
+
+1. Confirm existing intent/entity validators, sessions, sample data, and answer keys are unchanged.
+2. Confirm ProjectSettings, Packages, Backend, Fundamentals, Act 3 logic, and Build Settings are unchanged by this run.
+3. Confirm the Lily portrait is an original generated pixel sprite and no external art asset was imported.
+
+---
+
+## M0-T45 Run 005: Drag Preview Cleanup / Lily Style Correction
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project.
+2. Wait for Unity to import and compile:
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityTokenDragView.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntitySlotDropTarget.cs`
+   - `Assets/Presentation/Act2EntityExtraction/Act2EntityTokenReturnDropTarget.cs`
+   - `Assets/Presentation/Characters/LilyPixelPortraitFactory.cs`
+3. Confirm there are no Console compile errors.
+
+### Act 2 Drag Preview Cleanup Check
+
+1. Open Act 2 in Play Mode and reach the token/slot fill phase.
+2. Drag a token over WHAT / WHERE / WHEN, then drop it into a slot.
+3. Confirm the temporary yellow drag preview disappears immediately after drop.
+4. Drag several different tokens quickly across the action card.
+5. Confirm no old preview boxes remain stuck in Ghost's action card or token area.
+6. Drag an assigned token back to the token area and confirm the preview disappears there too.
+
+### Lily Style Check
+
+1. Open the Game Shell and show a Lily dialogue line.
+2. Confirm Lily's generated pixel portrait has gold short hair and glasses.
+3. Confirm the visible outfit reads as blue suit jacket, white shirt, black long pants, and black shoes.
+4. Enter any act with ambient banter and confirm the same Lily portrait appears there.
+
+### Scope Check
+
+1. Confirm existing validators, sessions, sample data, and answer keys are unchanged.
+2. Confirm no external art asset was imported.
+3. Confirm ProjectSettings, Packages, Backend, Fundamentals, Act 3 logic, and Build Settings are unchanged by this run.

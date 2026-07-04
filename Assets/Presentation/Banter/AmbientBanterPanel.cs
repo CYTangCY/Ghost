@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Ghost.Presentation.Characters;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -179,7 +180,7 @@ namespace Ghost.Presentation.Banter
                 return ghostPortrait;
             }
 
-            return lilyPortrait;
+            return lilyPortrait != null ? lilyPortrait : LilyPixelPortraitFactory.GetPortrait();
         }
 
         public void Configure(

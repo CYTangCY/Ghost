@@ -344,6 +344,20 @@ different wordings to one room entity, and the word chips are tokens that become
 inside an Act 1 intent and later slots. The deterministic validator, session, sample data, answer keys,
 and span-tagging mechanic remain unchanged.
 
+### M0-T45 Run 002 Teaching-as-Gameplay Redesign Note
+
+The M0-T37 text-layer approach is superseded as the primary Act 2 teaching method. Act 2 is redesigned
+as `Ghost's Errand`: Lily first gives a short how-this-level-works beat, then the player watches Ghost
+fail an authored errand, presses `Split` to turn the message into word-token chips, drags or clicks
+tokens into Ghost's typed action-card slots, and presses `Go, Ghost!` to see the errand succeed or fail
+from those slots. Slots are derived from the existing sample message entity types: `object` becomes
+WHAT, `room` becomes WHERE, and `time` becomes WHEN. WHAT and WHERE use custom lab vocabulary chrome;
+WHEN uses system entity chrome. Each errand outcome is authored static data, but correctness still
+comes from the existing `EntityExtractionSession` and `EntityExtractionValidator`. The `lab` /
+`laboratory` synonym beat is shown through slot resolution text such as `laboratory -> lab room`.
+Ghost's shared face changes mood for intro failures, slot mistakes, and successful errands, so the
+learning content is visible as Ghost's behaviour rather than a success lecture.
+
 ---
 
 ## Act *: Supplementary NLP Pipeline (revised: Act 7 — NLP Pipeline Lab)

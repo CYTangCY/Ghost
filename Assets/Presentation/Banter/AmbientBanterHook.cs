@@ -1,4 +1,5 @@
 using System.Collections;
+using Ghost.Presentation.Common;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -99,38 +100,17 @@ namespace Ghost.Presentation.Banter
 
         private static BanterPlacement ResolvePlacement(string sceneName, string actId)
         {
-            if (actId == GhostNarrativeState.Act3Id)
-            {
-                var sidePanel = FindRectTransform("Goal Test List");
-                if (sidePanel != null)
-                {
-                    return BanterPlacement.Layout(sidePanel, BanterPanelStyle.Act3Guide());
-                }
-            }
-
-            if (actId == GhostNarrativeState.Act1Id || actId == GhostNarrativeState.Act2Id)
-            {
-                var validationRow = FindRectTransform("Validation Controls");
-                if (validationRow != null)
-                {
-                    return BanterPlacement.Layout(
-                        validationRow,
-                        actId == GhostNarrativeState.Act1Id
-                            ? BanterPanelStyle.Act1Validation()
-                            : BanterPanelStyle.Act2Validation());
-                }
-            }
-
             var canvas = FindSceneCanvas();
             if (canvas == null)
             {
                 canvas = CreateFallbackCanvas();
             }
 
-            return BanterPlacement.Absolute(canvas.transform, CreateFallbackRect(sceneName), BanterPanelStyle.Fallback());
+            var style = BanterPanelStyle.Floating();
+            return BanterPlacement.Absolute(canvas.transform, CreateFloatingRect(sceneName, style), style);
         }
 
-        private static BanterRect CreateFallbackRect(string sceneName)
+        private static BanterRect CreateFloatingRect(string sceneName, BanterPanelStyle style)
         {
             if (sceneName == ShellSceneNames.Act3SceneName)
             {
@@ -139,15 +119,15 @@ namespace Ghost.Presentation.Banter
                     new Vector2(1f, 0.5f),
                     new Vector2(1f, 0.5f),
                     new Vector2(-28f, -250f),
-                    BanterPanelStyle.Fallback().Size);
+                    style.Size);
             }
 
             return new BanterRect(
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(0f, 22f),
-                BanterPanelStyle.Fallback().Size);
+                new Vector2(0f, 28f),
+                style.Size);
         }
 
         private static AmbientBanterPanel CreatePanel(BanterPlacement placement, string actId)
@@ -177,7 +157,10 @@ namespace Ghost.Presentation.Banter
 
             var image = panelRoot.AddComponent<Image>();
             image.color = new Color(1f, 0.98f, 0.91f, 0.94f);
-            image.raycastTarget = false;
+            image.raycastTarget = true;
+
+            var dragHandle = panelRoot.AddComponent<FloatingWindowDragHandle>();
+            dragHandle.Configure(rect);
 
             var outline = panelRoot.AddComponent<Outline>();
             outline.effectColor = new Color(0.62f, 0.56f, 0.78f, 0.72f);
@@ -378,7 +361,7 @@ namespace Ghost.Presentation.Banter
                 return mainCanvas;
             }
 
-            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude);
             foreach (var canvas in canvases)
             {
                 if (canvas != null &&
@@ -422,7 +405,7 @@ namespace Ghost.Presentation.Banter
 
         private static void EnsureEventSystem()
         {
-            if (Object.FindFirstObjectByType<EventSystem>() != null)
+            if (Object.FindAnyObjectByType<EventSystem>() != null)
             {
                 return;
             }
@@ -605,6 +588,26 @@ namespace Ghost.Presentation.Banter
                     14,
                     72f,
                     96f,
+                    3f,
+                    78f,
+                    34f,
+                    12);
+            }
+
+            public static BanterPanelStyle Floating()
+            {
+                return new BanterPanelStyle(
+                    new Vector2(560f, 96f),
+                    new RectOffset(12, 10, 10, 10),
+                    10f,
+                    1f,
+                    58f,
+                    13,
+                    15,
+                    22f,
+                    14,
+                    44f,
+                    74f,
                     3f,
                     78f,
                     34f,

@@ -1260,6 +1260,259 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T45 Run 002: Act 2 Ghost's Errand Redesign
+
+This section supersedes the older M0-T37 Act 2 span-teaching presentation notes. The pure
+`EntityExtractionSession`, `EntityExtractionValidator`, and `Act2EntityExtractionSampleData` scripts
+remain unchanged; the new scripts below turn those same spans into an errand consequence loop.
+
+### Script Name
+
+Act2ErrandDemoData.cs
+
+### Purpose
+
+Defines authored static Act 2 errand data beside the existing entity-extraction sample messages. Each
+errand references an existing sample message, derives its needed action-card slots from that message's
+expected entity types, and supplies intro failure, success, and per-slot missing/wrong outcome lines.
+It also defines the `lab` / `laboratory` synonym resolution display data.
+
+### Attached GameObject
+
+None. This is pure C# runtime data and should not be attached to a GameObject.
+
+### Runtime Role
+
+Created by the Act 2 presentation controller when a new errand loop starts.
+
+### Important Methods
+
+- `CreateErrands()`: returns the three authored errands from the existing Act 2 sample messages.
+- `CreateSlotsForMessage(...)`: maps `object` to WHAT, `room` to WHERE, and `time` to WHEN.
+- `CreateSynonymResolutions()`: returns the room synonym display mapping to `lab room`.
+
+### Unity Test
+
+Covered by `Act2ErrandOutcomeEngineTests.cs`; also verify manually through the Act 2 scene.
+
+---
+
+### Script Name
+
+Act2ErrandOutcomeEngine.cs
+
+### Purpose
+
+Pure deterministic engine that evaluates Ghost's current errand action-card spans. It compares the
+player's `EntitySpan` list against the current errand's expected spans using the existing
+`EntityExtractionValidator`, then returns per-slot Correct / Missing / Wrong states, the authored
+outcome line, and a pure Ghost mood enum for the presenter to map into `GhostFaceView`.
+
+### Attached GameObject
+
+None. This is pure C# logic and should not be attached to a GameObject.
+
+### Runtime Role
+
+Called by `Act2EntityExtractionInteractionController.RunErrand()` after the player presses
+`Go, Ghost!`.
+
+### Important Methods
+
+- `Evaluate(...)`: validates the submitted spans, creates slot results, chooses the outcome line, and
+  marks success only when every slot is correct and the existing validator passes.
+
+### Failure Cases
+
+Missing submitted spans return Missing slot states. Wrong boundaries, wrong token choices, duplicate
+or extra spans remain incorrect through the validator semantics.
+
+### Unity Test
+
+Run `Act2ErrandOutcomeEngineTests` in Unity EditMode Test Runner.
+
+---
+
+### Script Name
+
+Act2EntityExtractionInteractionController.cs
+
+### Purpose
+
+Owns the current Act 2 errand state machine: onboarding, intro failure, token fill, run outcome, and
+completion. It keeps one `EntityExtractionSession` per errand, stores token-to-slot assignments, and
+uses only session span additions/removals to mutate the puzzle state.
+
+### Attached GameObject
+
+None. This is a plain C# presentation controller created by
+`Act2EntityExtractionStaticPresenter`.
+
+### Runtime Role
+
+Receives UI events from token clicks/drags, slot drops, Split, `Go, Ghost!`, revise, and next-errand
+buttons. It raises `StateChanged` so the presenter can redraw the current phase.
+
+### Important Methods
+
+- `BeginAfterOnboarding()`: dismisses Lily's how-to beat and shows Ghost's first authored errand
+  failure.
+- `SplitMessage()`: changes the solid sentence into token chips.
+- `AssignTokenToSlot(...)`: converts a token into an `EntitySpan` with the slot's `EntityType` and
+  adds it through `EntityExtractionSession`.
+- `RemoveTokenAssignment(...)`: removes an assigned span through the session.
+- `RunErrand()`: evaluates via `Act2ErrandOutcomeEngine`, posts a best-effort attempt log, and asks
+  Lily for a non-spoiler hint on failure.
+- `ContinueAfterSuccess()`: advances to the next errand or the completion state.
+
+### Unity Test
+
+In Play Mode, confirm the onboarding, objective strip, Split, token-to-slot assignment, untagging,
+errand outcomes, synonym resolution, and completion flow.
+
+---
+
+### Script Name
+
+Act2EntityExtractionStaticPresenter.cs
+
+### Purpose
+
+Renders the current Act 2 `Ghost's Errand` UI: Lily onboarding, persistent objective strip,
+conversation panel with shared Ghost face, solid sentence / token grid, and Ghost's action card with
+typed WHAT / WHERE / WHEN slots. It does not decide correctness; it displays controller state and
+forwards input.
+
+### Attached GameObject
+
+Attach to the root UI object in `Assets/Scenes/Act2EntityExtractionPrototype.unity`, normally created
+through `Ghost > Build Act 2 Entity Extraction Prototype Scene`.
+
+### Runtime Role
+
+On `Start`, creates the controller and redraws the entire UI whenever the controller phase or slot
+state changes.
+
+### Important Methods
+
+- `RenderSampleData()`: creates the controller and initial onboarding UI.
+- `RenderState()`: rebuilds the UI for the current phase.
+- `CreateObjectiveStrip()`: displays the always-visible current objective.
+- `CreateMessagePanel()`: shows either the solid sentence or draggable token chips.
+- `CreateActionCardPanel()` / `CreateSlotView(...)`: shows typed slots, assignment chips, slot
+  state colours, and synonym resolution text.
+
+### Unity Test
+
+Open the Act 2 scene at 1920x1080 and confirm all visible panels fit without cropping, especially the
+bottom action controls.
+
+---
+
+### Script Name
+
+Act2EntityTokenDragView.cs
+
+### Purpose
+
+Makes an Act 2 token chip draggable and creates a temporary drag preview.
+
+### Attached GameObject
+
+Added at runtime by `Act2EntityExtractionStaticPresenter` to token chips and assigned slot chips.
+
+### Runtime Role
+
+Forwards drag metadata through Unity's event system so slot and return drop targets can identify the
+dragged token's chip key.
+
+### Unity Test
+
+Drag a token chip into a slot and confirm a preview follows the pointer and disappears after drop.
+
+---
+
+### Script Name
+
+Act2EntitySlotDropTarget.cs
+
+### Purpose
+
+Receives a dragged token chip over one action-card slot and forwards the token chip key plus target
+slot id to the presenter/controller.
+
+### Attached GameObject
+
+Added at runtime to each slot view.
+
+### Unity Test
+
+Drop a token into WHAT, WHERE, or WHEN and confirm the slot fills and creates the corresponding span.
+
+---
+
+### Script Name
+
+Act2EntityTokenReturnDropTarget.cs
+
+### Purpose
+
+Receives an assigned token dragged back to the message-token area and forwards it for untagging.
+
+### Attached GameObject
+
+Added at runtime to the token grid area.
+
+### Unity Test
+
+After filling a slot, drag its assigned token back into the token area and confirm the slot clears.
+
+---
+
+### Script Name
+
+Act2EntityExtractionPrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor-only scene builder for the redesigned Act 2 errand prototype. It creates the camera, canvas,
+event system, and root presenter object, then lets `Act2EntityExtractionStaticPresenter` render the
+current layout.
+
+### Attached GameObject
+
+None. This script lives in an `Editor` folder and runs from the Unity Editor menu.
+
+### Runtime Role
+
+No runtime role.
+
+### Unity Test
+
+Run `Ghost > Build Act 2 Entity Extraction Prototype Scene`, open the generated scene, and enter Play
+Mode.
+
+---
+
+### Script Name
+
+Act2ErrandOutcomeEngineTests.cs
+
+### Purpose
+
+EditMode tests for the pure Act 2 errand outcome engine.
+
+### Important Methods
+
+NUnit tests cover all-correct success, missing WHEN failure, wrong WHAT failure, and successful
+`laboratory -> lab room` synonym resolution.
+
+### Unity Test
+
+Run the EditMode tests in Unity Test Runner.
+
+---
+
 ## M0-T45 Run 001 Act 1 Teaching-as-Gameplay Redesign
 
 ### Script Name
@@ -1311,17 +1564,18 @@ GhostMood.cs / GhostFaceView.cs
 ### Purpose
 
 Defines a shared programmatic Ghost face with `Neutral`, `Happy`, `Confused`, and `Sad` moods. The view
-creates its face from Unity UI objects and built-in resources, with no external art assets.
+creates its face from Unity UI objects and a runtime-generated sprite, with no external art assets.
 
 ### Attached GameObject
 
-`GhostFaceView` is attached to a runtime-created `Ghost Face` UI object inside the Act 1 conversation
-panel. Future acts can reuse it.
+`GhostFaceView` is attached to runtime-created `Ghost Face` UI objects inside the Act 1 and Act 2
+conversation/consequence panels. Future acts can reuse it.
 
 ### Runtime Role
 
 `SetMood(GhostMood)` changes the face colour, eyes, mouth, and small confused mark so Ghost visibly
-reacts to intro failures and teaching-demo outcomes.
+reacts to intro failures and teaching-demo outcomes. The UI sprite is generated in memory rather than
+loaded from Unity's old `UI/Skin/*.psd` built-in resources, avoiding missing-resource Console warnings.
 
 ### Unity Test
 
@@ -1439,6 +1693,196 @@ hand-edited.
 
 Run `Ghost > Build Act 1 Intent Classification Prototype Scene`, open the generated scene, enter Play
 Mode, and run the M0-T45 checklist.
+
+---
+
+## M0-T45 Run 003 Play Mode Feedback Fixes
+
+### Script Name
+
+FloatingWindowDragHandle.cs
+
+### Purpose
+
+Reusable UGUI drag handle for floating panels such as Lily chat or future hint windows. It keeps the
+window inside its parent canvas so the player can move support UI away from the puzzle without losing
+it off-screen.
+
+### Runtime Role
+
+Attach this component to a window header and call `Configure(...)` with the target window
+`RectTransform`. During drag, it converts screen pointer movement into parent-local movement and clamps
+the target window inside the canvas bounds.
+
+### Unity Test
+
+Open Lily chat in Play Mode, drag the chat header, and confirm the window moves freely while staying
+inside the Game view.
+
+---
+
+### Script Name
+
+LilyChatWindow.cs
+
+### Purpose
+
+Runtime-created Lily chat window. M0-T45 Run 003 changes it from a fixed right-side overlay into a
+floating draggable window by attaching `FloatingWindowDragHandle` to the chat header.
+
+### Runtime Role
+
+The window still pauses ambient banter, sends chat turns to `/chat`, and falls back to static Lily
+chat when backend/LLM calls fail. Its initial position is near the right side of the screen, but the
+player can now drag the header to uncover puzzle content.
+
+### Unity Test
+
+In any act, click `Ask Lily`, confirm the chat opens near the right side, drag the header to another
+part of the screen, type/close as before, and confirm ambient banter resumes.
+
+---
+
+### Script Name
+
+Act1IntentClassificationStaticPresenter.cs
+
+### Purpose
+
+M0-T45 Run 003 adds a visible `Complete Act` control for the Act 1 completion state. This resolves the
+Play Mode issue where the player could correctly train Ghost but had no obvious way to finish.
+
+### Runtime Role
+
+When `Act1IntentClassificationInteractionController` reaches `Complete`, the presenter shows
+`Complete Act`, hides Teach/Revise, sets the pending Act 1 debrief on `GhostNarrativeState`, and loads
+the Game Shell scene. The Shell's existing debrief flow marks Act 1 complete.
+
+### Unity Test
+
+Complete Act 1 with the correct labelled piles, confirm `Complete Act` appears, click it, and confirm
+the Game Shell debrief/hub flow starts.
+
+---
+
+## M0-T45 Run 004 Retry / Floating Banter / Lily Pixel Portrait
+
+### Script Name
+
+Act2EntityExtractionInteractionController.cs / Act2EntityExtractionStaticPresenter.cs
+
+### Purpose
+
+M0-T45 Run 004 fixes the Act 2 Play Mode issue where a failed errand felt unretryable. A failed
+`Go, Ghost!` run now keeps the authored failure outcome and slot result colours visible, but returns
+the level to the editable Fill phase immediately.
+
+### Runtime Role
+
+After an incorrect errand run, slots and token chips remain interactive and the action button changes
+to `Try again`. Correct runs still enter the success Run phase and use `Next errand` / `Complete`.
+Correctness still comes from `EntityExtractionValidator` through the existing outcome engine.
+
+### Unity Test
+
+In Act 2, intentionally put a wrong or missing token in a slot, press `Go, Ghost!`, confirm the wrong
+slot result stays visible, edit the slot immediately without pressing a separate revise button, and
+press `Try again`.
+
+---
+
+### Script Name
+
+AmbientBanterHook.cs / AmbientBanterPanel.cs
+
+### Purpose
+
+The normal ambient Lily/Ghost dialogue panel is now a floating draggable window instead of a fixed
+layout child of the bottom validation area. This prevents it from permanently blocking act controls.
+
+### Runtime Role
+
+`AmbientBanterHook` creates the banter panel on the scene canvas with `FloatingWindowDragHandle`
+attached to the panel root. The panel still cycles through `BanterData`, still opens Lily chat, and
+still pauses while chat is open. `AmbientBanterPanel` now uses the generated Lily pixel portrait when
+no explicit Lily sprite is assigned.
+
+### Unity Test
+
+Enter an act, confirm the ambient banter panel appears near the bottom, drag the panel away from puzzle
+controls, click `Ask Lily`, close chat, and confirm ambient cycling resumes.
+
+---
+
+### Script Name
+
+LilyPixelPortraitFactory.cs
+
+### Purpose
+
+Creates a small original Lily pixel portrait at runtime. Run 004 introduced the generated fallback
+portrait; Run 005 updates the visual specification to the current user direction. It is a
+Ghost-project original portrait and does not use external art assets.
+
+### Runtime Role
+
+`LilyPixelPortraitFactory.GetPortrait()` lazily builds a 32x32 point-filtered `Texture2D`, converts it
+to a Sprite, and caches it. `AmbientBanterPanel` and `LilyDialogueFrame` use it when their serialized
+`lilyPortrait` sprite is empty.
+
+### Unity Test
+
+Open the Game Shell and any act with ambient banter; confirm Lily lines show a pixel portrait instead
+of the plain `Lily` placeholder label.
+
+---
+
+## M0-T45 Run 005 Drag Preview Cleanup / Lily Style Correction
+
+### Script Name
+
+Act2EntityTokenDragView.cs / Act2EntitySlotDropTarget.cs / Act2EntityTokenReturnDropTarget.cs
+
+### Purpose
+
+Fixes the Act 2 Play Mode issue where token drag preview boxes could remain stuck inside Ghost's
+action card after dragging. This happened because dropping a token can immediately re-render the Act 2
+presenter, destroying the dragged source object before Unity calls `OnEndDrag`.
+
+### Runtime Role
+
+`Act2EntityTokenDragView` now tracks all active drag previews globally. It clears old previews when a
+new drag starts, when a drag ends, when the source token is disabled/destroyed, and when slot/return
+drop targets receive a token. This keeps the preview visual separate from the actual slot assignment
+state.
+
+### Unity Test
+
+In Act 2 Play Mode, drag several tokens across WHAT/WHERE/WHEN and drop them on slots or back on the
+token area. Confirm no yellow preview boxes remain stuck after each drop or failed drag.
+
+---
+
+### Script Name
+
+LilyPixelPortraitFactory.cs
+
+### Purpose
+
+Updates Lily's generated pixel portrait to the current character direction: gold short hair, glasses,
+blue suit jacket, white shirt, black long pants, and black high heels. The portrait remains a runtime
+generated original asset.
+
+### Runtime Role
+
+`GetPortrait()` still lazily creates and caches a point-filtered 32x32 sprite. The pixel drawing now
+uses the corrected colour blocks and full-body chibi silhouette so the same fallback sprite is used by
+Shell and ambient banter Lily portraits.
+
+### Unity Test
+
+Open the Shell and an act with ambient banter; confirm Lily appears as a gold-short-haired pixel
+character with glasses, blue jacket, white shirt, black pants, and black shoes.
 
 ---
 

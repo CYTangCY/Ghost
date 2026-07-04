@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Ghost.Presentation.Backend;
+using Ghost.Presentation.Common;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -90,10 +91,10 @@ namespace Ghost.Presentation.Banter
             root.transform.SetParent(parent, false);
 
             var rect = root.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(-28f, 0f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(520f, 0f);
             rect.sizeDelta = new Vector2(560f, 520f);
 
             var image = root.AddComponent<Image>();
@@ -135,6 +136,13 @@ namespace Ghost.Presentation.Banter
             var headerLayoutElement = header.AddComponent<LayoutElement>();
             headerLayoutElement.minHeight = 42f;
             headerLayoutElement.preferredHeight = 42f;
+
+            var headerImage = header.AddComponent<Image>();
+            headerImage.color = new Color(1f, 1f, 1f, 0.01f);
+            headerImage.raycastTarget = true;
+
+            var dragHandle = header.AddComponent<FloatingWindowDragHandle>();
+            dragHandle.Configure(panelRoot);
 
             var layout = header.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 8f;
@@ -531,7 +539,7 @@ namespace Ghost.Presentation.Banter
 
         private static void EnsureEventSystem()
         {
-            if (Object.FindFirstObjectByType<EventSystem>() != null)
+            if (Object.FindAnyObjectByType<EventSystem>() != null)
             {
                 return;
             }

@@ -545,6 +545,27 @@ beat, objective not persistently visible. Run 002 (Act 2 errand/token-slot redes
 how-to intro + persistent objective strip from the start. Residual: run EditMode Test Runner once in
 the Editor for the new engine tests. M0-T45 remains the active task.
 
+### 2026-07-04 — M0-T45: Acts 1–2 teaching-as-gameplay + Ghost face — Completed
+Runs 002–005 completed the redesign and the user's iterative Play Mode feedback: run 002 rebuilt Act 2
+as the "Ghost's errand" loop (Lily onboarding + persistent objective strip; Split-into-tokens; drag
+tokens into typed WHAT/WHERE/WHEN slots via the same EntitySpan model; "Go, Ghost!" plays authored
+success/cute-failure outcomes; lab/laboratory synonym resolution; `Act2ErrandOutcomeEngine` +
+`Act2ErrandDemoData` + 4 EditMode tests — success AND per-slot states derive from
+`EntityExtractionValidator`); run 003 fixed missing `UI/Skin/*.psd` sprite errors, added the reusable
+`FloatingWindowDragHandle` (Lily chat draggable) and a clear Act 1 `Complete Act` path; run 004 added
+Act 2 retry after failed errands, made ambient banter a draggable floating panel, and added the first
+generated Lily pixel portrait; run 005 fixed stuck drag previews (global active-preview tracking) and
+corrected the portrait to the user's design (gold short hair, glasses, blue suit jacket, white shirt,
+black pants, black heels). Scope guards clean on every run; run logs honest (dotnet builds only; Unity
+"Not run" in-session). The user accepted after Play Mode ("這章也不錯") and explicitly authorized
+Claude to directly polish the Lily portrait as an exception: Claude rebuilt
+`LilyPixelPortraitFactory` from 32×32 FillRects to a 48×48 string-pixel map (iterated visually in a
+scratchpad render before porting; original art, black-framed glasses with visible eyes, gold bob,
+lapelled blue suit, heels), `dotnet build` clean. Archive:
+`Docs/completed_tasks/M0-T45_acts12_teaching_as_gameplay.md`. Next: M0-T39 (planning mini-level,
+teaching-as-gameplay), then M0-T40 (Act 4 slider/fallback) + WebGL smoke test before the writing window
+(deadline ≈ early August).
+
 ---
 
 ## Entry Template

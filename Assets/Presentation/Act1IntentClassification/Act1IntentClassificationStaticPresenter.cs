@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Ghost.Presentation.GhostAvatar;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.IntentClassification;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Ghost.Presentation.Act1IntentClassification
@@ -66,6 +68,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         private RectTransform controlsRoot;
         private Button teachButton;
         private Button reviseButton;
+        private Button completeButton;
         private Text feedbackText;
 
         private static readonly string[] IntentIds =
@@ -570,6 +573,10 @@ namespace Ghost.Presentation.Act1IntentClassification
             reviseButton.onClick.RemoveAllListeners();
             reviseButton.onClick.AddListener(() => controller.ReturnToBuild());
 
+            completeButton = EnsureControlButton(controlsRoot, "Complete Act Button", "Complete Act", 142f);
+            completeButton.onClick.RemoveAllListeners();
+            completeButton.onClick.AddListener(CompleteActAndReturnToHub);
+
             feedbackText = EnsureFeedbackText(controlsRoot);
         }
 
@@ -588,6 +595,13 @@ namespace Ghost.Presentation.Act1IntentClassification
         {
             teachButton.gameObject.SetActive(controller.Phase == Act1TeachingPhase.Build);
             reviseButton.gameObject.SetActive(controller.Phase == Act1TeachingPhase.Demo);
+            completeButton.gameObject.SetActive(controller.Phase == Act1TeachingPhase.Complete);
+        }
+
+        private void CompleteActAndReturnToHub()
+        {
+            GhostNarrativeState.SetPendingDebriefAct(GhostNarrativeState.Act1Id);
+            SceneManager.LoadScene(ShellSceneNames.GameShellSceneName);
         }
 
         private GhostMood GetGhostMood()
@@ -1204,7 +1218,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private static void EnsureEventSystem()
         {
-            if (FindFirstObjectByType<EventSystem>() != null)
+            if (FindAnyObjectByType<EventSystem>() != null)
             {
                 return;
             }
