@@ -566,6 +566,46 @@ lapelled blue suit, heels), `dotnet build` clean. Archive:
 teaching-as-gameplay), then M0-T40 (Act 4 slider/fallback) + WebGL smoke test before the writing window
 (deadline ≈ early August).
 
+### 2026-07-04 — Ship-plan revision: complete 5-chapter game + Lily portrait v8 (planning + Claude edit)
+User direction: polish the existing three chapters, add a transition chapter and an ending chapter with
+a small ending animation (~5 chapters total, honouring the preliminary report's promises and covering
+as much of the IBM course as feasible), finish the system, and move the remaining breadth to Future
+Work. Recorded in ROADMAP: M0-T46 (ACTIVE — unify Acts 1/3 to the Act 2 standard: Lily onboarding
+beat + persistent objective strip; Act 3 additionally gets GhostFaceView reactions, clear retry, and a
+Complete Act path), M0-T47 (Chapter 4: lean confidence-slider + fallback/handoff transition level —
+covers IBM §1.2/§1.8, delivers the guaranteed-minimum slider mechanic; the shelved M0-T39 planning
+content folds its handoff idea here), M0-T48 (Chapter 5: "Repair Ghost's Voice" ending capstone, five
+components §1.3, + authored ending animation/credits), M0-T49 (system completeness: WebGL/desktop
+build smoke, EditMode suite green, doc cleanup, demo guide). Original Acts 5–7 + standalone planning
+level → Future Work as design mappings.
+
+### 2026-07-05 — Ship plan v2 (6 chapters) + Lily v9 + preliminary-report revision (planning + Claude edits)
+User revised the ship plan again: SIX chapters (Acts 1–3 polished + Ch4 confidence/fallback slider +
+Ch5 testing&debugging + Ch6 ending capstone with ending animation), honouring the preliminary report's
+guaranteed-minimum mechanics and maximising IBM coverage; ROADMAP updated (M0-T46 active → T47 Ch4 →
+T48 Ch5 [lean, reuses Act 3 simulator] → T49 Ch6 ending → T50 system pass; 2026-07-18 checkpoint: Ch5
+folds into Ch6 if slipping; Future Work = backend-action level, NLP lab, standalone planning level).
+Lily portrait v9 (Claude direct edit, authorized): taller round thin-frame lenses, 2×2 brown eyes with
+sparkle, merged blush row, tapered chin — user's reference image did NOT come through in chat; a
+precise pass is pending the re-attached image. `dotnet build` clean. Claude also revised
+`unorganized_data/first_report.tex` per `ghost_report_revision_summary.md` (all teacher points): title
+de-chatboted ("Ghost: A Narrative Puzzle Game for Teaching Chatbot and NLP Concepts"); intro rewritten
+to describe the actual game first; "Ghost Chatbot"→"Ghost", Lily = LLM tutor; 3 problems narrowed
+(chatbot-education gap restated per teacher's wording); RQ simplified to the supervisor's single
+question + 3 analysis areas (narrative check demoted to supporting evidence); defensive
+research-approach paragraph shortened; contributions downgraded to software artefact + design check;
+literature review restructured into 7 subsections with explicit says-X/helps-Y/lacks-Z/I-do-A
+judgments; AI-flavoured vocabulary replaced throughout per the word table; citation style unified to
+numbered \cite. References added (all web-verified, none invented): Okonkwo & Ade-Ibijola 2021;
+Wollny et al. 2021; Smutny & Schreiberova 2020; Labadze et al. 2023; Yusuf, Money & Daylamani-Zad
+2025 (ETR&D 73(2) 815–874); Ng, Chen & Chu 2024 (JCAL 40(5) 2049–2064); Wang et al. 2025 (JECR
+advance online, DOI 10.1177/07356331251321719). A candidate 2025 CAEAI LLM-in-education review was
+REJECTED because its author list could not be verified. Next: Codex implements M0-T46. Also, per user feedback ("太俗、眼鏡大框一點") Claude directly
+iterated the Lily portrait (v5–v8, rendered and reviewed each step in a scratchpad before porting):
+bigger rounded thin-frame black glasses with bright lens tint + 2×2 brown eyes with sparkle, cleaner
+hair, tapered waist, longer legs; `LilyPixelPortraitFactory` updated; `dotnet build` clean. Next:
+Codex implements M0-T46.
+
 ---
 
 ## Entry Template

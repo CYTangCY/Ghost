@@ -20,9 +20,21 @@
 > action-card slots + errand consequences; shared Ghost expression face; floating Lily windows;
 > generated Lily portrait; validators unchanged; user-accepted after iterative Play Mode runs
 > 001–005). M0-T38 (Act 3 teaching text) is reduced/absorbed — Act 3 already teaches via test-case
-> consequences. **ACTIVE: M0-T39 planning mini-level (teaching-as-gameplay).** Then M0-T40 (Act 4
-> confidence/fallback — delivers the guaranteed-minimum slider mechanic) + an early WebGL build smoke
-> test; Acts 5–8 ship as design mappings if the early-August writing window arrives first.
+> consequences. **Ship-plan revision v2 (user, 2026-07-04): a complete 6-CHAPTER game honouring the
+> preliminary report's promises and maximising IBM course coverage.** Chapters 1–3 = existing Acts
+> 1–3 unified to the Act 2 experience standard (**M0-T46, ACTIVE**: Lily onboarding beat +
+> persistent objective strip in Acts 1/3, Ghost face + retry + Complete Act in Act 3). Chapter 4
+> (M0-T47) = lean confidence/fallback level: threshold slider + fallback/handoff (IBM §1.2/§1.8;
+> delivers the guaranteed-minimum slider mechanic). Chapter 5 (M0-T48) = testing & debugging level
+> (IBM §1.10 preview/test/revise; lean — reuses the Act 3 simulator/test-case infrastructure).
+> Chapter 6 (M0-T49) = ending capstone "Repair Ghost's Voice" (five components, §1.3) + a short
+> authored ending animation and credits. Then M0-T50 system completeness (WebGL/desktop build smoke
+> test, EditMode suite green in the Editor, doc/mojibake cleanup, README/demo guide) before the
+> writing window (~2026-07-18 hard checkpoint: if slipping, Chapter 5 folds into Chapter 6 as a
+> test-before-restore beat). **Moved to Future Work:** original Act 6 backend-action level, Act 7
+> NLP pipeline lab (POS/sentiment/MT), the standalone M0-T39 planning mini-level (its handoff idea
+> folds into Chapter 4), and further LLM depth — retained as design mappings in
+> `Docs/IBM_COURSE_CONTENT.md` for the dissertation.
 >
 > **Delivery constraint (user, 2026-07-03): dissertation deadline ≈ early August 2026.** Reserve the
 > final 1.5–2 weeks for writing; re-assess remaining scope after M0-T38. If time runs short, Acts 5–7

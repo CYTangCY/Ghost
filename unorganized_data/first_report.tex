@@ -1,0 +1,322 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=1.5cm,bottom=1.5cm,left=1.5cm,right=1.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\titlespacing*{\subsection}{0pt}{8pt}{4pt}
+
+\begin{document}
+
+%% ============================================================
+%%  Cover page
+%% ============================================================
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\LARGE\bfseries Ghost: A Narrative Puzzle Game for\\[0.4em]
+Teaching Chatbot and NLP Concepts\par}
+\vspace{2cm}
+{\large Preliminary Project Report\par}
+\vspace{0.5cm}
+{\large 7CCSMPRJ Individual Project\par}
+\vspace{2cm}
+{\large Chao-Yang Tang\par}
+\vspace{0.5cm}
+{\large Department of Informatics\par}
+{\large King's College London\par}
+\vspace{0.5cm}
+{\large April 2026\par}
+\vfill
+\end{titlepage}
+
+%% ============================================================
+%%  1. Introduction
+%% ============================================================
+\section{Introduction}
+
+\subsection{What This Project Builds}
+
+This project builds \textit{Ghost}, a narrative puzzle game for teaching selected chatbot and NLP concepts from the IBM SkillsBuild course \textit{Build Your First Chatbot Using IBM watsonx}. In the game, the player helps Ghost, a small ghost character in a research lab who has lost its voice, learn how to communicate again. Each level turns one course concept into a puzzle. For example, the intent level asks the player to group visitor messages by purpose, and the entity level asks the player to mark the useful words in a sentence. When the player makes a wrong design choice, Ghost gives the wrong response or cannot understand the input, and the player can see why.
+
+The concepts covered come directly from the course: intent classification, entity extraction, dialog nodes, confidence and fallback, testing, and integration. A second character, Lily, is a researcher in the story and acts as an LLM tutor: she gives hints and short explanations, powered by a locally hosted large language model (IBM Granite via Ollama), but she never gives away puzzle answers and never decides whether a solution is correct. Correctness is always decided by deterministic checks written for each puzzle.
+
+The full design covers 24 levels in the Game Design Document (GDD). A playable prototype implementing one level per Act (8 levels) is the implementation target of this project.
+
+\subsection{Problem Statement}
+
+Three problems motivate this work.
+
+\textbf{Problem 1: The course explains concepts, but it does not always require design choices.}
+Concepts such as intent, entity, dialog node, and confidence score are mostly presented through videos, text, and multiple-choice questions. The learner rarely has to make a design choice and see its result. Research on learning with games suggests that mechanics which carry the learning content support deeper processing than formats where the learner only reads or watches \cite{mayer2019,sweller1988}.
+
+\textbf{Problem 2: Chatbot education research is large, but it mostly studies chatbots as tools, not as the subject.}
+Many studies use chatbots as tutors, FAQ assistants, or delivery channels in education \cite{okonkwo2021,wollny2021,smutny2020,labadze2023,winkler2018,perez2020}. Fewer works teach learners how to design a chatbot, and I found fewer still that turn chatbot and NLP concepts into playable game mechanics. That narrower gap is where this project sits.
+
+\textbf{Problem 3: Tutor and agent research helps design Lily, but it does not answer the main question here.}
+Work on pedagogical agents and AI tutors informs how Lily should behave \cite{moreno2001,kimbaylor2006,yusuf2025}. The main output of this project, however, is the puzzle game itself: the claim under test is that course concepts can become puzzles, not that an AI tutor improves learning.
+
+\subsection{Aim and Research Question}
+
+Aim: this project explores how selected chatbot and NLP concepts can be turned into playable puzzle mechanics.
+
+Research question:
+
+\begin{quote}
+\textbf{How can selected IBM SkillsBuild chatbot and NLP concepts be translated into playable puzzle mechanics in a narrative game prototype?}
+\end{quote}
+
+The question is answered through three analysis areas (Table~\ref{tab:evals}): (1) curriculum-to-puzzle mapping, (2) prototype implementation check, and (3) LLM tutor response check. A short design review of the story (whether Ghost's progress matches the concepts the player has completed) is used as supporting evidence only, not as a separate research question.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.2cm}p{5.5cm}p{4.3cm}}
+\toprule
+\textbf{Analysis area} & \textbf{Method} & \textbf{Evidence produced} \\
+\midrule
+Curriculum-to-puzzle mapping
+  & Mapping matrix from course learning objectives to levels; for each level, judge whether the puzzle action applies the concept or only displays it
+  & Concept-to-level matrix with written justification \\
+\addlinespace
+Prototype implementation check
+  & Play the implemented levels against a manual test checklist; deterministic validator tests
+  & Test results showing each mapped mechanic works in the prototype \\
+\addlinespace
+LLM tutor response check
+  & Fixed prompt bank (one per Act, three hint tiers; each prompt submitted three times); simple rubric
+  & Rubric scores per Act and tier; list of failure cases \\
+\bottomrule
+\end{tabular}
+\caption{Analysis areas, methods, and evidence.}
+\label{tab:evals}
+\end{table}
+
+\subsection{Research Approach and Scope}
+
+This report evaluates \textit{Ghost} as a working game prototype. The focus is whether selected chatbot and NLP concepts can be translated into playable puzzle mechanics and implemented in a working system. User-based learning evaluation is outside the scope of this preliminary report; it is future work. The project loosely follows a design-based approach: requirements come from the course content and the literature, the game is built, and the evaluation checks the built game against those requirements \cite{brown1992}.
+
+Scope summary: the full GDD specifies 24 levels; the prototype target is one level per Act (8 levels); Lily is an LLM tutor with hints only; puzzle correctness is decided by deterministic checks, never by the LLM; no user study is conducted in this phase.
+
+\subsection{Technical Specifications}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Game client:} Unity 6 (C\#), WebGL build target for local browser-based demonstration; single-player
+  \item \textbf{Puzzle mechanics:} Eight different puzzle types: drag-and-drop classification, span annotation, node assembly, slider calibration, flow diagram construction, multiple choice, form configuration, and ordered list
+  \item \textbf{Prototype scope:} A 24-level curriculum is fully specified in the GDD; a playable prototype implementing one complete level per Act (8 levels) will be developed for evaluation
+  \item \textbf{AI tutor:} IBM Granite via Ollama, accessed through a local Node.js proxy; constrained by a course-specific system prompt that forbids answer disclosure
+  \item \textbf{Backend:} Node.js with TypeScript; REST API used for progress synchronisation and attempt logging
+  \item \textbf{Database:} SQLite for prototype development and local evaluation
+  \item \textbf{Progress profile:} A local pseudonymous profile associates prototype progress and attempt logs with a test session
+  \item \textbf{Analytics:} Puzzle attempt logs and hint triggers are recorded for internal prototype validation
+\end{itemize}
+
+\subsection{Contribution}
+
+The main contribution is a software system: a 24-level design and an 8-level playable prototype that translate selected IBM SkillsBuild chatbot and NLP concepts into puzzle mechanics. The report also provides a design check showing how each prototype level maps to the intended concept.
+
+This project is scoped to the IBM SkillsBuild chatbot and NLP course. Whether the same approach fits other courses is future work, because different courses may need different puzzle types.
+
+%% ============================================================
+%%  2. Background and Literature Review
+%% ============================================================
+\section{Background and Literature Review}
+
+\subsection{Teaching Chatbot and NLP Concepts}
+
+The IBM SkillsBuild course teaches what a chatbot is, the difference between rule-based and AI-enabled chatbots, the components of a chatbot (user interface, NLP engine, dialogue management, response generation, backend integration), and the working concepts: intent, entity, dialog nodes, confidence, fallback, and testing. The course delivers these through videos, reading, and multiple-choice questions. The starting point of this project is that these concepts are design decisions, and a game can ask the player to actually make them.
+
+\subsection{Chatbots in Education: A Broad Field with a Different Focus}
+
+Chatbot education research is a large field. Okonkwo and Ade-Ibijola's systematic review covers 53 studies of chatbot applications in education \cite{okonkwo2021}; Wollny et al.\ review chatbots in education across roles such as tutoring and service support \cite{wollny2021}; Smutny and Schreiberova review educational chatbots on a messaging platform \cite{smutny2020}; and Labadze et al.\ review AI chatbots in education with a focus on student support \cite{labadze2023}. Earlier surveys by Winkler and S\"{o}llner \cite{winkler2018} and P\'{e}rez et al.\ \cite{perez2020} show the same pattern: chatbots appear as FAQ systems, delivery tools, or tutoring agents.
+
+These reviews help my project in two ways: they confirm that chatbot education is well studied, and they show what the field focuses on. However, in these reviews the chatbot is the tool that teaches something else; the studies rarely teach the learner how to design a chatbot. My project addresses that narrower gap: the chatbot concepts themselves are the learning subject, and the player practices them by playing.
+
+\subsection{Game-Based Learning and Puzzle Mechanics}
+
+Plass et al.\ describe the foundations of game-based learning: games can place knowledge inside goal-directed tasks where the learner acts and sees results \cite{plass2015}. Mayer's review of computer games in education argues that claims about educational games need evidence, and gives a useful design rule: the game action should carry the learning content, not just decorate it \cite{mayer2019}. Sweller's cognitive load theory warns that complex technical content can overload working memory \cite{sweller1988}. More recently, Ng et al.\ report that educational games can support AI literacy learning and engagement in schools \cite{ng2024}, which suggests game formats fit AI-related content.
+
+These works help my project because they give judging criteria: each puzzle should require the concept to be applied, and each level should introduce only one new idea. However, they do not explain how chatbot concepts such as intent or entity should be turned into puzzles. This project addresses that design step: for example, intent classification becomes grouping visitor messages by purpose, and entity extraction becomes marking the useful words that fill the slots of Ghost's action.
+
+\subsection{Narrative Games for Learning}
+
+Lester et al.\ describe narrative-centred learning, where the story gives meaning to the concepts \cite{lester2014}. Rowe et al.\ show that narrative-centred learning environments can integrate learning, problem solving, and engagement \cite{rowe2011}. These works help my project because they justify the frame story: Ghost cannot speak because the communication concepts are not built yet, and each solved level visibly restores part of Ghost's voice. The story is the reason the puzzles matter. However, these works study science education settings, not chatbot design. In \textit{Ghost}, the story is written so that each concept is a plot step: Ghost answers with the wrong reply type until intent classification is trained, and cannot pick out details until entity extraction is learned.
+
+\subsection{Pedagogical Agents and the Design of Lily}
+
+Moreno et al.\ report that agent-mediated instruction can deepen learning through social presence \cite{moreno2001}. Kim and Baylor distinguish companion-style agents from expert tutors \cite{kimbaylor2006}. These studies are old, so I also use a recent survey: Yusuf, Money, and Daylamani-Zad review pedagogical AI conversational agents in higher education and give a conceptual framework for their roles \cite{yusuf2025}. Graesser et al.'s work on tutoring dialogue shows how a tutor can guide with questions rather than answers \cite{graesser2001}.
+
+These works help my project by shaping Lily: she is a companion character, she hints rather than solves, and her dialogue is guided by a fixed system prompt. However, the recent survey is a framework and literature summary, not proof that an LLM tutor improves learning \cite{yusuf2025}. That is one more reason this project does not claim learning gains from Lily; her role is support, and the evaluation only checks that her responses stay on topic, respect hint levels, and avoid giving answers.
+
+\subsection{LLM Support in Game-Based Learning}
+
+Kasneci et al.\ outline the opportunities and risks of large language models in education, including hallucination \cite{kasneci2023}. Huber et al.\ argue that game structure can reduce over-reliance on an LLM, because the game requires the player to act rather than just ask \cite{huber2024}. Goslen et al.\ show LLM-based student plan generation inside a narrative learning game \cite{goslen2025}. Gong et al.\ report learning gains and reduced cognitive load from LLM scaffolding in a game-based AI literacy setting with elementary school students \cite{gong2026}. Wang et al.\ report that adding an LLM-based adaptive mechanism to a contextual learning game affected performance, flow, and cognitive load in a school study \cite{wang2025}. Nye et al.\ note that prompt constraints shape whether LLM behaviour is appropriate for tutoring \cite{nye2023}.
+
+These works help my project because they support two design choices: Lily is wrapped inside game rules (she cannot play the game for you), and her system prompt is restricted to the current concept with no answer disclosure. However, the strongest results here come from school-age AI literacy settings \cite{gong2026,wang2025}, not from teaching chatbot design to adult learners, and none of these systems make the LLM the judge of correctness. In \textit{Ghost}, all scoring is deterministic; the LLM only talks.
+
+\subsection{Summary: What the Literature Supports and What Remains}
+
+The literature supports three design ideas: game mechanics should carry the learning content \cite{mayer2019,plass2015}, a story can give concepts meaning \cite{lester2014,rowe2011}, and an LLM tutor can help if it is constrained \cite{huber2024,nye2023,yusuf2025}. These ideas guide the design: game-based learning informs the puzzle mechanics, the story gives a reason for Ghost's progress, and Lily supports the player after errors. They are used here as design guides, not as a large theoretical model; the main output is the prototype. What the literature does not provide is the concrete step this project takes: turning intent, entity, dialog, confidence, and fallback into playable puzzles whose results the player can see in a character's behaviour.
+
+%% ============================================================
+%%  3. Proposed System and Evaluation
+%% ============================================================
+\section{Proposed System and Evaluation}
+
+\subsection{System Overview}
+
+\textit{Ghost} is a single-player narrative puzzle game in which the IBM SkillsBuild chatbot course content is turned into different puzzle types across 24 designed levels. Requirements come from the course content and the design rules above; the evaluation checks whether the built game meets them. The final report will include a table linking course concepts, implemented mechanics, and test evidence.
+
+A playable prototype covering one complete level per Act (8 levels) will be implemented. The Acts and their topics:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Act 0:} Chatbot fundamentals (definitions, rule-based vs.\ AI-enabled, five components, four challenges)
+  \item \textbf{Act 1:} Intent (classification, training examples)
+  \item \textbf{Act 2:} Entity (extraction, synonyms, system vs.\ custom entities)
+  \item \textbf{Act * (supplementary):} NLP pipeline: tokenisation, POS tagging, named entity recognition, sentiment analysis; implemented if time allows and excluded from the primary evaluation scope
+  \item \textbf{Act 3:} Dialog (nodes, branching, slots, response types, context variables)
+  \item \textbf{Act 4:} Confidence and fallback (scoring, threshold calibration, disambiguation)
+  \item \textbf{Act 5:} Testing and debugging
+  \item \textbf{Act 6:} Integration and deployment (a deployment design puzzle, not a production deployment)
+\end{itemize}
+
+\subsection{Evaluation Design}
+
+The research question is answered through the three analysis areas in Table~\ref{tab:evals}. No user study is conducted and no participant recruitment is required.
+
+For the curriculum-to-puzzle mapping, each course learning objective is mapped to its level in the GDD, and I judge whether the puzzle action applies the concept (the player must use it to win) or only displays it, following Mayer's rule that the game action should carry the learning content \cite{mayer2019}. Implementation evidence from the prototype confirms whether the mapped mechanics work in practice. For the LLM tutor response check, a fixed prompt bank (one prompt per Act across three hint tiers, each submitted three times) produces responses scored on course relevance, hint-level fit, and factual accuracy. As supporting evidence, a short design review checks that Ghost's abilities in the story match the concepts the player has completed.
+
+\subsection{LLM Tutor Architecture}
+
+Lily's responses are generated by IBM Granite via Ollama, a locally hosted large language model. The model is constrained by a course-specific system prompt that limits responses to the current Act's concept and forbids giving puzzle answers. A hint tier system controls depth: early tiers guide with questions; later tiers may explain directly. If the LLM or backend is unavailable, the game falls back to static hints, and play continues. The LLM never decides puzzle correctness.
+
+%% ============================================================
+%%  4. Project Schedule
+%% ============================================================
+\section{Project Schedule}
+
+The project is planned across seven phases between April 2026 and August 2026, as summarised in Table~\ref{tab:timeline}.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.8cm}ccccc}
+\toprule
+\textbf{Work package} & \textbf{Apr} & \textbf{May} & \textbf{Jun} & \textbf{Jul} & \textbf{Aug} \\
+\midrule
+Preliminary report         & X &   &   &   &   \\
+Unity core infrastructure  &   & X &   &   &   \\
+Prototype level implementation &   & X & X & X &   \\
+Backend and LLM integration &   &   & X & X &   \\
+Evaluation                 &   &   &   & X & X \\
+Final report writing       &   &   & X & X & X \\
+Final build and submission &   &   &   &   & X \\
+\bottomrule
+\end{tabular}
+\caption{High-level project timeline (April--August 2026).}
+\label{tab:timeline}
+\end{table}
+
+\textbf{Phase 1: Preliminary report} (by 30 April 2026)
+
+\textbf{Phase 2: Unity core infrastructure} (May 2026) --- Core UI components (DropZone, DialogueBox, ChoiceButton, SliderPuzzle, FormPanel, OrderableList), the Ghost system and HintSystem, and scene management. DraggableNode is already complete.
+
+\textbf{Phase 3: Prototype level implementation} (May to July 2026) --- One complete level per Act (8 levels). Priority goes to Acts 0, 1, and 2, which introduce the most reused puzzle types. Target: 5 July 2026.
+
+\textbf{Phase 4: Backend and LLM integration} (June to July 2026) --- Node.js and SQLite backend with REST endpoints; IBM Granite via Ollama; Lily system prompt; Unity connected via an API client. Target: 19 July 2026.
+
+\textbf{Phase 5: Evaluation} (July to early August 2026) --- Curriculum mapping against the full GDD; the LLM prompt bank after backend integration; the supporting story design review. Target: 2 August 2026.
+
+\textbf{Phase 6: Final report writing} (June to August 2026) --- Chapters 1 to 3 are substantially drafted. Chapters 4 to 6 follow the evaluation. Target: 9 August 2026.
+
+\textbf{Phase 7: Final build and submission} (by 16 August 2026) --- WebGL build, code repository, and final report submitted via KEATS.
+
+\textbf{Prototype scope:} The target prototype covers one level per Act (8 levels). The guaranteed minimum covers five different puzzle types: drag-and-drop classification, slider calibration, node assembly, span annotation, and multiple choice. If LLM integration is delayed, static hints are used as a gameplay fallback, and the LLM tutor response check is reported as a limitation or deferred component.
+
+%% ============================================================
+%%  References
+%% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{brown1992}
+Brown, A.~L. (1992). Design experiments: Theoretical and methodological challenges in creating complex interventions in classroom settings. \textit{Journal of the Learning Sciences}, \textit{2}(2), 141--178.
+
+\bibitem{gong2026}
+Gong, Y., Wang, M., He, L., Xu, C., \& Yu, Y. (2026). Asking, playing, learning: Investigating large language model-based scaffolding in digital game-based learning for elementary artificial intelligence education. \textit{Journal of Educational Computing Research}, \textit{64}(2), 311--343.
+
+\bibitem{goslen2025}
+Goslen, A., Kim, Y.~J., Rowe, J., \& Lester, J. (2025). LLM-based student plan generation for adaptive scaffolding in game-based learning environments. \textit{International Journal of Artificial Intelligence in Education}, \textit{35}(2), 533--558.
+
+\bibitem{graesser2001}
+Graesser, A.~C., VanLehn, K., Ros\'{e}, C.~P., Jordan, P.~W., \& Harter, D. (2001). Intelligent tutoring systems with conversational dialogue. \textit{AI Magazine}, \textit{22}(4), 39--51.
+
+\bibitem{huber2024}
+Huber, S.~E., Kiili, K., Nebel, S., Ryan, R.~M., Sailer, M., \& Ninaus, M. (2024). Leveraging the potential of large language models in education through playful and game-based learning. \textit{Educational Psychology Review}, \textit{36}(1), Article~25.
+
+\bibitem{kasneci2023}
+Kasneci, E., Se{\ss}ler, K., K\"{u}chemann, S., Bannert, M., Dementieva, D., Fischer, F., \& Kasneci, G. (2023). ChatGPT for good? On opportunities and challenges of large language models for education. \textit{Learning and Individual Differences}, \textit{103}, 102274.
+
+\bibitem{kimbaylor2006}
+Kim, Y., \& Baylor, A.~L. (2006). A social-cognitive framework for pedagogical agents as learning companions. \textit{Educational Technology Research and Development}, \textit{54}(6), 569--596.
+
+\bibitem{labadze2023}
+Labadze, L., Grigolia, M., \& Machaidze, L. (2023). Role of AI chatbots in education: Systematic literature review. \textit{International Journal of Educational Technology in Higher Education}, \textit{20}, Article~56.
+
+\bibitem{lester2014}
+Lester, J.~C., Spires, H.~A., Nietfeld, J.~L., Minogue, J., Mott, B.~W., \& Lobene, E.~V. (2014). Designing game-based learning environments for elementary science education: A narrative-centered learning perspective. \textit{Information Sciences}, \textit{264}, 4--18.
+
+\bibitem{mayer2019}
+Mayer, R.~E. (2019). Computer games in education. \textit{Annual Review of Psychology}, \textit{70}, 531--549.
+
+\bibitem{moreno2001}
+Moreno, R., Mayer, R.~E., Spires, H.~A., \& Lester, J.~C. (2001). The case for social agency in computer-based teaching: Do students learn more deeply when they interact with animated pedagogical agents? \textit{Cognition and Instruction}, \textit{19}(2), 177--213.
+
+\bibitem{ng2024}
+Ng, D.~T.~K., Chen, X., \& Chu, S.~K.~W. (2024). Fostering students' AI literacy development through educational games: AI knowledge, affective and cognitive engagement. \textit{Journal of Computer Assisted Learning}, \textit{40}(5), 2049--2064.
+
+\bibitem{nye2023}
+Nye, B., Mee, D., \& Core, M.~G. (2023). Generative large language models for dialog-based tutoring: An early consideration of opportunities and concerns. In \textit{Proceedings of the AIED 2023 Workshop: Empowering Education with LLMs} (CEUR Workshop Proceedings, Vol.~3487, pp.~78--88).
+
+\bibitem{okonkwo2021}
+Okonkwo, C.~W., \& Ade-Ibijola, A. (2021). Chatbots applications in education: A systematic review. \textit{Computers and Education: Artificial Intelligence}, \textit{2}, 100033.
+
+\bibitem{perez2020}
+P\'{e}rez, J.~Q., Daradoumis, T., \& Puig, J.~M.~M. (2020). Rediscovering the use of chatbots in education: A systematic literature review. \textit{Computer Applications in Engineering Education}, \textit{28}(6), 1549--1565.
+
+\bibitem{plass2015}
+Plass, J.~L., Homer, B.~D., \& Kinzer, C.~K. (2015). Foundations of game-based learning. \textit{Educational Psychologist}, \textit{50}(4), 258--283.
+
+\bibitem{rowe2011}
+Rowe, J.~P., Shores, L.~R., Mott, B.~W., \& Lester, J.~C. (2011). Integrating learning, problem solving, and engagement in narrative-centered learning environments. \textit{International Journal of Artificial Intelligence in Education}, \textit{21}(1--2), 115--133.
+
+\bibitem{smutny2020}
+Smutny, P., \& Schreiberova, P. (2020). Chatbots for learning: A review of educational chatbots for the Facebook Messenger. \textit{Computers \& Education}, \textit{151}, 103862.
+
+\bibitem{sweller1988}
+Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. \textit{Cognitive Science}, \textit{12}(2), 257--285.
+
+\bibitem{wang2025}
+Wang, M., Zhang, D., Zhu, J., \& Gu, H. (2025). Effects of incorporating a large language model-based adaptive mechanism into contextual games on students' academic performance, flow experience, cognitive load and behavioral patterns. \textit{Journal of Educational Computing Research}. Advance online publication. \url{https://doi.org/10.1177/07356331251321719}
+
+\bibitem{winkler2018}
+Winkler, R., \& S\"{o}llner, M. (2018). Unleashing the potential of chatbots in education: A state-of-the-art analysis. In \textit{Academy of Management Annual Meeting Proceedings} (Article~15903). Academy of Management.
+
+\bibitem{wollny2021}
+Wollny, S., Schneider, J., Di Mitri, D., Weidlich, J., Rittberger, M., \& Drachsler, H. (2021). Are we there yet? A systematic literature review on chatbots in education. \textit{Frontiers in Artificial Intelligence}, \textit{4}, 654924.
+
+\bibitem{yusuf2025}
+Yusuf, H., Money, A., \& Daylamani-Zad, D. (2025). Pedagogical AI conversational agents in higher education: A conceptual framework and survey of the state of the art. \textit{Educational Technology Research and Development}, \textit{73}(2), 815--874.
+
+\end{thebibliography}
+
+\end{document}
