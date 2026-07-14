@@ -276,6 +276,18 @@ reteaching changes Ghost's behaviour. Completion still comes from the existing
 training data. A shared programmatic Ghost face now shows neutral / happy / confused / sad moods for
 the teaching-as-gameplay demo phases.
 
+### M0-T46 Run 001 Experience Wrapper Note
+
+Act 1 now opens with a separate Lily onboarding beat before the transcript controls become available.
+Her three short lines preview the playable loop: watch Ghost fail, cluster and label training piles,
+teach Ghost, and check new visitors. A persistent objective strip then follows the existing phases
+without revealing card placements: watch the failure, build and label the piles, then teach and check.
+To match the complete Act 2 transition, the onboarding screen also shows Ghost's exact-word problem,
+and the level keeps a compact Lily note with `Replay Lily` after onboarding is dismissed.
+Its page composition now follows the same Act 2 hierarchy: header/progress, objective, onboarding or
+Lily note, Ghost conversation, then the flexible puzzle body.
+The intent validator, sample data, generalization demo, and completion rule are unchanged.
+
 ---
 
 ## Act 2: Entity
@@ -473,6 +485,23 @@ Ghost's responses or Lily's hints. See `Docs/ARCHITECTURE.md` (Node Graph System
 ### Implementation Priority
 
 High (flagship; ROADMAP Phase C).
+
+### M0-T46 Run 001 Experience Standard Note
+
+Act 3 now opens with Lily's short reply-map loop before graph interaction. It connects the earlier
+Acts in play: an intent routes a branch, an Act 2 detail fills a slot check, and a response card gives
+Ghost its next line. A persistent objective strip moves from assembling the map to revising/testing
+it. The onboarding pairs Lily's explanation with a visible Ghost reply-order problem, then changes to
+a compact replayable Lily note when the graph unlocks. Deterministic validation alone drives Ghost's
+face: empty or incomplete submissions are sad,
+wrong structures or failed test routes are confused, and a full pass is happy. Failed validation
+keeps its detail visible while the graph remains editable and the action becomes `Try again`; success
+shows `Complete Act` and returns through the existing Shell debrief path. The graph session,
+simulator, validator, sample data, and test cases are unchanged.
+
+The Act 3 page uses the same top-level layout as Act 2: header/progress, objective, onboarding or Lily
+note, a persistent Ghost conversation/result panel, then the graph body. Ghost's face and deterministic
+test consequence live in that conversation panel rather than competing with the graph Guide column.
 
 ---
 

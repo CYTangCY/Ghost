@@ -1260,6 +1260,144 @@ Run the EditMode tests in Unity Test Runner. This script has no Play Mode behavi
 
 ---
 
+## M0-T46 Run 001: Acts 1 and 3 Experience Unification
+
+### Script Name
+
+Act1IntentClassificationInteractionController.cs
+
+### Purpose
+
+Adds a presentation-only `Onboarding` phase before the existing Act 1 intro/build/demo/complete flow.
+The controller starts in onboarding and exposes `BeginAfterOnboarding()` as the single transition into
+the authored exact-word failure beats. Existing pile state, generalization demo, validator call, and
+completion logic are unchanged.
+
+### Attached GameObject
+
+None. The presenter owns this plain C# controller at runtime.
+
+### Important Methods
+
+- `BeginAfterOnboarding()`: dismisses Lily's loop explanation and enters the existing intro failures.
+- `ReplayOnboarding()`: reopens Lily's loop from the in-level note without changing validator data.
+- `GetCurrentConversationBeat()`: includes a non-interactive onboarding fallback beat, then preserves
+  the existing intro, build, demo, and complete beats.
+
+### Unity Test
+
+Open Act 1 in Play Mode. Confirm only Lily's onboarding panel is actionable at first, then dismiss it
+and complete the existing watch/build/teach flow.
+
+### Script Name
+
+Act1IntentClassificationStaticPresenter.cs
+
+### Purpose
+
+Creates the Act 2-style warm onboarding panel and dark persistent objective strip at runtime. During
+onboarding it hides the prototype body so transcript cards cannot be touched, while keeping the Ghost
+problem preview visible beneath Lily's explanation. After dismissal it restores the existing UI,
+changes Lily's panel into a compact note strip with `Replay Lily`, and updates the objective for Intro,
+Build, Demo, and Complete.
+
+The runtime root is normalized to Act 2's page skeleton and dimensions: a 56px header with right-side
+phase progress, 48px objective, 180px onboarding or 54px Lily note, 170px Ghost conversation, and a
+flexible two-column puzzle body with 18px column spacing.
+No scene YAML change or Inspector reference is required.
+
+### Important Methods
+
+- `EnsureExperienceChrome()`: creates and orders the objective strip/onboarding panel around the
+  existing generated scene hierarchy.
+- `EnsurePageHeader()`: moves the generated title into the shared header pattern and creates phase
+  progress while hiding the superseded standalone subtitle.
+- `UpdateExperienceChrome()`: toggles onboarding versus gameplay visibility and refreshes the strip.
+- `EnsureTeachingPanel()`: builds the compact in-level Lily note row used after onboarding.
+- `GetObjectiveText()`: returns non-answer phase guidance for the three-step training loop.
+
+### Unity Test
+
+At 1920x1080, confirm the onboarding and every later objective fit without hiding cards, piles,
+conversation, controls, feedback, or the floating banter panel.
+
+### Script Name
+
+Act3DialogGraphInteractionController.cs
+
+### Purpose
+
+Adds presentation state around the existing `DialogGraphSession`: onboarding, build/retry, and
+complete. Each Validate still delegates to `session.ValidateCurrentState()`. The returned deterministic
+result sets a presentation reaction: Happy on pass, Sad when required graph pieces are absent, and
+Confused when a populated graph has wrong structure or fails a test route. A failed attempt remains
+recorded while edits occur; a successful result is invalidated if the graph structure is edited.
+
+### Important Methods
+
+- `BeginAfterOnboarding()`: unlocks graph building after Lily's one-button onboarding.
+- `ReplayOnboarding()`: reopens the same onboarding from the in-level Lily note while preserving the
+  current graph and last deterministic result.
+- `ValidateCurrentState()`: stores the existing validator result, selects the deterministic Ghost
+  reaction, posts the existing best-effort attempt log, and requests the existing non-spoiler hint on
+  failure.
+- `IsEmptyOrIncompleteGraph()`: presentation classification for Sad versus Confused; it does not score
+  correctness.
+- `NotifyGraphChanged()`: preserves failed-attempt detail during retry edits and clears a stale success
+  if the player changes the graph.
+
+### Unity Test
+
+Validate an empty/incomplete graph, a fully populated but wrong graph, and the correct graph. Confirm
+Sad, Confused, and Happy respectively, with no LLM involvement in the result.
+
+### Script Name
+
+Act3DialogGraphStaticPresenter.cs
+
+### Purpose
+
+Adds the Act 3 onboarding panel, a visible Ghost reply-order problem preview, persistent objective
+strip, replayable in-level Lily note, compact `GhostFaceView`, retry label, and Shell completion
+action. The graph body is hidden until onboarding is dismissed. Failed validation
+keeps the existing summary and specific Ghost outcome visible while the graph stays editable and the
+button reads `Try again`. Success changes the button to `Complete Act`, sets the pending Act 3 debrief,
+and loads the existing Game Shell scene.
+
+The root follows the same Act 2 page skeleton and dimensions as Act 1. The persistent 170px Ghost
+conversation panel owns the deterministic face and test outcome; the right Guide column is reserved
+for graph instructions, route legend, and authored test cases. The graph-specific three-column body
+remains flexible beneath the shared header/objective/note/conversation chrome.
+
+The existing `AmbientBanterHook` already recognizes `Act3DialogGraphPrototype` and creates the floating
+banter panel; its `Ask Lily` action opens the existing draggable `LilyChatWindow`. No Banter/Common/
+GhostAvatar code is changed by M0-T46 Run 001.
+
+### Important Methods
+
+- `EnsureExperienceChrome()` / `UpdateExperienceChrome()`: create and drive onboarding, objective,
+  Ghost-problem preview, replayable note, visibility, face mood, and primary-action text.
+- `EnsurePageHeader()`: creates the shared 56px header and phase progress and hides the old subtitle.
+- `UpdateConversationPanel()`: maps onboarding, untested, failed, and passed states into the shared
+  Ghost conversation/result panel without deciding correctness.
+- `RenderSidePanel()`: adds the shared Ghost face within the compact 1080p guide column.
+- `ApplyValidationFeedback()`: preserves the deterministic failure/success detail and refreshes the
+  presentation state.
+- `HandlePrimaryAction()`: validates during build/retry and returns through the Shell pending-debrief
+  path after success.
+
+### Inspector Setup
+
+No new serialized fields are required. Keep the existing Act 1 and Act 3 presenter references created
+by their scene builders. Runtime presentation code creates the new panels and Ghost face.
+
+### Unity Test
+
+Follow the M0-T46 Run 001 section in `Docs/UNITY_TEST_CHECKLIST.md`, including 1920x1080 fit, floating
+window drag checks, retry, completion/debrief, deterministic face reactions, and Console review.
+
+---
+
 ## M0-T45 Run 002: Act 2 Ghost's Errand Redesign
 
 This section supersedes the older M0-T37 Act 2 span-teaching presentation notes. The pure

@@ -606,6 +606,23 @@ bigger rounded thin-frame black glasses with bright lens tint + 2×2 brown eyes 
 hair, tapered waist, longer legs; `LilyPixelPortraitFactory` updated; `dotnet build` clean. Next:
 Codex implements M0-T46.
 
+### 2026-07-05 — M0-T46 run 001 reviewed (closure pending Play Mode); M0-T47 chapters build-out launched
+Claude reviewed M0-T46 run 001 + the layout-alignment correction: scope clean (protected paths all
+zero-diff — Ghost.Runtime, Act 2, Fundamentals, Backend, ProjectSettings, Packages, shared
+components); the unified Act 2 page composition is present in both Act 1 and Act 3 presenters
+(48f objective strip / 180f onboarding / 170f conversation panel / 54f Lily note / 18f body spacing);
+Act 3 has GhostFaceView driven by deterministic results, Try again / Complete Act dual-state button,
+and SetPendingDebriefAct wiring. NOT closed — the user's Play Mode verification against the 8-point
+checklist is pending; the three dirty scenes remain shelved side-effects. Per user direction ("build
+Acts 4/5/6 and the ending first; I will revise after"), `CURRENT_TASK.md` now defines **M0-T47/T48/
+T49 — Chapters 4–6 build-out** in three slices: Act 4 confidence-threshold slider + fallback/handoff
+day-run (new Act4 demo data + validator), Act 5 testing & debugging on a seeded buggy graph via the
+EXISTING DialogGraphSimulator/Validator, and the final capstone five-component pipeline + programmatic
+ending animation/credits (new pipeline data + validator; Fundamentals untouched). Mapping-first rule
+enforced (LEARNING_CONTENT before each slice); shell/Build-Settings additions per act are the approved
+exception; deterministic-correctness holds throughout. M0-T46 Part C (Lily portrait) continues as
+side-runs on user feedback.
+
 ---
 
 ## Entry Template

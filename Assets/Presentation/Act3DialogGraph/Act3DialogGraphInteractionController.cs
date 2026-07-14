@@ -18,6 +18,10 @@ namespace Ghost.Presentation.Act3DialogGraph
             session = DialogGraphSession.CreateFromSampleData();
             nodePositions = new Dictionary<string, Vector2>(StringComparer.Ordinal);
             SelectedNodeId = string.Empty;
+            CurrentPhase = Act3ExperiencePhase.Onboarding;
+            CurrentReaction = Act3GhostReaction.Neutral;
+            LastValidationErrors = Array.Empty<string>();
+            LastFeedbackMessage = string.Empty;
         }
 
         public event Action StateChanged;
@@ -33,6 +37,42 @@ namespace Ghost.Presentation.Act3DialogGraph
         public string SelectedNodeId { get; private set; }
 
         public IReadOnlyList<DialogGraphTestCase> TestCases => session.TestCases;
+
+        public Act3ExperiencePhase CurrentPhase { get; private set; }
+
+        public Act3GhostReaction CurrentReaction { get; private set; }
+
+        public bool HasValidationAttempt { get; private set; }
+
+        public bool LastValidationWasCorrect { get; private set; }
+
+        public bool HasFailedValidation => HasValidationAttempt && !LastValidationWasCorrect;
+
+        public string LastFeedbackMessage { get; private set; }
+
+        public IReadOnlyList<string> LastValidationErrors { get; private set; }
+
+        public void BeginAfterOnboarding()
+        {
+            if (CurrentPhase != Act3ExperiencePhase.Onboarding)
+            {
+                return;
+            }
+
+            CurrentPhase = Act3ExperiencePhase.Build;
+            NotifyStateChanged();
+        }
+
+        public void ReplayOnboarding()
+        {
+            if (CurrentPhase == Act3ExperiencePhase.Onboarding || CurrentPhase == Act3ExperiencePhase.Complete)
+            {
+                return;
+            }
+
+            CurrentPhase = Act3ExperiencePhase.Onboarding;
+            NotifyStateChanged();
+        }
 
         public string PlaceNode(
             DialogNodeType type,
@@ -51,7 +91,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             SelectedNodeId = nodeId;
-            NotifyStateChanged();
+            NotifyGraphChanged();
             return nodeId;
         }
 
@@ -119,7 +159,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         public void SetStartNode(string nodeId)
         {
             session.SetStartNode(nodeId);
-            NotifyStateChanged();
+            NotifyGraphChanged();
         }
 
         public bool ConnectNodes(string fromId, string toId, DialogTransitionCondition condition)
@@ -131,7 +171,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
             RemoveExistingTransitionFromOutput(fromId, condition);
             session.AddTransition(fromId, toId, condition);
-            NotifyStateChanged();
+            NotifyGraphChanged();
             return true;
         }
 
@@ -149,7 +189,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             nodePositions.Remove(nodeId);
-            NotifyStateChanged();
+            NotifyGraphChanged();
             return true;
         }
 
@@ -158,7 +198,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             var removed = session.RemoveTransition(fromId, toId, condition);
             if (removed)
             {
-                NotifyStateChanged();
+                NotifyGraphChanged();
             }
 
             return removed;
@@ -179,6 +219,17 @@ namespace Ghost.Presentation.Act3DialogGraph
                 ? "Nice. Ghost answers when the room is known and asks when it is missing."
                 : CreateIncorrectFeedbackMessage(result.Errors.Count);
 
+            HasValidationAttempt = true;
+            LastValidationWasCorrect = result.IsCorrect;
+            LastFeedbackMessage = feedbackMessage;
+            LastValidationErrors = new List<string>(result.Errors);
+            CurrentPhase = result.IsCorrect ? Act3ExperiencePhase.Complete : Act3ExperiencePhase.Build;
+            CurrentReaction = result.IsCorrect
+                ? Act3GhostReaction.Happy
+                : IsEmptyOrIncompleteGraph()
+                    ? Act3GhostReaction.Sad
+                    : Act3GhostReaction.Confused;
+
             FeedbackChanged?.Invoke(feedbackMessage, result.IsCorrect, result.Errors);
             if (!result.IsCorrect)
             {
@@ -188,7 +239,52 @@ namespace Ghost.Presentation.Act3DialogGraph
                     "The player validated an incorrect dialog graph. Error count: " + result.Errors.Count + ". Give a non-spoiler hint about ordering the map and checking slots before answering.");
             }
 
+            NotifyStateChanged();
             return result;
+        }
+
+        private bool IsEmptyOrIncompleteGraph()
+        {
+            if (session.CurrentNodes.Count == 0
+                || string.IsNullOrWhiteSpace(session.CurrentStartNodeId)
+                || session.CurrentTransitions.Count == 0)
+            {
+                return true;
+            }
+
+            var hasStart = false;
+            var hasIntent = false;
+            var hasSlotCheck = false;
+            var hasAnswer = false;
+            var hasAsk = false;
+
+            foreach (var node in session.CurrentNodes)
+            {
+                switch (node.Type)
+                {
+                    case DialogNodeType.Start:
+                        hasStart = true;
+                        break;
+                    case DialogNodeType.IntentBranch:
+                        hasIntent = true;
+                        break;
+                    case DialogNodeType.SlotCheck:
+                        hasSlotCheck = true;
+                        break;
+                    case DialogNodeType.Response:
+                        hasAnswer |= string.Equals(
+                            node.ResponseId,
+                            Act3DialogGraphSampleData.AnswerObjectLocationResponseId,
+                            StringComparison.Ordinal);
+                        hasAsk |= string.Equals(
+                            node.ResponseId,
+                            Act3DialogGraphSampleData.AskForRoomResponseId,
+                            StringComparison.Ordinal);
+                        break;
+                }
+            }
+
+            return !hasStart || !hasIntent || !hasSlotCheck || !hasAnswer || !hasAsk;
         }
 
         private bool CanConnectNodes(string fromId, string toId, DialogTransitionCondition condition)
@@ -326,6 +422,21 @@ namespace Ghost.Presentation.Act3DialogGraph
             StateChanged?.Invoke();
         }
 
+        private void NotifyGraphChanged()
+        {
+            if (LastValidationWasCorrect)
+            {
+                HasValidationAttempt = false;
+                LastValidationWasCorrect = false;
+                LastFeedbackMessage = string.Empty;
+                LastValidationErrors = Array.Empty<string>();
+                CurrentReaction = Act3GhostReaction.Neutral;
+                CurrentPhase = Act3ExperiencePhase.Build;
+            }
+
+            NotifyStateChanged();
+        }
+
         private static string CreateIncorrectFeedbackMessage(int issueCount)
         {
             if (issueCount <= 0)
@@ -340,5 +451,20 @@ namespace Ghost.Presentation.Act3DialogGraph
 
             return $"Not yet. Ghost's map still has {issueCount} issues.";
         }
+    }
+
+    public enum Act3ExperiencePhase
+    {
+        Onboarding,
+        Build,
+        Complete
+    }
+
+    public enum Act3GhostReaction
+    {
+        Neutral,
+        Happy,
+        Confused,
+        Sad
     }
 }

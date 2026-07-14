@@ -52,9 +52,9 @@ namespace Ghost.Presentation.Act1IntentClassification
             introFailures = Act1TeachingDemoData.CreateIntroFailures();
             testMessages = Act1TeachingDemoData.CreateTestMessages();
             replyLinesByIntentId = Act1TeachingDemoData.CreateReplyLines();
-            Phase = Act1TeachingPhase.Intro;
+            Phase = Act1TeachingPhase.Onboarding;
             CurrentFeedback = Act1IntentClassificationFeedback.Neutral(
-                "Watch Ghost try exact-word replies, then help it learn visitor purposes.");
+                "Read Lily's training loop before touching the visitor transcripts.");
         }
 
         public event Action StateChanged;
@@ -85,8 +85,48 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         public Act1IntentClassificationFeedback CurrentFeedback { get; private set; }
 
+        public void BeginAfterOnboarding()
+        {
+            if (Phase != Act1TeachingPhase.Onboarding)
+            {
+                return;
+            }
+
+            Phase = Act1TeachingPhase.Intro;
+            SetFeedback(Act1IntentClassificationFeedback.Neutral(
+                "Watch Ghost try exact-word replies before building the training piles."));
+            NotifyStateChanged();
+        }
+
+        public void ReplayOnboarding()
+        {
+            if (Phase == Act1TeachingPhase.Onboarding || Phase == Act1TeachingPhase.Complete)
+            {
+                return;
+            }
+
+            introIndex = 0;
+            demoIndex = 0;
+            currentDemoResult = null;
+            highlightedCardIds.Clear();
+            Phase = Act1TeachingPhase.Onboarding;
+            SetFeedback(Act1IntentClassificationFeedback.Neutral(
+                "Read Lily's training loop again, then return to Ghost's exact-word failures."));
+            NotifyStateChanged();
+        }
+
         public Act1ConversationBeat GetCurrentConversationBeat()
         {
+            if (Phase == Act1TeachingPhase.Onboarding)
+            {
+                return new Act1ConversationBeat(
+                    "Visitor transcripts keep arriving in new wording.",
+                    "Ghost: I only remember the exact sentences I heard before...",
+                    "Lily's loop starts by showing why exact-word memory cannot recognize a visitor's purpose.",
+                    false,
+                    string.Empty);
+            }
+
             if (Phase == Act1TeachingPhase.Intro)
             {
                 if (introIndex < introFailures.Count)
@@ -510,6 +550,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
     public enum Act1TeachingPhase
     {
+        Onboarding,
         Intro,
         Build,
         Demo,

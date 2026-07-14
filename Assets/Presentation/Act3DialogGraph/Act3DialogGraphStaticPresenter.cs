@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Ghost.Presentation.GhostAvatar;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.DialogGraph;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Ghost.Presentation.Act3DialogGraph
@@ -13,6 +16,10 @@ namespace Ghost.Presentation.Act3DialogGraph
     {
         private const float PaletteItemPreferredHeight = 70f;
         private const float TestCasePreferredHeight = 58f;
+        private const float ObjectiveStripHeight = 48f;
+        private const float OnboardingPanelHeight = 180f;
+        private const float ConversationPanelHeight = 170f;
+        private const float LilyNoteStripHeight = 54f;
         private const float ValidationControlsPreferredHeight = 28f;
         private const float NodeCardWidth = 210f;
         private const float NodeCardHeight = 112f;
@@ -29,6 +36,13 @@ namespace Ghost.Presentation.Act3DialogGraph
             "Help Ghost reply in the right order. Add simple cards, move them around, then drag wires between their ports.";
         private const string PlaceholderFeedbackText =
             "Build the map, then test Ghost's replies.";
+        private const string OnboardingTitleText = "Lily's quick reply-map loop";
+        private const string OnboardingBodyText =
+            "Lily: Um... Ghost needs one reply map before it can answer in order.\n" +
+            "Lily: Intent cards choose a branch; slot checks use the details you caught in Act 2; response cards answer.\n" +
+            "Lily: Build the map, then test it on both visitors. A failed route will show what to revise.";
+        private const string LilyNoteText =
+            "Lily: Um... route the request, check the detail, then let both visitors test Ghost's next reply.";
 
         private static readonly Color RootTextColor = new Color(0.15f, 0.12f, 0.22f);
         private static readonly Color SecondaryTextColor = new Color(0.30f, 0.28f, 0.38f);
@@ -40,6 +54,8 @@ namespace Ghost.Presentation.Act3DialogGraph
         private static readonly Color BoardColor = new Color(0.985f, 0.985f, 1f);
         private static readonly Color ValidationColor = new Color(1f, 0.99f, 0.94f);
         private static readonly Color ObjectiveColor = new Color(1f, 0.965f, 0.78f);
+        private static readonly Color ObjectiveStripColor = new Color(0.14f, 0.18f, 0.32f);
+        private static readonly Color WarmNoteColor = new Color(1f, 0.96f, 0.82f);
         private static readonly Color OutlineColor = new Color(0.62f, 0.60f, 0.78f, 0.72f);
         private static readonly Color NodeCardColor = new Color(1f, 0.995f, 0.94f);
         private static readonly Color SelectedNodeColor = new Color(1f, 0.92f, 0.68f);
@@ -68,6 +84,18 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private Act3DialogGraphInteractionController controller;
         private Canvas rootCanvas;
+        private RectTransform pageHeader;
+        private Text phaseProgressText;
+        private RectTransform objectiveStrip;
+        private Text objectiveText;
+        private RectTransform onboardingPanel;
+        private RectTransform onboardingBridgePanel;
+        private GhostFaceView onboardingGhostFaceView;
+        private Text conversationLabelText;
+        private Text conversationVisitorText;
+        private RectTransform lilyNoteStrip;
+        private Button replayOnboardingButton;
+        private RectTransform prototypeBody;
         private RectTransform graphBoardRoot;
         private RectTransform wireLayer;
         private RectTransform nodeLayer;
@@ -77,6 +105,8 @@ namespace Ghost.Presentation.Act3DialogGraph
         private Act3DialogGraphOutputPortView activeOutputPort;
         private Text validationFeedbackText;
         private Text ghostOutcomeText;
+        private Button primaryActionButton;
+        private Text primaryActionButtonText;
         private string selectedWireFromId;
         private string selectedWireToId;
         private DialogTransitionCondition selectedWireCondition;
@@ -97,7 +127,9 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private void Update()
         {
-            if (Keyboard.current == null)
+            if (Keyboard.current == null
+                || controller == null
+                || controller.CurrentPhase == Act3ExperiencePhase.Onboarding)
             {
                 return;
             }
@@ -148,17 +180,21 @@ namespace Ghost.Presentation.Act3DialogGraph
             ClearRenderedGraphState(true);
             validationFeedbackText = null;
             ghostOutcomeText = null;
+            primaryActionButton = null;
+            primaryActionButtonText = null;
 
             rootCanvas = GetComponentInParent<Canvas>();
             ConfigureGeneratedColumnLayout();
             controller = new Act3DialogGraphInteractionController();
-            controller.StateChanged += RefreshGraphCanvas;
+            controller.StateChanged += HandleControllerStateChanged;
             controller.FeedbackChanged += ApplyValidationFeedback;
 
+            EnsureExperienceChrome();
             RenderNodePalette();
             RenderSidePanel();
             RefreshGraphCanvas();
             RenderValidationControls();
+            UpdateExperienceChrome();
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(nodePaletteRoot);
@@ -169,7 +205,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void BeginWireDrag(Act3DialogGraphOutputPortView outputPort, PointerEventData eventData)
         {
-            if (outputPort == null || wireLayer == null)
+            if (!CanEditGraph() || outputPort == null || wireLayer == null)
             {
                 return;
             }
@@ -213,7 +249,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void CompleteWireDrop(Act3DialogGraphOutputPortView outputPort, Act3DialogGraphInputPortView inputPort)
         {
-            if (controller == null || outputPort == null || inputPort == null)
+            if (!CanEditGraph() || outputPort == null || inputPort == null)
             {
                 return;
             }
@@ -238,7 +274,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             string responseId,
             PointerEventData eventData)
         {
-            if (controller == null || nodeLayer == null || eventData == null)
+            if (!CanEditGraph() || nodeLayer == null || eventData == null)
             {
                 return;
             }
@@ -265,6 +301,11 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void SelectNode(string nodeId)
         {
+            if (!CanEditGraph())
+            {
+                return;
+            }
+
             selectedWireFromId = null;
             selectedWireToId = null;
             controller?.SelectNode(nodeId);
@@ -272,7 +313,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void MoveNodeToPointer(string nodeId, RectTransform nodeCard, PointerEventData eventData)
         {
-            if (controller == null || nodeLayer == null || nodeCard == null || eventData == null)
+            if (!CanEditGraph() || nodeLayer == null || nodeCard == null || eventData == null)
             {
                 return;
             }
@@ -296,7 +337,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void CompleteNodeDrag(string nodeId, RectTransform nodeCard, PointerEventData eventData)
         {
-            if (controller == null || trashDropRoot == null)
+            if (!CanEditGraph() || trashDropRoot == null)
             {
                 return;
             }
@@ -361,6 +402,441 @@ namespace Ghost.Presentation.Act3DialogGraph
             bodyLayout.childControlHeight = true;
             bodyLayout.childForceExpandWidth = false;
             bodyLayout.childForceExpandHeight = true;
+            bodyLayout.spacing = 18f;
+        }
+
+        private void EnsureExperienceChrome()
+        {
+            objectiveStrip = transform.Find("Objective Strip") as RectTransform;
+            if (objectiveStrip == null)
+            {
+                objectiveStrip = new GameObject("Objective Strip", typeof(RectTransform)).GetComponent<RectTransform>();
+                objectiveStrip.SetParent(transform, false);
+            }
+
+            ClearChildren(objectiveStrip);
+            ConfigurePanelSurface(objectiveStrip.gameObject, ObjectiveStripColor, false);
+            var objectiveLayoutElement = objectiveStrip.GetComponent<LayoutElement>();
+            if (objectiveLayoutElement == null)
+            {
+                objectiveLayoutElement = objectiveStrip.gameObject.AddComponent<LayoutElement>();
+            }
+
+            objectiveLayoutElement.minHeight = ObjectiveStripHeight;
+            objectiveLayoutElement.preferredHeight = ObjectiveStripHeight;
+
+            var objectiveLayout = objectiveStrip.GetComponent<HorizontalLayoutGroup>();
+            if (objectiveLayout == null)
+            {
+                objectiveLayout = objectiveStrip.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            objectiveLayout.padding = new RectOffset(18, 18, 7, 7);
+            objectiveLayout.childControlWidth = true;
+            objectiveLayout.childControlHeight = true;
+            objectiveLayout.childForceExpandWidth = true;
+            objectiveLayout.childForceExpandHeight = true;
+            objectiveText = CreateText(
+                "Objective Text",
+                objectiveStrip,
+                string.Empty,
+                18,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                Color.white,
+                34f);
+
+            onboardingPanel = transform.Find("Onboarding Panel") as RectTransform;
+            if (onboardingPanel == null)
+            {
+                onboardingPanel = new GameObject("Onboarding Panel", typeof(RectTransform)).GetComponent<RectTransform>();
+                onboardingPanel.SetParent(transform, false);
+            }
+
+            ClearChildren(onboardingPanel);
+            ConfigurePanelSurface(onboardingPanel.gameObject, WarmNoteColor, true);
+            var onboardingLayoutElement = onboardingPanel.GetComponent<LayoutElement>();
+            if (onboardingLayoutElement == null)
+            {
+                onboardingLayoutElement = onboardingPanel.gameObject.AddComponent<LayoutElement>();
+            }
+
+            onboardingLayoutElement.minHeight = OnboardingPanelHeight;
+            onboardingLayoutElement.preferredHeight = OnboardingPanelHeight;
+
+            var onboardingLayout = onboardingPanel.GetComponent<VerticalLayoutGroup>();
+            if (onboardingLayout == null)
+            {
+                onboardingLayout = onboardingPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            onboardingLayout.padding = new RectOffset(18, 18, 12, 12);
+            onboardingLayout.spacing = 6f;
+            onboardingLayout.childControlWidth = true;
+            onboardingLayout.childControlHeight = true;
+            onboardingLayout.childForceExpandWidth = true;
+            onboardingLayout.childForceExpandHeight = false;
+
+            CreateText(
+                "Onboarding Title",
+                onboardingPanel,
+                OnboardingTitleText,
+                20,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.28f, 0.18f, 0.08f),
+                26f);
+            CreateText(
+                "Onboarding Body",
+                onboardingPanel,
+                OnboardingBodyText,
+                17,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                new Color(0.25f, 0.20f, 0.18f),
+                72f);
+            var beginButton = CreateOnboardingButton(onboardingPanel, "Build the map");
+            beginButton.onClick.AddListener(controller.BeginAfterOnboarding);
+
+            onboardingBridgePanel = transform.Find("Conversation Panel") as RectTransform;
+            if (onboardingBridgePanel == null)
+            {
+                onboardingBridgePanel = transform.Find("Ghost Problem Preview") as RectTransform;
+                if (onboardingBridgePanel == null)
+                {
+                    onboardingBridgePanel = new GameObject("Conversation Panel", typeof(RectTransform)).GetComponent<RectTransform>();
+                    onboardingBridgePanel.SetParent(transform, false);
+                }
+            }
+
+            onboardingBridgePanel.name = "Conversation Panel";
+
+            ClearChildren(onboardingBridgePanel);
+            ConfigurePanelSurface(onboardingBridgePanel.gameObject, new Color(0.93f, 0.97f, 1f), true);
+            var bridgeLayoutElement = onboardingBridgePanel.GetComponent<LayoutElement>();
+            if (bridgeLayoutElement == null)
+            {
+                bridgeLayoutElement = onboardingBridgePanel.gameObject.AddComponent<LayoutElement>();
+            }
+
+            bridgeLayoutElement.minHeight = ConversationPanelHeight;
+            bridgeLayoutElement.preferredHeight = ConversationPanelHeight;
+
+            var bridgeLayout = onboardingBridgePanel.GetComponent<HorizontalLayoutGroup>();
+            if (bridgeLayout == null)
+            {
+                bridgeLayout = onboardingBridgePanel.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            bridgeLayout.padding = new RectOffset(18, 18, 10, 10);
+            bridgeLayout.spacing = 16f;
+            bridgeLayout.childControlWidth = true;
+            bridgeLayout.childControlHeight = true;
+            bridgeLayout.childForceExpandWidth = false;
+            bridgeLayout.childForceExpandHeight = true;
+
+            var bridgeFaceRoot = new GameObject("Ghost Face", typeof(RectTransform)).GetComponent<RectTransform>();
+            bridgeFaceRoot.SetParent(onboardingBridgePanel, false);
+            var bridgeFaceLayout = bridgeFaceRoot.gameObject.AddComponent<LayoutElement>();
+            bridgeFaceLayout.minWidth = 150f;
+            bridgeFaceLayout.preferredWidth = 150f;
+            bridgeFaceLayout.minHeight = 150f;
+            bridgeFaceLayout.preferredHeight = 150f;
+            onboardingGhostFaceView = bridgeFaceRoot.gameObject.AddComponent<GhostFaceView>();
+
+            var bridgeTextColumn = new GameObject("Ghost Problem Text", typeof(RectTransform)).GetComponent<RectTransform>();
+            bridgeTextColumn.SetParent(onboardingBridgePanel, false);
+            bridgeTextColumn.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            var bridgeTextLayout = bridgeTextColumn.gameObject.AddComponent<VerticalLayoutGroup>();
+            bridgeTextLayout.spacing = 5f;
+            bridgeTextLayout.childControlWidth = true;
+            bridgeTextLayout.childControlHeight = true;
+            bridgeTextLayout.childForceExpandWidth = true;
+            bridgeTextLayout.childForceExpandHeight = false;
+            conversationLabelText = CreateText(
+                "Conversation Label",
+                bridgeTextColumn,
+                string.Empty,
+                18,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                RootTextColor,
+                28f);
+            conversationVisitorText = CreateText(
+                "Visitor Message",
+                bridgeTextColumn,
+                string.Empty,
+                17,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.10f, 0.18f, 0.30f),
+                36f);
+            ghostOutcomeText = CreateText(
+                "Ghost Outcome",
+                bridgeTextColumn,
+                string.Empty,
+                16,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                SecondaryTextColor,
+                64f);
+
+            lilyNoteStrip = transform.Find("Lily Note Strip") as RectTransform;
+            if (lilyNoteStrip == null)
+            {
+                lilyNoteStrip = new GameObject("Lily Note Strip", typeof(RectTransform)).GetComponent<RectTransform>();
+                lilyNoteStrip.SetParent(transform, false);
+            }
+
+            ClearChildren(lilyNoteStrip);
+            ConfigurePanelSurface(lilyNoteStrip.gameObject, WarmNoteColor, true);
+            var noteLayoutElement = lilyNoteStrip.GetComponent<LayoutElement>();
+            if (noteLayoutElement == null)
+            {
+                noteLayoutElement = lilyNoteStrip.gameObject.AddComponent<LayoutElement>();
+            }
+
+            noteLayoutElement.minHeight = LilyNoteStripHeight;
+            noteLayoutElement.preferredHeight = LilyNoteStripHeight;
+
+            var noteLayout = lilyNoteStrip.GetComponent<HorizontalLayoutGroup>();
+            if (noteLayout == null)
+            {
+                noteLayout = lilyNoteStrip.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            noteLayout.padding = new RectOffset(16, 12, 7, 7);
+            noteLayout.spacing = 10f;
+            noteLayout.childControlWidth = true;
+            noteLayout.childControlHeight = true;
+            noteLayout.childForceExpandWidth = false;
+            noteLayout.childForceExpandHeight = true;
+
+            var lilyNote = CreateText(
+                "Lily Note",
+                lilyNoteStrip,
+                LilyNoteText,
+                15,
+                FontStyle.Normal,
+                TextAnchor.MiddleLeft,
+                new Color(0.25f, 0.20f, 0.18f),
+                40f);
+            lilyNote.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            replayOnboardingButton = CreateOnboardingButton(lilyNoteStrip, "Replay Lily");
+            var replayLayout = replayOnboardingButton.GetComponent<LayoutElement>();
+            replayLayout.minWidth = 130f;
+            replayLayout.preferredWidth = 130f;
+            replayOnboardingButton.onClick.AddListener(controller.ReplayOnboarding);
+
+            prototypeBody = transform.Find("Prototype Body") as RectTransform;
+            if (pageHeader != null)
+            {
+                objectiveStrip.SetSiblingIndex(pageHeader.GetSiblingIndex() + 1);
+                onboardingPanel.SetSiblingIndex(objectiveStrip.GetSiblingIndex() + 1);
+                lilyNoteStrip.SetSiblingIndex(onboardingPanel.GetSiblingIndex() + 1);
+                onboardingBridgePanel.SetSiblingIndex(lilyNoteStrip.GetSiblingIndex() + 1);
+            }
+
+            if (prototypeBody != null)
+            {
+                prototypeBody.SetSiblingIndex(onboardingBridgePanel.GetSiblingIndex() + 1);
+            }
+        }
+
+        private void HandleControllerStateChanged()
+        {
+            RefreshGraphCanvas();
+            UpdateExperienceChrome();
+        }
+
+        private void UpdateExperienceChrome()
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            if (objectiveText != null)
+            {
+                objectiveText.text = GetObjectiveText();
+            }
+
+            if (phaseProgressText != null)
+            {
+                phaseProgressText.text = GetPhaseProgressText();
+            }
+
+            var isOnboarding = controller.CurrentPhase == Act3ExperiencePhase.Onboarding;
+            if (onboardingPanel != null)
+            {
+                onboardingPanel.gameObject.SetActive(isOnboarding);
+            }
+
+            if (onboardingBridgePanel != null)
+            {
+                onboardingBridgePanel.gameObject.SetActive(true);
+            }
+
+            if (lilyNoteStrip != null)
+            {
+                lilyNoteStrip.gameObject.SetActive(!isOnboarding);
+            }
+
+            if (prototypeBody != null)
+            {
+                prototypeBody.gameObject.SetActive(!isOnboarding);
+            }
+
+            if (onboardingGhostFaceView != null)
+            {
+                onboardingGhostFaceView.SetMood(MapGhostMood(controller.CurrentReaction));
+            }
+
+            if (replayOnboardingButton != null)
+            {
+                replayOnboardingButton.gameObject.SetActive(
+                    !isOnboarding && controller.CurrentPhase != Act3ExperiencePhase.Complete);
+            }
+
+            if (primaryActionButton != null)
+            {
+                primaryActionButton.gameObject.SetActive(!isOnboarding);
+            }
+
+            if (primaryActionButtonText != null)
+            {
+                primaryActionButtonText.text = controller.CurrentPhase == Act3ExperiencePhase.Complete
+                    ? "Complete Act"
+                    : controller.HasFailedValidation
+                        ? "Try again"
+                        : "Test Ghost's map";
+            }
+
+            if (!controller.HasValidationAttempt)
+            {
+                if (validationFeedbackText != null)
+                {
+                    validationFeedbackText.text = PlaceholderFeedbackText;
+                    validationFeedbackText.color = FeedbackNeutralColor;
+                }
+
+                if (ghostOutcomeText != null)
+                {
+                    ghostOutcomeText.text = "Ghost is waiting for a tested reply map.";
+                    ghostOutcomeText.color = FeedbackNeutralColor;
+                }
+            }
+
+            UpdateConversationPanel();
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform);
+        }
+
+        private string GetObjectiveText()
+        {
+            if (controller.CurrentPhase == Act3ExperiencePhase.Onboarding)
+            {
+                return "Setup: learn how to assemble and test Ghost's reply map";
+            }
+
+            if (controller.CurrentPhase == Act3ExperiencePhase.Complete)
+            {
+                return "Complete: Ghost passed both reply-map tests";
+            }
+
+            return controller.HasFailedValidation
+                ? "2/2 Revise the map from Ghost's failed test, then try again"
+                : "1/2 Build Ghost's reply map from the available cards and routes";
+        }
+
+        private string GetPhaseProgressText()
+        {
+            if (controller.CurrentPhase == Act3ExperiencePhase.Onboarding)
+            {
+                return "Setup";
+            }
+
+            if (controller.CurrentPhase == Act3ExperiencePhase.Complete)
+            {
+                return "Complete";
+            }
+
+            return controller.HasValidationAttempt ? "Test 2/2" : "Build 1/2";
+        }
+
+        private void UpdateConversationPanel()
+        {
+            if (conversationLabelText == null || conversationVisitorText == null || ghostOutcomeText == null)
+            {
+                return;
+            }
+
+            if (controller.CurrentPhase == Act3ExperiencePhase.Onboarding)
+            {
+                conversationLabelText.text = "Ghost has a reply-order problem";
+                conversationVisitorText.text = "Visitor: Can you find the lantern in the archive?";
+                ghostOutcomeText.text = "Ghost recognizes the request and catches the room, but answers before checking which reply should come next.";
+                ghostOutcomeText.color = SecondaryTextColor;
+                return;
+            }
+
+            if (!controller.HasValidationAttempt)
+            {
+                conversationLabelText.text = "Ghost is waiting for a reply map";
+                conversationVisitorText.text = "Two visitors will test the same request with different room details.";
+                ghostOutcomeText.text = "Build the route, then test whether Ghost chooses an appropriate next reply for each visitor.";
+                ghostOutcomeText.color = SecondaryTextColor;
+                return;
+            }
+
+            conversationLabelText.text = controller.LastValidationWasCorrect
+                ? "Ghost's reply map works"
+                : "Ghost's reply map needs another pass";
+            conversationVisitorText.text = "The two authored visitors ran through the current map.";
+            ghostOutcomeText.text = CreateGhostOutcomeMessage(
+                controller.LastValidationWasCorrect,
+                controller.LastValidationErrors);
+            ghostOutcomeText.color = controller.LastValidationWasCorrect
+                ? FeedbackCorrectColor
+                : FeedbackIncorrectColor;
+        }
+
+        private bool CanEditGraph()
+        {
+            return controller != null && controller.CurrentPhase != Act3ExperiencePhase.Onboarding;
+        }
+
+        private static GhostMood MapGhostMood(Act3GhostReaction reaction)
+        {
+            switch (reaction)
+            {
+                case Act3GhostReaction.Happy:
+                    return GhostMood.Happy;
+                case Act3GhostReaction.Confused:
+                    return GhostMood.Confused;
+                case Act3GhostReaction.Sad:
+                    return GhostMood.Sad;
+                default:
+                    return GhostMood.Neutral;
+            }
+        }
+
+        private void HandlePrimaryAction()
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            if (controller.CurrentPhase == Act3ExperiencePhase.Complete)
+            {
+                GhostNarrativeState.SetPendingDebriefAct(GhostNarrativeState.Act3Id);
+                SceneManager.LoadScene(ShellSceneNames.GameShellSceneName);
+                return;
+            }
+
+            controller.ValidateCurrentState();
         }
 
         private static void ConfigureColumnLayoutElement(
@@ -491,7 +967,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                if (controller == null)
+                if (!CanEditGraph())
                 {
                     return;
                 }
@@ -561,7 +1037,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private static string CreateObjectiveText()
         {
-            return "Goal: If the visitor names a room, Ghost answers. If the room is missing, Ghost asks which room.";
+            return "Build a route that uses the visitor's intent, checks available details, and reaches an appropriate response.";
         }
 
         private void CreateGraphBoard()
@@ -843,6 +1319,11 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private void RemoveSelectedGraphItem()
         {
+            if (!CanEditGraph())
+            {
+                return;
+            }
+
             if (RemoveSelectedWire())
             {
                 return;
@@ -948,29 +1429,30 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return;
             }
 
-            CreateSectionLabel(goalTestRoot, "How to play");
+            var guideLayout = goalTestRoot.GetComponent<VerticalLayoutGroup>();
+            if (guideLayout != null)
+            {
+                guideLayout.spacing = 6f;
+            }
+
+            CreateGuideSectionLabel(goalTestRoot, "How to play");
             CreateSidePanelText(
                 "Play Steps",
-                "Drag cards into the map. Connect dots so Ghost checks the room before replying. Drag cards to X to delete. Click a wire or card and press Del to remove it.",
-                92f);
+                "Drag cards into the map and connect their dots. Drag to X, or select and press Del, to remove.",
+                56f);
 
-            CreateSectionLabel(goalTestRoot, "Legend");
+            CreateGuideSectionLabel(goalTestRoot, "Legend");
             CreateLegendRow("Blue dot", "next step", AlwaysPortColor);
             CreateLegendRow("Green dot", "room is known", SlotPresentPortColor);
             CreateLegendRow("Orange dot", "room is missing", SlotMissingPortColor);
             CreateLegendRow("Top dot", "drop a wire here", InputPortColor);
 
-            CreateSectionLabel(goalTestRoot, "Ghost should handle");
+            CreateGuideSectionLabel(goalTestRoot, "Ghost should handle");
             foreach (var testCase in controller.TestCases)
             {
                 CreateCompactTestCaseRow(testCase);
             }
 
-            CreateSectionLabel(goalTestRoot, "Ghost reaction");
-            ghostOutcomeText = CreateSidePanelText(
-                "Ghost Outcome",
-                "Ghost is waiting for a map.",
-                96f);
         }
 
         private Text CreateSidePanelText(string name, string value, float preferredHeight)
@@ -1040,18 +1522,10 @@ namespace Ghost.Presentation.Act3DialogGraph
             ConfigurePanelSurface(validationControlsRoot.gameObject, ValidationColor, false);
             ConfigureValidationControlsRoot();
 
-            var validateButton = CreateValidateButton(validationControlsRoot);
-            validateButton.interactable = true;
-            validateButton.onClick.RemoveAllListeners();
-            validateButton.onClick.AddListener(() =>
-            {
-                if (controller == null)
-                {
-                    return;
-                }
-
-                controller.ValidateCurrentState();
-            });
+            primaryActionButton = CreateValidateButton(validationControlsRoot, out primaryActionButtonText);
+            primaryActionButton.interactable = true;
+            primaryActionButton.onClick.RemoveAllListeners();
+            primaryActionButton.onClick.AddListener(HandlePrimaryAction);
 
             validationFeedbackText = CreateValidationFeedbackText(validationControlsRoot);
             validationFeedbackText.text = PlaceholderFeedbackText;
@@ -1072,6 +1546,8 @@ namespace Ghost.Presentation.Act3DialogGraph
                 ghostOutcomeText.text = CreateGhostOutcomeMessage(isCorrect, errors);
                 ghostOutcomeText.color = isCorrect ? FeedbackCorrectColor : FeedbackIncorrectColor;
             }
+
+            UpdateExperienceChrome();
         }
 
         private void ConfigureValidationControlsRoot()
@@ -1120,23 +1596,102 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private void EnsureInstructionText()
         {
-            ConfigureExistingLabel(
-                transform.Find("Title"),
-                TitleText,
-                44,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                RootTextColor,
-                68f);
+            var rootLayout = transform.GetComponent<VerticalLayoutGroup>();
+            if (rootLayout != null)
+            {
+                rootLayout.padding = new RectOffset(36, 36, 26, 24);
+                rootLayout.spacing = 9f;
+                rootLayout.childControlWidth = true;
+                rootLayout.childControlHeight = true;
+                rootLayout.childForceExpandWidth = true;
+                rootLayout.childForceExpandHeight = false;
+            }
 
-            ConfigureExistingLabel(
-                transform.Find("Subtitle"),
-                InstructionText,
-                20,
-                FontStyle.Normal,
-                TextAnchor.MiddleLeft,
-                SecondaryTextColor,
-                70f);
+            var rootImage = transform.GetComponent<Image>();
+            if (rootImage != null)
+            {
+                rootImage.color = new Color(0.96f, 0.94f, 1f);
+                rootImage.raycastTarget = false;
+            }
+
+            EnsurePageHeader();
+        }
+
+        private void EnsurePageHeader()
+        {
+            pageHeader = transform.Find("Header") as RectTransform;
+            if (pageHeader == null)
+            {
+                pageHeader = new GameObject("Header", typeof(RectTransform)).GetComponent<RectTransform>();
+                pageHeader.SetParent(transform, false);
+            }
+
+            pageHeader.SetAsFirstSibling();
+            var headerLayoutElement = pageHeader.GetComponent<LayoutElement>();
+            if (headerLayoutElement == null)
+            {
+                headerLayoutElement = pageHeader.gameObject.AddComponent<LayoutElement>();
+            }
+
+            headerLayoutElement.minHeight = 56f;
+            headerLayoutElement.preferredHeight = 56f;
+
+            var headerLayout = pageHeader.GetComponent<HorizontalLayoutGroup>();
+            if (headerLayout == null)
+            {
+                headerLayout = pageHeader.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            headerLayout.spacing = 16f;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = true;
+
+            var titleRoot = pageHeader.Find("Title") as RectTransform;
+            if (titleRoot == null)
+            {
+                titleRoot = transform.Find("Title") as RectTransform;
+                if (titleRoot == null)
+                {
+                    titleRoot = new GameObject("Title", typeof(RectTransform)).GetComponent<RectTransform>();
+                }
+
+                titleRoot.SetParent(pageHeader, false);
+            }
+
+            if (titleRoot.GetComponent<Text>() == null)
+            {
+                titleRoot.gameObject.AddComponent<Text>();
+            }
+
+            ConfigureExistingLabel(titleRoot, TitleText, 38, FontStyle.Bold, TextAnchor.MiddleLeft, RootTextColor, 56f);
+            titleRoot.GetComponent<LayoutElement>().flexibleWidth = 1f;
+
+            var progressRoot = pageHeader.Find("Phase Progress") as RectTransform;
+            if (progressRoot == null)
+            {
+                progressRoot = new GameObject("Phase Progress", typeof(RectTransform)).GetComponent<RectTransform>();
+                progressRoot.SetParent(pageHeader, false);
+            }
+
+            phaseProgressText = progressRoot.GetComponent<Text>();
+            if (phaseProgressText == null)
+            {
+                phaseProgressText = progressRoot.gameObject.AddComponent<Text>();
+            }
+
+            ConfigureExistingLabel(progressRoot, string.Empty, 20, FontStyle.Bold, TextAnchor.MiddleRight, SecondaryTextColor, 56f);
+            var progressLayout = progressRoot.GetComponent<LayoutElement>();
+            progressLayout.minWidth = 210f;
+            progressLayout.preferredWidth = 210f;
+            progressLayout.flexibleWidth = 0f;
+
+            var subtitle = transform.Find("Subtitle");
+            if (subtitle != null)
+            {
+                subtitle.gameObject.SetActive(false);
+            }
         }
 
         private void DetachController()
@@ -1146,7 +1701,7 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return;
             }
 
-            controller.StateChanged -= RefreshGraphCanvas;
+            controller.StateChanged -= HandleControllerStateChanged;
             controller.FeedbackChanged -= ApplyValidationFeedback;
             controller = null;
         }
@@ -1302,7 +1857,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             layoutElement.flexibleWidth = 1f;
         }
 
-        private static Button CreateValidateButton(Transform parent)
+        private static Button CreateValidateButton(Transform parent, out Text label)
         {
             var buttonRoot = new GameObject("Validate Button", typeof(RectTransform));
             buttonRoot.transform.SetParent(parent, false);
@@ -1325,15 +1880,51 @@ namespace Ghost.Presentation.Act3DialogGraph
             labelTransform.offsetMin = Vector2.zero;
             labelTransform.offsetMax = Vector2.zero;
 
-            var text = labelTransform.gameObject.AddComponent<Text>();
-            text.text = "Test Ghost's map";
-            text.font = GetBuiltinFont();
-            text.fontSize = 14;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = new Color(0.12f, 0.18f, 0.30f);
-            text.raycastTarget = false;
+            label = labelTransform.gameObject.AddComponent<Text>();
+            label.text = "Test Ghost's map";
+            label.font = GetBuiltinFont();
+            label.fontSize = 14;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = new Color(0.12f, 0.18f, 0.30f);
+            label.raycastTarget = false;
 
+            return button;
+        }
+
+        private static Button CreateOnboardingButton(Transform parent, string labelText)
+        {
+            var buttonRoot = new GameObject(labelText + " Button", typeof(RectTransform));
+            buttonRoot.transform.SetParent(parent, false);
+
+            var image = buttonRoot.AddComponent<Image>();
+            image.color = new Color(0.84f, 0.92f, 1f);
+            image.raycastTarget = true;
+
+            var button = buttonRoot.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            var layoutElement = buttonRoot.AddComponent<LayoutElement>();
+            layoutElement.minWidth = 190f;
+            layoutElement.preferredWidth = 190f;
+            layoutElement.minHeight = 42f;
+            layoutElement.preferredHeight = 42f;
+
+            var labelTransform = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
+            labelTransform.SetParent(buttonRoot.transform, false);
+            labelTransform.anchorMin = Vector2.zero;
+            labelTransform.anchorMax = Vector2.one;
+            labelTransform.offsetMin = Vector2.zero;
+            labelTransform.offsetMax = Vector2.zero;
+
+            var label = labelTransform.gameObject.AddComponent<Text>();
+            label.text = labelText;
+            label.font = GetBuiltinFont();
+            label.fontSize = 14;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = new Color(0.12f, 0.18f, 0.30f);
+            label.raycastTarget = false;
             return button;
         }
 

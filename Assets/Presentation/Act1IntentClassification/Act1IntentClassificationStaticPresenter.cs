@@ -16,16 +16,22 @@ namespace Ghost.Presentation.Act1IntentClassification
         private const float CardPreferredHeight = 52f;
         private const float PilePreferredHeight = 128f;
         private const float LabelChipHeight = 38f;
-        private const float ConversationPanelHeight = 150f;
-        private const float TeachingPanelPreferredHeight = 66f;
+        private const float ObjectiveStripHeight = 48f;
+        private const float OnboardingPanelHeight = 180f;
+        private const float ConversationPanelHeight = 170f;
+        private const float TeachingPanelPreferredHeight = 54f;
         private const float ControlsPreferredHeight = 92f;
 
         private const string TitleText = "Act 1: Train Ghost to Greet Visitors";
         private const string InstructionText =
             "Watch Ghost fail, cluster visitor transcripts into training piles, label each purpose, then teach Ghost.";
-        private const string TeachingPanelTitleText = "Lily's Intent Note";
         private const string TeachingPanelBodyText =
-            "Lily: Um... Ghost memorizes sentences. We need piles that show the visitor's purpose, not exact words.";
+            "Lily: Um... build piles around visitor purpose, then let new visitors test what Ghost learned.";
+        private const string OnboardingTitleText = "Lily's quick training loop";
+        private const string OnboardingBodyText =
+            "Lily: Um... first, watch Ghost fail when a visitor uses new words.\n" +
+            "Lily: Then cluster the old transcripts into piles and label each pile's purpose.\n" +
+            "Lily: Teach Ghost with those piles, then watch it answer new visitors.";
 
         private static readonly Color CardDefaultColor = new Color(1f, 0.99f, 0.94f);
         private static readonly Color CardSelectedColor = new Color(1f, 0.91f, 0.52f);
@@ -41,6 +47,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         private static readonly Color LabelSelectedColor = new Color(1f, 0.92f, 0.62f);
         private static readonly Color TeachingPanelColor = new Color(1f, 0.96f, 0.82f, 0.96f);
         private static readonly Color TeachingPanelOutlineColor = new Color(0.86f, 0.58f, 0.22f, 0.95f);
+        private static readonly Color ObjectiveStripColor = new Color(0.14f, 0.18f, 0.32f);
         private static readonly Color FeedbackNeutralColor = new Color(0.24f, 0.22f, 0.30f);
         private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
         private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
@@ -58,6 +65,12 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private Act1IntentClassificationInteractionController controller;
         private Canvas rootCanvas;
+        private RectTransform pageHeader;
+        private Text phaseProgressText;
+        private RectTransform objectiveStrip;
+        private Text objectiveText;
+        private RectTransform onboardingPanel;
+        private RectTransform prototypeBody;
         private RectTransform conversationPanel;
         private GhostFaceView ghostFaceView;
         private Text visitorText;
@@ -69,6 +82,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         private Button teachButton;
         private Button reviseButton;
         private Button completeButton;
+        private Button replayOnboardingButton;
         private Text feedbackText;
 
         private static readonly string[] IntentIds =
@@ -113,6 +127,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             controller.StateChanged += RefreshAll;
             controller.FeedbackChanged += ApplyFeedback;
 
+            EnsureExperienceChrome();
             RefreshAll();
         }
 
@@ -125,6 +140,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             UpdateConversationPanel();
             UpdateControls();
             ApplyFeedback(controller.CurrentFeedback);
+            UpdateExperienceChrome();
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(cardListRoot);
@@ -444,25 +460,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         private void EnsureInstructionText()
         {
             ConfigureRootLayout();
-            ConfigureExistingLabel(
-                transform,
-                "Title",
-                TitleText,
-                40,
-                FontStyle.Bold,
-                TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
-                50f);
-
-            ConfigureExistingLabel(
-                transform,
-                "Subtitle",
-                InstructionText,
-                18,
-                FontStyle.Normal,
-                TextAnchor.MiddleLeft,
-                new Color(0.26f, 0.21f, 0.35f),
-                32f);
+            EnsurePageHeader();
 
             EnsureTeachingPanel(transform);
             ConfigureColumnPanelLayout(cardListRoot.parent);
@@ -471,6 +469,103 @@ namespace Ghost.Presentation.Act1IntentClassification
             ConfigureListRoot(intentGroupListRoot, 8f);
             ConfigurePanelSurface(cardListRoot.parent, new Color(1f, 0.985f, 0.94f), new Color(0.82f, 0.70f, 0.90f, 0.85f));
             ConfigurePanelSurface(intentGroupListRoot.parent, PanelColor, new Color(0.60f, 0.72f, 0.90f, 0.90f));
+
+            prototypeBody = cardListRoot.parent != null ? cardListRoot.parent.parent as RectTransform : null;
+            var bodyLayout = prototypeBody != null ? prototypeBody.GetComponent<HorizontalLayoutGroup>() : null;
+            if (bodyLayout != null)
+            {
+                bodyLayout.spacing = 18f;
+                bodyLayout.childControlWidth = true;
+                bodyLayout.childControlHeight = true;
+                bodyLayout.childForceExpandWidth = true;
+                bodyLayout.childForceExpandHeight = true;
+            }
+        }
+
+        private void EnsurePageHeader()
+        {
+            pageHeader = transform.Find("Header") as RectTransform;
+            if (pageHeader == null)
+            {
+                pageHeader = new GameObject("Header", typeof(RectTransform)).GetComponent<RectTransform>();
+                pageHeader.SetParent(transform, false);
+            }
+
+            pageHeader.SetAsFirstSibling();
+            ConfigureLayoutElement(pageHeader.gameObject, 0f, 56f, 0f);
+            var headerLayout = pageHeader.GetComponent<HorizontalLayoutGroup>();
+            if (headerLayout == null)
+            {
+                headerLayout = pageHeader.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            headerLayout.spacing = 16f;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = true;
+
+            var titleRoot = pageHeader.Find("Title") as RectTransform;
+            if (titleRoot == null)
+            {
+                titleRoot = transform.Find("Title") as RectTransform;
+                if (titleRoot == null)
+                {
+                    titleRoot = new GameObject("Title", typeof(RectTransform)).GetComponent<RectTransform>();
+                }
+
+                titleRoot.SetParent(pageHeader, false);
+            }
+
+            var title = titleRoot.GetComponent<Text>();
+            if (title == null)
+            {
+                title = titleRoot.gameObject.AddComponent<Text>();
+            }
+
+            ConfigureHeaderText(title, TitleText, 38, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.12f, 0.28f));
+            ConfigureLayoutElement(titleRoot.gameObject, 0f, 56f, 1f);
+
+            var progressRoot = pageHeader.Find("Phase Progress") as RectTransform;
+            if (progressRoot == null)
+            {
+                progressRoot = new GameObject("Phase Progress", typeof(RectTransform)).GetComponent<RectTransform>();
+                progressRoot.SetParent(pageHeader, false);
+            }
+
+            phaseProgressText = progressRoot.GetComponent<Text>();
+            if (phaseProgressText == null)
+            {
+                phaseProgressText = progressRoot.gameObject.AddComponent<Text>();
+            }
+
+            ConfigureHeaderText(phaseProgressText, string.Empty, 20, FontStyle.Bold, TextAnchor.MiddleRight, new Color(0.35f, 0.32f, 0.45f));
+            ConfigureLayoutElement(progressRoot.gameObject, 210f, 56f, 0f);
+
+            var subtitle = transform.Find("Subtitle");
+            if (subtitle != null)
+            {
+                subtitle.gameObject.SetActive(false);
+            }
+        }
+
+        private static void ConfigureHeaderText(
+            Text text,
+            string value,
+            int fontSize,
+            FontStyle fontStyle,
+            TextAnchor alignment,
+            Color color)
+        {
+            text.text = value;
+            text.font = GetBuiltinFont();
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.alignment = alignment;
+            text.color = color;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.raycastTarget = false;
         }
 
         private void EnsureConversationPanel()
@@ -580,6 +675,135 @@ namespace Ghost.Presentation.Act1IntentClassification
             feedbackText = EnsureFeedbackText(controlsRoot);
         }
 
+        private void EnsureExperienceChrome()
+        {
+            objectiveStrip = EnsureObjectiveStrip(transform, out objectiveText);
+            onboardingPanel = EnsureOnboardingPanel(transform);
+            prototypeBody = transform.Find("Prototype Body") as RectTransform;
+
+            var onboardingButton = EnsureControlButton(
+                onboardingPanel,
+                "Watch Ghost Fail Button",
+                "Watch Ghost fail",
+                190f);
+            onboardingButton.onClick.RemoveAllListeners();
+            onboardingButton.onClick.AddListener(controller.BeginAfterOnboarding);
+
+            var teachingPanel = transform.Find("Lily Intent Teaching Panel");
+            var teachingNoteRow = teachingPanel != null ? teachingPanel.Find("Teaching Note Row") : null;
+            if (teachingNoteRow != null)
+            {
+                replayOnboardingButton = EnsureControlButton(
+                    teachingNoteRow,
+                    "Replay Lily Button",
+                    "Replay Lily",
+                    130f);
+                replayOnboardingButton.onClick.RemoveAllListeners();
+                replayOnboardingButton.onClick.AddListener(controller.ReplayOnboarding);
+            }
+
+            if (pageHeader != null)
+            {
+                objectiveStrip.SetSiblingIndex(pageHeader.GetSiblingIndex() + 1);
+                onboardingPanel.SetSiblingIndex(objectiveStrip.GetSiblingIndex() + 1);
+            }
+
+            if (teachingPanel != null)
+            {
+                teachingPanel.SetSiblingIndex(onboardingPanel.GetSiblingIndex() + 1);
+                conversationPanel.SetSiblingIndex(teachingPanel.GetSiblingIndex() + 1);
+            }
+
+            if (prototypeBody != null)
+            {
+                prototypeBody.SetSiblingIndex(conversationPanel.GetSiblingIndex() + 1);
+            }
+        }
+
+        private void UpdateExperienceChrome()
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            if (objectiveText != null)
+            {
+                objectiveText.text = GetObjectiveText();
+            }
+
+            if (phaseProgressText != null)
+            {
+                phaseProgressText.text = GetPhaseProgressText();
+            }
+
+            var isOnboarding = controller.Phase == Act1TeachingPhase.Onboarding;
+            if (onboardingPanel != null)
+            {
+                onboardingPanel.gameObject.SetActive(isOnboarding);
+            }
+
+            var teachingPanel = transform.Find("Lily Intent Teaching Panel");
+            if (teachingPanel != null)
+            {
+                teachingPanel.gameObject.SetActive(!isOnboarding);
+            }
+
+            if (conversationPanel != null)
+            {
+                conversationPanel.gameObject.SetActive(true);
+            }
+
+            if (prototypeBody != null)
+            {
+                prototypeBody.gameObject.SetActive(!isOnboarding);
+            }
+
+            if (replayOnboardingButton != null)
+            {
+                replayOnboardingButton.gameObject.SetActive(
+                    !isOnboarding && controller.Phase != Act1TeachingPhase.Complete);
+            }
+        }
+
+        private string GetObjectiveText()
+        {
+            switch (controller.Phase)
+            {
+                case Act1TeachingPhase.Onboarding:
+                    return "Setup: learn the training loop before touching the transcripts";
+                case Act1TeachingPhase.Intro:
+                    return "1/3 Watch Ghost fail when exact-word matching breaks";
+                case Act1TeachingPhase.Build:
+                    return "2/3 Build + label training piles by visitor purpose";
+                case Act1TeachingPhase.Demo:
+                    return "3/3 Teach Ghost and check how it answers new visitors";
+                case Act1TeachingPhase.Complete:
+                    return "Complete: Ghost can answer new visitors from the training piles";
+                default:
+                    return "Act 1 training";
+            }
+        }
+
+        private string GetPhaseProgressText()
+        {
+            switch (controller.Phase)
+            {
+                case Act1TeachingPhase.Onboarding:
+                    return "Step 0/3";
+                case Act1TeachingPhase.Intro:
+                    return "Step 1/3";
+                case Act1TeachingPhase.Build:
+                    return "Step 2/3";
+                case Act1TeachingPhase.Demo:
+                    return "Step 3/3";
+                case Act1TeachingPhase.Complete:
+                    return "Complete";
+                default:
+                    return string.Empty;
+            }
+        }
+
         private void UpdateConversationPanel()
         {
             var beat = controller.GetCurrentConversationBeat();
@@ -606,6 +830,11 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private GhostMood GetGhostMood()
         {
+            if (controller.Phase == Act1TeachingPhase.Onboarding)
+            {
+                return GhostMood.Neutral;
+            }
+
             if (controller.Phase == Act1TeachingPhase.Complete)
             {
                 return GhostMood.Happy;
@@ -682,8 +911,15 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
-            layout.padding = new RectOffset(36, 36, 22, 26);
-            layout.spacing = 10f;
+            layout.padding = new RectOffset(36, 36, 26, 24);
+            layout.spacing = 9f;
+
+            var image = transform.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.96f, 0.94f, 1f);
+                image.raycastTarget = false;
+            }
         }
 
         private static void ConfigureColumnPanelLayout(Transform root)
@@ -763,8 +999,136 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(16, 16, 6, 6);
-            layout.spacing = 2f;
+            layout.padding = new RectOffset(16, 12, 7, 7);
+            layout.spacing = 0f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var oldTitle = panel.Find("Teaching Panel Title");
+            if (oldTitle != null)
+            {
+                oldTitle.gameObject.SetActive(false);
+            }
+
+            var oldBody = panel.Find("Teaching Panel Body");
+            if (oldBody != null)
+            {
+                oldBody.gameObject.SetActive(false);
+            }
+
+            var row = panel.Find("Teaching Note Row") as RectTransform;
+            if (row == null)
+            {
+                row = new GameObject("Teaching Note Row", typeof(RectTransform)).GetComponent<RectTransform>();
+                row.SetParent(panel, false);
+            }
+
+            ConfigureLayoutElement(row.gameObject, 0f, 40f, 0f);
+            var rowLayout = row.GetComponent<HorizontalLayoutGroup>();
+            if (rowLayout == null)
+            {
+                rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            rowLayout.spacing = 10f;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = true;
+
+            ConfigureOrCreateLabel(
+                row,
+                "Teaching Note Text",
+                TeachingPanelBodyText,
+                15,
+                FontStyle.Normal,
+                TextAnchor.MiddleLeft,
+                new Color(0.25f, 0.20f, 0.18f),
+                40f);
+            row.Find("Teaching Note Text").GetComponent<LayoutElement>().flexibleWidth = 1f;
+        }
+
+        private static RectTransform EnsureObjectiveStrip(Transform root, out Text label)
+        {
+            var strip = root.Find("Objective Strip") as RectTransform;
+            if (strip == null)
+            {
+                strip = new GameObject("Objective Strip", typeof(RectTransform)).GetComponent<RectTransform>();
+                strip.SetParent(root, false);
+            }
+
+            var image = strip.GetComponent<Image>();
+            if (image == null)
+            {
+                image = strip.gameObject.AddComponent<Image>();
+            }
+
+            image.color = ObjectiveStripColor;
+            image.raycastTarget = false;
+            ConfigureLayoutElement(strip.gameObject, 0f, ObjectiveStripHeight, 0f);
+
+            var layout = strip.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = strip.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(18, 18, 7, 7);
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            ConfigureOrCreateLabel(
+                strip,
+                "Objective Text",
+                string.Empty,
+                18,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                Color.white,
+                34f);
+            label = strip.Find("Objective Text").GetComponent<Text>();
+            return strip;
+        }
+
+        private static RectTransform EnsureOnboardingPanel(Transform root)
+        {
+            var panel = root.Find("Onboarding Panel") as RectTransform;
+            if (panel == null)
+            {
+                panel = new GameObject("Onboarding Panel", typeof(RectTransform)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+            }
+
+            var image = panel.GetComponent<Image>();
+            if (image == null)
+            {
+                image = panel.gameObject.AddComponent<Image>();
+            }
+
+            image.color = TeachingPanelColor;
+            image.raycastTarget = false;
+
+            var outline = panel.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = panel.gameObject.AddComponent<Outline>();
+            }
+
+            SetOutline(outline, TeachingPanelOutlineColor, new Vector2(2f, -2f));
+            ConfigureLayoutElement(panel.gameObject, 0f, OnboardingPanelHeight, 0f);
+
+            var layout = panel.GetComponent<VerticalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            layout.padding = new RectOffset(18, 18, 12, 12);
+            layout.spacing = 6f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -772,23 +1136,23 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             ConfigureOrCreateLabel(
                 panel,
-                "Teaching Panel Title",
-                TeachingPanelTitleText,
-                14,
+                "Onboarding Title",
+                OnboardingTitleText,
+                20,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.30f, 0.20f, 0.08f),
-                18f);
-
+                new Color(0.28f, 0.18f, 0.08f),
+                26f);
             ConfigureOrCreateLabel(
                 panel,
-                "Teaching Panel Body",
-                TeachingPanelBodyText,
-                14,
+                "Onboarding Body",
+                OnboardingBodyText,
+                17,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.20f, 0.18f),
-                34f);
+                88f);
+            return panel;
         }
 
         private static GhostFaceView EnsureGhostFace(Transform parent)
@@ -800,7 +1164,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 root.SetParent(parent, false);
             }
 
-            ConfigureLayoutElement(root.gameObject, 150f, 128f, 0f);
+            ConfigureLayoutElement(root.gameObject, 150f, 150f, 0f);
             var view = root.GetComponent<GhostFaceView>();
             if (view == null)
             {
@@ -892,7 +1256,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             button.targetGraphic = image;
-            label = CreateFillText(root, "Next", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            label = EnsureButtonText(root, "Next");
             label.color = new Color(0.12f, 0.18f, 0.30f);
             return button;
         }
@@ -923,9 +1287,40 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             button.targetGraphic = image;
-            var label = CreateFillText(root, text, 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            var label = EnsureButtonText(root, text);
             label.color = new Color(0.12f, 0.18f, 0.30f);
             return button;
+        }
+
+        private static Text EnsureButtonText(Transform parent, string value)
+        {
+            var labelRoot = parent.Find("Button Text") as RectTransform;
+            if (labelRoot == null)
+            {
+                labelRoot = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
+                labelRoot.SetParent(parent, false);
+            }
+
+            labelRoot.anchorMin = Vector2.zero;
+            labelRoot.anchorMax = Vector2.one;
+            labelRoot.offsetMin = Vector2.zero;
+            labelRoot.offsetMax = Vector2.zero;
+
+            var label = labelRoot.GetComponent<Text>();
+            if (label == null)
+            {
+                label = labelRoot.gameObject.AddComponent<Text>();
+            }
+
+            label.text = value;
+            label.font = GetBuiltinFont();
+            label.fontSize = 13;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.raycastTarget = false;
+            return label;
         }
 
         private static Text EnsureFeedbackText(Transform parent)

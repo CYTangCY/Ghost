@@ -1844,3 +1844,111 @@ runtime.
 1. Confirm existing validators, sessions, sample data, and answer keys are unchanged.
 2. Confirm no external art asset was imported.
 3. Confirm ProjectSettings, Packages, Backend, Fundamentals, Act 3 logic, and Build Settings are unchanged by this run.
+
+---
+
+## M0-T46 Run 001: Acts 1 and 3 Experience Unification
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project and wait for script compilation.
+2. Confirm these four modified scripts import without errors:
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationInteractionController.cs`
+   - `Assets/Presentation/Act1IntentClassification/Act1IntentClassificationStaticPresenter.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphInteractionController.cs`
+   - `Assets/Presentation/Act3DialogGraph/Act3DialogGraphStaticPresenter.cs`
+3. Confirm no Console errors appear.
+
+### Act 1 Onboarding / Objective Check
+
+1. Open `Assets/Scenes/Act1IntentClassificationPrototype.unity` or enter Act 1 from the Shell.
+2. Set the Game view to 1920x1080 and enter Play Mode.
+3. Confirm the top-level order matches Act 2: header with right-side progress, objective strip,
+   onboarding/Lily note, Ghost conversation, then puzzle body.
+4. Confirm the first actionable screen is `Lily's quick training loop` with three short Lily lines and
+   one `Watch Ghost fail` button.
+5. Confirm the Ghost conversation panel remains visible below onboarding and previews the exact-word
+   problem, but has no active advance control yet.
+6. Confirm transcript cards, piles, and teaching controls cannot be used before dismissing onboarding.
+7. Confirm the persistent strip reads the setup objective and does not reveal card placements.
+8. Click `Watch Ghost fail`; confirm the existing intro failure begins.
+9. Confirm onboarding changes into the compact Lily note strip with a `Replay Lily` button.
+10. Advance the intro, create one training pile, then click `Replay Lily`.
+11. Confirm the full onboarding and Ghost problem preview return; dismiss it again and confirm the
+    existing pile is preserved.
+12. Confirm the strip moves through:
+   - `1/3 Watch Ghost fail...`
+   - `2/3 Build + label training piles...`
+   - `3/3 Teach Ghost and check...`
+13. Build the three correct labelled piles, run the unseen visitors, and confirm the completion objective
+   and existing `Complete Act` flow still work.
+14. Confirm the full screen remains visible at 1920x1080 with no clipped bottom controls.
+
+### Act 3 Onboarding / Objective Check
+
+1. Open `Assets/Scenes/Act3DialogGraphPrototype.unity` or enter Act 3 from the Shell.
+2. Set the Game view to 1920x1080 and enter Play Mode.
+3. Confirm the top-level order matches Act 2: header with right-side progress, objective strip,
+   onboarding/Lily note, Ghost conversation, then graph body.
+4. Confirm Lily's onboarding appears before the graph can be edited, with three short lines explaining
+   intent branch, Act 2 detail/slot check, response, and test steps.
+5. Confirm the panel has one `Build the map` dismiss button.
+6. Confirm the Ghost conversation panel below Lily explains that Ghost recognizes the request and room
+   detail but replies before checking what it knows.
+7. Confirm the setup objective is visible and does not reveal the finished wiring.
+8. Click `Build the map`; confirm onboarding changes into a compact Lily note with `Replay Lily` while
+   the Ghost conversation panel remains in the same position.
+9. Add one graph card, click `Replay Lily`, and confirm the same onboarding/conversation return.
+10. Dismiss it and confirm the graph card is preserved.
+11. Confirm palette, reply-map board, guide, validation row, and persistent build
+   objective appear without cropping.
+12. Confirm Ghost's face and deterministic test outcome appear in the upper conversation panel, not
+    inside or on top of the right Guide column.
+
+### Act 3 Face / Retry Check
+
+1. With the graph empty, click `Test Ghost's map`.
+2. Confirm the deterministic validation failure remains visible, the Ghost face becomes Sad, the button
+   becomes `Try again`, and the graph remains editable.
+3. Add all five card types but wire at least one route incorrectly; click `Try again`.
+4. Confirm the face becomes Confused for wrong structure/failed test, and the new failure detail remains
+   visible while moving, adding, deleting, or reconnecting graph items.
+5. Confirm clicking `Ask Lily` only requests a hint and never changes validation or face scoring.
+
+### Act 3 Success / Debrief Check
+
+1. Build the passing map using the existing sample case:
+   - Start next -> Recognize request
+   - Recognize request next -> Check room
+   - Check room `room yes` -> Answer location
+   - Check room `room no` -> Ask which room
+2. Click `Try again` / `Test Ghost's map`.
+3. Confirm both deterministic test cases pass, the face becomes Happy, and the objective shows completion.
+4. Confirm the primary button reads `Complete Act`.
+5. Click `Complete Act`; confirm `GameShellPrototype` loads through the existing pending-debrief path and
+   the Act 3 debrief is shown.
+
+### Acts 1-3 Consistency / Floating Windows
+
+1. Enter Acts 1, 2, and 3 and compare onboarding panel style, persistent objective strip, and Ghost face
+   language.
+2. In Act 3, confirm the ambient banter panel appears as the existing floating window.
+3. Drag ambient banter within the Game view and confirm it remains movable and clamped on screen.
+4. Click `Ask Lily`, drag the Lily chat by its header, close it, and confirm ambient banter resumes.
+5. Confirm neither floating panel permanently blocks graph editing or the validation/completion button.
+6. Confirm the Act 3 guide column, Ghost face, test cases, and validation detail all fit at 1920x1080.
+7. Confirm no Console errors appear throughout the Act 1-3 checks.
+
+### Scope / Determinism Check
+
+1. Confirm all intent/entity/dialog validators, sessions, sample data, demo engines, and existing tests
+   are unchanged.
+2. Confirm Act 2, Fundamentals, Shell flow, Banter/Common/GhostAvatar components, Backend,
+   ProjectSettings, Packages, Build Settings, scenes, and existing `.meta` files are unchanged by Run 001.
+3. Confirm no Lily portrait file or `tmp/lily` preview was changed; portrait work starts in Run 002.
+
+### Inspector Setup
+
+No new Inspector setup is required. Use the existing Act 1 and Act 3 scene presenter wiring. The new
+onboarding panels, objective strips, Act 3 Ghost face, and action-button states are created at runtime;
+the existing scene-load hooks create floating banter/chat affordances.
