@@ -623,6 +623,17 @@ enforced (LEARNING_CONTENT before each slice); shell/Build-Settings additions pe
 exception; deterministic-correctness holds throughout. M0-T46 Part C (Lily portrait) continues as
 side-runs on user feedback.
 
+### 2026-07-05 — M0-T46: Acts 1/3 unified to the Act 2 experience standard — Completed
+The user verified the 8-point Play Mode checklist and confirmed completion ("M0-T46已經確認完成了"):
+Act 1 two-column body and Act 3 three-column body preserved under the unified composition (56px
+header + phase progress / 48px objective strip / 180px onboarding + 54px replayable note / 170px
+Ghost conversation panel / 18px body spacing); Act 3 face + deterministic result in the conversation
+panel; Guide reduced to instructions/legend/tests; standalone subtitles hidden;
+onboarding/replay/state/retry/completion working; 1080p clean; Act 2 + protected logic unchanged.
+Lily portrait v8–v9 baseline shipped (Claude edits); Korean-style refinement continues on user
+feedback/reference image. Archive: `Docs/completed_tasks/M0-T46_acts13_experience_unification.md`.
+Next: M0-T47/T48/T49 chapters build-out (Codex prompt already issued).
+
 ---
 
 ## Entry Template

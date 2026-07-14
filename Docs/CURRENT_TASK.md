@@ -6,10 +6,11 @@ M0-T47
 
 ## Status Note
 
-M0-T46 run 001 is code-reviewed (scope clean) and awaits the user's Play Mode verification before
-closure; its Part C (Lily portrait iterations) continues as side-runs under M0-T46 ids when the user
-gives portrait feedback. Per the user's direction (2026-07-05, "build Acts 4/5/6 and the ending first;
-I will revise after"), M0-T47 is now the active implementation task.
+M0-T46 is CLOSED (user Play Mode verification passed 2026-07-05; archive in
+`Docs/completed_tasks/M0-T46_acts13_experience_unification.md`). Lily portrait refinement continues
+as side-runs when the user provides the reference image / feedback. M0-T47 is the active
+implementation task, per the user's direction ("build Acts 4/5/6 and the ending first; I will revise
+after").
 
 ## Goal
 
