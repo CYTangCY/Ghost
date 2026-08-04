@@ -1,4 +1,6 @@
+using Ghost.Presentation.Common;
 using Ghost.Presentation.Characters;
+using Ghost.Presentation.GhostAvatar;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,6 +26,28 @@ namespace Ghost.Presentation.Shell
             dialogueText = dialogue;
             speakerPortraitImage = portraitImage;
             portraitPlaceholderText = portraitPlaceholder;
+
+            GhostUITheme.Label(
+                speakerNameText,
+                speakerNameText == null ? string.Empty : speakerNameText.text,
+                GhostUITheme.HeadingSize,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                GhostUITheme.Ink);
+            GhostUITheme.Label(
+                dialogueText,
+                dialogueText == null ? string.Empty : dialogueText.text,
+                GhostUITheme.BodySize,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                GhostUITheme.Ink);
+            GhostUITheme.Label(
+                portraitPlaceholderText,
+                portraitPlaceholderText == null ? string.Empty : portraitPlaceholderText.text,
+                GhostUITheme.SmallSize,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                GhostUITheme.InkSoft);
         }
 
         public void Show(ShellDialogueLine line)
@@ -72,7 +96,9 @@ namespace Ghost.Presentation.Shell
         {
             if (string.Equals(speakerName, ShellDialogueData.GhostSpeakerName, System.StringComparison.OrdinalIgnoreCase))
             {
-                return ghostPortrait;
+                return ghostPortrait != null
+                    ? ghostPortrait
+                    : GhostPixelSpriteFactory.GetSprite(GhostMood.Neutral);
             }
 
             return lilyPortrait != null ? lilyPortrait : LilyPixelPortraitFactory.GetPortrait();

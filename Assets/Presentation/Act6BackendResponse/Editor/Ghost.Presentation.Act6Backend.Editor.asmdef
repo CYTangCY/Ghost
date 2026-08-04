@@ -1,0 +1,20 @@
+{
+    "name": "Ghost.Presentation.Act6Backend.Editor",
+    "rootNamespace": "Ghost.Presentation.Act6BackendResponse.Editor",
+    "references": [
+        "Ghost.Presentation",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

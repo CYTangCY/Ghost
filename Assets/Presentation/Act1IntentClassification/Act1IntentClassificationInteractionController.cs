@@ -240,6 +240,33 @@ namespace Ghost.Presentation.Act1IntentClassification
             BeginBuildAfterEdit("New training pile created. Add more matching transcripts or give it a purpose label.");
         }
 
+        /// <summary>
+        /// Starts an empty pile from a purpose label. Piles could previously only be born from a
+        /// dropped transcript, so a player who wanted to lay out the purposes first found the labels
+        /// simply did not respond - which read as a bug rather than a rule.
+        /// </summary>
+        public void AssignLabelToNewPile(string intentId)
+        {
+            if (string.IsNullOrWhiteSpace(intentId))
+            {
+                return;
+            }
+
+            var pile = new Act1IntentPileState(CreatePileId());
+            piles.Add(pile);
+            pile.SetIntentLabel(intentId);
+            SelectedLabelIntentId = null;
+            BeginBuildAfterEdit("Empty pile labelled. Drag the transcripts that match that purpose into it.");
+        }
+
+        public void AssignSelectedLabelToNewPile()
+        {
+            if (HasSelectedLabel)
+            {
+                AssignLabelToNewPile(SelectedLabelIntentId);
+            }
+        }
+
         public void MoveSelectedCardToPile(string pileId)
         {
             if (!HasSelectedCard)

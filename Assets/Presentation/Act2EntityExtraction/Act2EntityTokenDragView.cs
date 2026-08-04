@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -125,7 +126,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             preview.SetParent(canvas.transform, false);
             preview.sizeDelta = new Vector2(150f, 54f);
 
-            var image = preview.gameObject.AddComponent<Image>();
+            var image = GhostUITheme.Chip(preview.gameObject);
             image.color = new Color(1f, 0.93f, 0.68f, 0.92f);
             image.raycastTarget = false;
 
@@ -140,11 +141,11 @@ namespace Ghost.Presentation.Act2EntityExtraction
             label.rectTransform.offsetMin = Vector2.zero;
             label.rectTransform.offsetMax = Vector2.zero;
             label.text = tokenText;
-            label.font = GetBuiltinFont();
-            label.fontSize = 20;
+            label.font = GhostUITheme.Font;
+            label.fontSize = GhostUITheme.TitleSize;
             label.fontStyle = FontStyle.Bold;
             label.alignment = TextAnchor.MiddleCenter;
-            label.color = new Color(0.13f, 0.10f, 0.20f);
+            label.color = GhostUITheme.Ink;
             label.raycastTarget = false;
 
             return preview;
@@ -160,15 +161,5 @@ namespace Ghost.Presentation.Act2EntityExtraction
             dragPreview.position = eventData.position;
         }
 
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

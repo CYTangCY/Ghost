@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using System;
 using System.Collections.Generic;
 using Ghost.Presentation.GhostAvatar;
@@ -12,21 +13,27 @@ using UnityEngine.UI;
 
 namespace Ghost.Presentation.Act3DialogGraph
 {
-    public sealed class Act3DialogGraphStaticPresenter : MonoBehaviour
+    public sealed class Act3DialogGraphStaticPresenter : MonoBehaviour, IDialogGraphWireInteractionHost
     {
-        private const float PaletteItemPreferredHeight = 70f;
-        private const float TestCasePreferredHeight = 58f;
-        private const float ObjectiveStripHeight = 48f;
+        // Sized for the themed type scale: a two-line 21px title over a two-line 15px detail, plus the
+        // 6/6 padding and 2px spacing ConfigureListItem applies. At the old 70f these wrapped past the
+        // card and printed on top of each other.
+        private const float PaletteItemPreferredHeight = 88f;
+        private const float TestCasePreferredHeight = 74f;
+        private const float ObjectiveStripHeight = 40f;
         private const float OnboardingPanelHeight = 180f;
-        private const float ConversationPanelHeight = 170f;
-        private const float LilyNoteStripHeight = 54f;
-        private const float ValidationControlsPreferredHeight = 28f;
+        private const float ConversationPanelHeight = 178f;
+        private const float LilyNoteStripHeight = 96f;
+        // One line of body text plus padding; 28f clipped it once the scale went up.
+        private const float ValidationControlsPreferredHeight = 40f;
         private const float NodeCardWidth = 210f;
         private const float NodeCardHeight = 112f;
         private const float BoardMinHeight = 430f;
         private const float WireThickness = 4f;
         private const float PortDotSize = 18f;
-        private const float PaletteColumnWidth = 125f;
+        // 105px of usable width wrapped "Recognize request" into three lines. 170px usable holds it in
+        // two, which is what PaletteItemPreferredHeight is budgeted for.
+        private const float PaletteColumnWidth = 190f;
         private const float GraphColumnMinWidth = 900f;
         private const float GraphColumnPreferredWidth = 1120f;
         private const float GuideColumnWidth = 290f;
@@ -40,12 +47,9 @@ namespace Ghost.Presentation.Act3DialogGraph
         private const string OnboardingBodyText =
             "Lily: Um... Ghost needs one reply map before it can answer in order.\n" +
             "Lily: Intent cards choose a branch; slot checks use the details you caught in Act 2; response cards answer.\n" +
-            "Lily: Build the map, then test it on both visitors. A failed route will show what to revise.";
+            "Lily: Build a route for whoever is at the desk, then test it. More people will come in after.";
         private const string LilyNoteText =
-            "Lily: Um... route the request, check the detail, then let both visitors test Ghost's next reply.";
-
-        private static readonly Color RootTextColor = new Color(0.15f, 0.12f, 0.22f);
-        private static readonly Color SecondaryTextColor = new Color(0.30f, 0.28f, 0.38f);
+            "Lily: Um... route the request, then let the visitor at the desk test Ghost's reply.";
         private static readonly Color FlowPaletteColor = new Color(0.92f, 0.97f, 1f);
         private static readonly Color CheckPaletteColor = new Color(0.93f, 1f, 0.94f);
         private static readonly Color ReplyPaletteColor = new Color(1f, 0.96f, 0.90f);
@@ -56,7 +60,6 @@ namespace Ghost.Presentation.Act3DialogGraph
         private static readonly Color ObjectiveColor = new Color(1f, 0.965f, 0.78f);
         private static readonly Color ObjectiveStripColor = new Color(0.14f, 0.18f, 0.32f);
         private static readonly Color WarmNoteColor = new Color(1f, 0.96f, 0.82f);
-        private static readonly Color OutlineColor = new Color(0.62f, 0.60f, 0.78f, 0.72f);
         private static readonly Color NodeCardColor = new Color(1f, 0.995f, 0.94f);
         private static readonly Color SelectedNodeColor = new Color(1f, 0.92f, 0.68f);
         private static readonly Color StartNodeColor = new Color(0.88f, 1f, 0.92f);
@@ -67,9 +70,6 @@ namespace Ghost.Presentation.Act3DialogGraph
         private static readonly Color ButtonColor = new Color(0.87f, 0.91f, 1f);
         private static readonly Color TrashColor = new Color(1f, 0.91f, 0.88f);
         private static readonly Color TrashHighlightColor = new Color(1f, 0.72f, 0.62f);
-        private static readonly Color FeedbackNeutralColor = new Color(0.36f, 0.31f, 0.42f);
-        private static readonly Color FeedbackCorrectColor = new Color(0.12f, 0.45f, 0.22f);
-        private static readonly Color FeedbackIncorrectColor = new Color(0.72f, 0.24f, 0.18f);
 
         [SerializeField] private RectTransform nodePaletteRoot;
         [SerializeField] private RectTransform graphCanvasRoot;
@@ -103,6 +103,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         private Image trashDropImage;
         private Image activeDragWire;
         private Act3DialogGraphOutputPortView activeOutputPort;
+        private Act3DialogGraphInputPortView reverseDragInputPort;
         private Text validationFeedbackText;
         private Text ghostOutcomeText;
         private Button primaryActionButton;
@@ -219,7 +220,12 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public void UpdateWireDrag(PointerEventData eventData)
         {
-            if (activeOutputPort == null || activeDragWire == null || wireLayer == null || eventData == null)
+            // Either end may be the anchor, depending on which dot the player grabbed.
+            var anchor = activeOutputPort != null
+                ? activeOutputPort.RectTransform
+                : reverseDragInputPort != null ? reverseDragInputPort.RectTransform : null;
+
+            if (anchor == null || activeDragWire == null || wireLayer == null || eventData == null)
             {
                 return;
             }
@@ -233,7 +239,7 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return;
             }
 
-            DrawLine(activeDragWire.rectTransform, GetPortLocalCenter(activeOutputPort.RectTransform), pointerLocal, WireThickness);
+            DrawLine(activeDragWire.rectTransform, GetPortLocalCenter(anchor), pointerLocal, WireThickness);
         }
 
         public void EndWireDrag(Act3DialogGraphOutputPortView outputPort)
@@ -247,6 +253,31 @@ namespace Ghost.Presentation.Act3DialogGraph
             DestroyActiveDragWire();
         }
 
+        /// <summary>
+        /// A wire started from a card's input dot. The rubber-band line is the same; only the end the
+        /// player grabbed differs, so the drop is resolved by the output port they release on.
+        /// </summary>
+        public void BeginReverseWireDrag(Act3DialogGraphInputPortView inputPort, PointerEventData eventData)
+        {
+            if (!CanEditGraph() || inputPort == null || wireLayer == null)
+            {
+                return;
+            }
+
+            activeOutputPort = null;
+            DestroyActiveDragWire();
+            activeDragWire = CreateWireImage("Temporary Wire", new Color(0.12f, 0.20f, 0.34f, 0.72f));
+            activeDragWire.transform.SetAsLastSibling();
+            reverseDragInputPort = inputPort;
+            UpdateWireDrag(eventData);
+        }
+
+        public void EndReverseWireDrag(Act3DialogGraphInputPortView inputPort)
+        {
+            reverseDragInputPort = null;
+            DestroyActiveDragWire();
+        }
+
         public void CompleteWireDrop(Act3DialogGraphOutputPortView outputPort, Act3DialogGraphInputPortView inputPort)
         {
             if (!CanEditGraph() || outputPort == null || inputPort == null)
@@ -254,7 +285,8 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return;
             }
 
-            var shouldUseDrop = activeOutputPort == null || activeOutputPort == outputPort;
+            var shouldUseDrop = activeOutputPort == null || activeOutputPort == outputPort ||
+                reverseDragInputPort == inputPort;
             if (!shouldUseDrop)
             {
                 return;
@@ -379,9 +411,26 @@ namespace Ghost.Presentation.Act3DialogGraph
             trashDropImage.color = shouldHighlight ? TrashHighlightColor : TrashColor;
         }
 
+        private static RectTransform FindAncestor(Transform start, string name)
+        {
+            for (var current = start; current != null; current = current.parent)
+            {
+                if (string.Equals(current.name, name, StringComparison.Ordinal))
+                {
+                    return current as RectTransform;
+                }
+            }
+
+            // Fall back to the immediate parent so a scene generated before the viewport existed
+            // still lays out rather than throwing.
+            return start != null ? start.parent as RectTransform : null;
+        }
+
         private void ConfigureGeneratedColumnLayout()
         {
-            var palettePanel = nodePaletteRoot.parent as RectTransform;
+            // The palette list now sits inside a scroll viewport, so the column panel is a grandparent.
+            // Walk up by name instead of assuming a fixed depth.
+            var palettePanel = FindAncestor(nodePaletteRoot, "Node Palette Panel");
             var graphPanel = graphCanvasRoot.parent as RectTransform;
             var guidePanel = goalTestRoot.parent as RectTransform;
 
@@ -424,6 +473,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
             objectiveLayoutElement.minHeight = ObjectiveStripHeight;
             objectiveLayoutElement.preferredHeight = ObjectiveStripHeight;
+            objectiveLayoutElement.flexibleHeight = 0f;
 
             var objectiveLayout = objectiveStrip.GetComponent<HorizontalLayoutGroup>();
             if (objectiveLayout == null)
@@ -436,14 +486,14 @@ namespace Ghost.Presentation.Act3DialogGraph
             objectiveLayout.childControlHeight = true;
             objectiveLayout.childForceExpandWidth = true;
             objectiveLayout.childForceExpandHeight = true;
-            objectiveText = CreateText(
+            objectiveText = GhostUITheme.Label(
                 "Objective Text",
                 objectiveStrip,
                 string.Empty,
-                18,
+                GhostUITheme.HeadingSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                Color.white,
+                GhostUITheme.InkOnDark,
                 34f);
 
             onboardingPanel = transform.Find("Onboarding Panel") as RectTransform;
@@ -477,25 +527,25 @@ namespace Ghost.Presentation.Act3DialogGraph
             onboardingLayout.childForceExpandWidth = true;
             onboardingLayout.childForceExpandHeight = false;
 
-            CreateText(
+            GhostUITheme.Label(
                 "Onboarding Title",
                 onboardingPanel,
                 OnboardingTitleText,
-                20,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.28f, 0.18f, 0.08f),
                 26f);
-            CreateText(
+            GhostUITheme.Label(
                 "Onboarding Body",
                 onboardingPanel,
                 OnboardingBodyText,
-                17,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.20f, 0.18f),
                 72f);
-            var beginButton = CreateOnboardingButton(onboardingPanel, "Build the map");
+            var beginButton = GhostUITheme.PushButton(onboardingPanel, "Build the map", ButtonColor, 190f);
             beginButton.onClick.AddListener(controller.BeginAfterOnboarding);
 
             onboardingBridgePanel = transform.Find("Conversation Panel") as RectTransform;
@@ -521,6 +571,9 @@ namespace Ghost.Presentation.Act3DialogGraph
 
             bridgeLayoutElement.minHeight = ConversationPanelHeight;
             bridgeLayoutElement.preferredHeight = ConversationPanelHeight;
+            // Same trap as the header: the inner group force-expands height, so without this the
+            // panel reports flexible height and stretches down the rest of the page.
+            bridgeLayoutElement.flexibleHeight = 0f;
 
             var bridgeLayout = onboardingBridgePanel.GetComponent<HorizontalLayoutGroup>();
             if (bridgeLayout == null)
@@ -553,32 +606,32 @@ namespace Ghost.Presentation.Act3DialogGraph
             bridgeTextLayout.childControlHeight = true;
             bridgeTextLayout.childForceExpandWidth = true;
             bridgeTextLayout.childForceExpandHeight = false;
-            conversationLabelText = CreateText(
+            conversationLabelText = GhostUITheme.Label(
                 "Conversation Label",
                 bridgeTextColumn,
                 string.Empty,
-                18,
+                GhostUITheme.HeadingSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                RootTextColor,
+                GhostUITheme.Ink,
                 28f);
-            conversationVisitorText = CreateText(
+            conversationVisitorText = GhostUITheme.Label(
                 "Visitor Message",
                 bridgeTextColumn,
                 string.Empty,
-                17,
+                GhostUITheme.BodySize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.10f, 0.18f, 0.30f),
                 36f);
-            ghostOutcomeText = CreateText(
+            ghostOutcomeText = GhostUITheme.Label(
                 "Ghost Outcome",
                 bridgeTextColumn,
                 string.Empty,
-                16,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
-                SecondaryTextColor,
+                GhostUITheme.InkSoft,
                 64f);
 
             lilyNoteStrip = transform.Find("Lily Note Strip") as RectTransform;
@@ -612,17 +665,17 @@ namespace Ghost.Presentation.Act3DialogGraph
             noteLayout.childForceExpandWidth = false;
             noteLayout.childForceExpandHeight = true;
 
-            var lilyNote = CreateText(
+            var lilyNote = GhostUITheme.Label(
                 "Lily Note",
                 lilyNoteStrip,
                 LilyNoteText,
-                15,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.25f, 0.20f, 0.18f),
                 40f);
             lilyNote.GetComponent<LayoutElement>().flexibleWidth = 1f;
-            replayOnboardingButton = CreateOnboardingButton(lilyNoteStrip, "Replay Lily");
+            replayOnboardingButton = GhostUITheme.PushButton(lilyNoteStrip, "Replay Lily", ButtonColor, 190f);
             var replayLayout = replayOnboardingButton.GetComponent<LayoutElement>();
             replayLayout.minWidth = 130f;
             replayLayout.preferredWidth = 130f;
@@ -640,6 +693,9 @@ namespace Ghost.Presentation.Act3DialogGraph
             if (prototypeBody != null)
             {
                 prototypeBody.SetSiblingIndex(onboardingBridgePanel.GetSiblingIndex() + 1);
+                var bodyLayoutElement = prototypeBody.GetComponent<LayoutElement>() ?? prototypeBody.gameObject.AddComponent<LayoutElement>();
+                bodyLayoutElement.minHeight = 96f;
+                bodyLayoutElement.flexibleHeight = 1f;
             }
         }
 
@@ -707,9 +763,11 @@ namespace Ghost.Presentation.Act3DialogGraph
             {
                 primaryActionButtonText.text = controller.CurrentPhase == Act3ExperiencePhase.Complete
                     ? "Complete Act"
-                    : controller.HasFailedValidation
-                        ? "Try again"
-                        : "Test Ghost's map";
+                    : controller.CurrentPhase == Act3ExperiencePhase.Playback
+                        ? (controller.HasMoreVisitors ? "Next visitor" : "Finish the shift")
+                        : controller.HasFailedValidation
+                            ? "Try again"
+                            : "Test Ghost's map";
             }
 
             if (!controller.HasValidationAttempt)
@@ -717,13 +775,13 @@ namespace Ghost.Presentation.Act3DialogGraph
                 if (validationFeedbackText != null)
                 {
                     validationFeedbackText.text = PlaceholderFeedbackText;
-                    validationFeedbackText.color = FeedbackNeutralColor;
+                    validationFeedbackText.color = GhostUITheme.InkSoft;
                 }
 
                 if (ghostOutcomeText != null)
                 {
                     ghostOutcomeText.text = "Ghost is waiting for a tested reply map.";
-                    ghostOutcomeText.color = FeedbackNeutralColor;
+                    ghostOutcomeText.color = GhostUITheme.InkSoft;
                 }
             }
 
@@ -740,9 +798,21 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return "Setup: learn how to assemble and test Ghost's reply map";
             }
 
+            if (controller.CurrentPhase == Act3ExperiencePhase.Playback)
+            {
+                return "Visitor " + controller.CurrentVisitorNumber + "/" + controller.VisitorCount +
+                    ": watch Ghost use the route you built";
+            }
+
+            if (controller.CurrentPhase == Act3ExperiencePhase.Build)
+            {
+                return "Visitor " + controller.RevealedVisitorCount + "/" + controller.VisitorCount +
+                    ": build a route that answers this request";
+            }
+
             if (controller.CurrentPhase == Act3ExperiencePhase.Complete)
             {
-                return "Complete: Ghost passed both reply-map tests";
+                return "Complete: Ghost handled all three visitors";
             }
 
             return controller.HasFailedValidation
@@ -777,16 +847,35 @@ namespace Ghost.Presentation.Act3DialogGraph
                 conversationLabelText.text = "Ghost has a reply-order problem";
                 conversationVisitorText.text = "Visitor: Can you find the lantern in the archive?";
                 ghostOutcomeText.text = "Ghost recognizes the request and catches the room, but answers before checking which reply should come next.";
-                ghostOutcomeText.color = SecondaryTextColor;
+                ghostOutcomeText.color = GhostUITheme.InkSoft;
                 return;
             }
 
             if (!controller.HasValidationAttempt)
             {
-                conversationLabelText.text = "Ghost is waiting for a reply map";
-                conversationVisitorText.text = "Two visitors will test the same request with different room details.";
-                ghostOutcomeText.text = "Build the route, then test whether Ghost chooses an appropriate next reply for each visitor.";
-                ghostOutcomeText.color = SecondaryTextColor;
+                var arrived = controller.ArrivedVisitor;
+                conversationLabelText.text = arrived != null
+                    ? "Visitor " + controller.RevealedVisitorCount + " is at the desk"
+                    : "Ghost is waiting for a reply map";
+                conversationVisitorText.text = arrived != null
+                    ? "Visitor: " + arrived.VisitorLine
+                    : "Build the route, then test it.";
+                ghostOutcomeText.text = controller.RevealedVisitorCount > 1
+                    ? "Ghost still has to handle the earlier visitors too - extend the map, do not replace it."
+                    : "Build a route that answers this, then press Test Ghost's map.";
+                ghostOutcomeText.color = GhostUITheme.InkSoft;
+                return;
+            }
+
+            // Playback: an actual person at the desk, one at a time.
+            var visitor = controller.CurrentVisitor;
+            if (visitor != null)
+            {
+                conversationLabelText.text =
+                    "Visitor " + controller.CurrentVisitorNumber + " of " + controller.VisitorCount;
+                conversationVisitorText.text = "Visitor: " + visitor.VisitorLine;
+                ghostOutcomeText.text = visitor.GhostReply + System.Environment.NewLine + visitor.Note;
+                ghostOutcomeText.color = GhostUITheme.Good;
                 return;
             }
 
@@ -798,8 +887,8 @@ namespace Ghost.Presentation.Act3DialogGraph
                 controller.LastValidationWasCorrect,
                 controller.LastValidationErrors);
             ghostOutcomeText.color = controller.LastValidationWasCorrect
-                ? FeedbackCorrectColor
-                : FeedbackIncorrectColor;
+                ? GhostUITheme.Good
+                : GhostUITheme.Bad;
         }
 
         private bool CanEditGraph()
@@ -833,6 +922,13 @@ namespace Ghost.Presentation.Act3DialogGraph
             {
                 GhostNarrativeState.SetPendingDebriefAct(GhostNarrativeState.Act3Id);
                 SceneManager.LoadScene(ShellSceneNames.GameShellSceneName);
+                return;
+            }
+
+            // During playback the same button walks the queue instead of re-validating.
+            if (controller.CurrentPhase == Act3ExperiencePhase.Playback)
+            {
+                controller.AdvanceVisitor();
                 return;
             }
 
@@ -897,37 +993,55 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private void RenderNodePalette()
         {
-            CreateSectionLabel(nodePaletteRoot, "Flow");
+            // Driven by Act3DialogGraphSampleData so the palette cannot fall out of step with the
+            // graph the validator demands. A hand-written palette made this chapter unsolvable the
+            // moment a node was added to the correct graph.
+            var lastSection = string.Empty;
 
-            CreatePalettePlacementItem("Start here", "Where Ghost begins.", FlowPaletteColor, DialogNodeType.Start);
-            CreatePalettePlacementItem(
-                "Recognize request",
-                "Visitor wants help finding something.",
-                FlowPaletteColor,
-                DialogNodeType.IntentBranch,
-                intentId: Act3DialogGraphSampleData.FindObjectIntentId);
+            foreach (var entry in Act3DialogGraphSampleData.CreatePaletteEntries())
+            {
+                var section = GetPaletteSection(entry.Type);
+                if (!string.Equals(section, lastSection, System.StringComparison.Ordinal))
+                {
+                    CreateSectionLabel(nodePaletteRoot, section);
+                    lastSection = section;
+                }
 
-            CreateSectionLabel(nodePaletteRoot, "Check");
-            CreatePalettePlacementItem(
-                "Check room",
-                "Does Ghost know which room?",
-                CheckPaletteColor,
-                DialogNodeType.SlotCheck,
-                requiredEntityType: Act3DialogGraphSampleData.RoomEntityTypeId);
+                CreatePalettePlacementItem(
+                    entry.Title,
+                    entry.Detail,
+                    GetPaletteColor(entry.Type),
+                    entry.Type,
+                    entry.IntentId,
+                    entry.RequiredEntityType,
+                    entry.ResponseId);
+            }
+        }
 
-            CreateSectionLabel(nodePaletteRoot, "Reply");
-            CreatePalettePlacementItem(
-                "Answer location",
-                "Use this when the room is known.",
-                ReplyPaletteColor,
-                DialogNodeType.Response,
-                responseId: Act3DialogGraphSampleData.AnswerObjectLocationResponseId);
-            CreatePalettePlacementItem(
-                "Ask which room",
-                "Use this when the room is missing.",
-                ReplyPaletteColor,
-                DialogNodeType.Response,
-                responseId: Act3DialogGraphSampleData.AskForRoomResponseId);
+        private static string GetPaletteSection(DialogNodeType type)
+        {
+            switch (type)
+            {
+                case DialogNodeType.SlotCheck:
+                    return "Check";
+                case DialogNodeType.Response:
+                    return "Reply";
+                default:
+                    return "Flow";
+            }
+        }
+
+        private static Color GetPaletteColor(DialogNodeType type)
+        {
+            switch (type)
+            {
+                case DialogNodeType.SlotCheck:
+                    return CheckPaletteColor;
+                case DialogNodeType.Response:
+                    return ReplyPaletteColor;
+                default:
+                    return FlowPaletteColor;
+            }
         }
 
         private void CreatePalettePlacementItem(
@@ -988,14 +1102,14 @@ namespace Ghost.Presentation.Act3DialogGraph
             ConfigureGraphCanvasRoot();
 
             CreateObjectivePanel();
-            CreateCanvasLabel(
+            GhostUITheme.Label(
                 "Graph Canvas Instruction",
                 graphCanvasRoot,
                 "Move cards freely. Drag from a bottom port to the next card's top port.",
-                15,
+                GhostUITheme.BodySize,
                 FontStyle.Italic,
                 TextAnchor.MiddleLeft,
-                SecondaryTextColor,
+                GhostUITheme.InkSoft,
                 28f);
 
             CreateGraphBoard();
@@ -1011,11 +1125,11 @@ namespace Ghost.Presentation.Act3DialogGraph
         {
             var panel = new GameObject("Objective Panel", typeof(RectTransform));
             panel.transform.SetParent(graphCanvasRoot, false);
-            ConfigurePanelSurface(panel, ObjectiveColor, true);
+            GhostUITheme.Card(panel, ObjectiveColor);
 
             var layoutElement = panel.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 58f;
-            layoutElement.preferredHeight = 58f;
+            layoutElement.minHeight = ObjectiveStripHeight;
+            layoutElement.preferredHeight = ObjectiveStripHeight;
 
             var layout = panel.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(12, 12, 8, 8);
@@ -1024,14 +1138,14 @@ namespace Ghost.Presentation.Act3DialogGraph
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            CreateText(
+            GhostUITheme.Label(
                 "Objective Text",
                 panel.transform,
                 CreateObjectiveText(),
-                17,
+                GhostUITheme.HeadingSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                RootTextColor,
+                GhostUITheme.Ink,
                 42f);
         }
 
@@ -1065,7 +1179,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         {
             trashDropRoot = new GameObject("Trash Drop Zone", typeof(RectTransform)).GetComponent<RectTransform>();
             trashDropRoot.SetParent(parent, false);
-            ConfigurePanelSurface(trashDropRoot.gameObject, TrashColor, true);
+            GhostUITheme.DropZone(trashDropRoot.gameObject, TrashColor);
             trashDropImage = trashDropRoot.GetComponent<Image>();
 
             var layoutElement = trashDropRoot.gameObject.AddComponent<LayoutElement>();
@@ -1080,7 +1194,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateText("Trash Label", trashDropRoot, "X drop card", 12, FontStyle.Bold, TextAnchor.MiddleCenter, FeedbackIncorrectColor, 18f);
+            GhostUITheme.Label("Trash Label", trashDropRoot, "X drop card", GhostUITheme.TinySize, FontStyle.Bold, TextAnchor.MiddleCenter, GhostUITheme.Bad, 18f);
         }
 
         private void RenderPlacedNodes()
@@ -1107,7 +1221,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
             var isSelected = string.Equals(controller.SelectedNodeId, node.Id, StringComparison.Ordinal);
             var isStart = string.Equals(controller.CurrentStartNodeId, node.Id, StringComparison.Ordinal);
-            ConfigurePanelSurface(card.gameObject, isSelected ? SelectedNodeColor : isStart ? StartNodeColor : NodeCardColor, true);
+            GhostUITheme.Card(card.gameObject, isSelected ? SelectedNodeColor : isStart ? StartNodeColor : NodeCardColor);
 
             var image = card.GetComponent<Image>();
             image.raycastTarget = true;
@@ -1132,7 +1246,7 @@ namespace Ghost.Presentation.Act3DialogGraph
                 CreateInputPortOnCard(card, node.Id);
             }
             CreateNodeTitleRow(card, node, isStart);
-            CreateText("Node Config", card, FormatNodeConfig(node), 12, FontStyle.Normal, TextAnchor.MiddleCenter, SecondaryTextColor, 18f);
+            GhostUITheme.Label("Node Config", card, FormatNodeConfig(node), GhostUITheme.TinySize, FontStyle.Normal, TextAnchor.UpperCenter, GhostUITheme.InkSoft, 36f);
             CreateOutputPortsOnCard(card, node);
         }
 
@@ -1153,14 +1267,14 @@ namespace Ghost.Presentation.Act3DialogGraph
         private void CreateNodeTitleRow(Transform parent, DialogNode node, bool isStart)
         {
             var row = CreateHorizontalRow("Node Title Row", parent, 24f, 4f);
-            var title = CreateText(
+            var title = GhostUITheme.Label(
                 "Node Title",
                 row,
                 isStart ? $"{GetNodeDisplayName(node)} [start]" : GetNodeDisplayName(node),
-                13,
+                GhostUITheme.SmallSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                RootTextColor,
+                GhostUITheme.Ink,
                 24f);
             title.horizontalOverflow = HorizontalWrapMode.Overflow;
             title.GetComponent<LayoutElement>().flexibleWidth = 1f;
@@ -1403,6 +1517,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private void DestroyActiveDragWire()
         {
+            reverseDragInputPort = null;
             if (activeDragWire == null)
             {
                 return;
@@ -1447,10 +1562,21 @@ namespace Ghost.Presentation.Act3DialogGraph
             CreateLegendRow("Orange dot", "room is missing", SlotMissingPortColor);
             CreateLegendRow("Top dot", "drop a wire here", InputPortColor);
 
-            CreateGuideSectionLabel(goalTestRoot, "Ghost should handle");
-            foreach (var testCase in controller.TestCases)
+            // Only the requests that have actually walked in. Listing all three up front told the
+            // player to build the missing-room branch before the visitor who needs it had arrived.
+            CreateGuideSectionLabel(goalTestRoot, "Asked so far");
+            var revealed = controller.RevealedVisitorCount;
+            for (var index = 0; index < controller.TestCases.Count && index < revealed; index++)
             {
-                CreateCompactTestCaseRow(testCase);
+                CreateCompactTestCaseRow(controller.TestCases[index]);
+            }
+
+            if (controller.HasMoreVisitors)
+            {
+                CreateSidePanelText(
+                    "More Waiting",
+                    "Someone else is still outside. Handle this one first.",
+                    40f);
             }
 
         }
@@ -1459,7 +1585,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         {
             var panel = new GameObject(name + " Panel", typeof(RectTransform));
             panel.transform.SetParent(goalTestRoot, false);
-            ConfigurePanelSurface(panel, GoalColor, true);
+            GhostUITheme.Card(panel, GoalColor);
 
             var layoutElement = panel.AddComponent<LayoutElement>();
             layoutElement.minHeight = preferredHeight;
@@ -1472,7 +1598,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            return CreateText(name, panel.transform, value, 13, FontStyle.Normal, TextAnchor.MiddleLeft, SecondaryTextColor, preferredHeight - 16f);
+            return GhostUITheme.Label(name, panel.transform, value, GhostUITheme.SmallSize, FontStyle.Normal, TextAnchor.MiddleLeft, GhostUITheme.InkSoft, preferredHeight - 16f);
         }
 
         private void CreateLegendRow(string label, string detail, Color color)
@@ -1483,14 +1609,14 @@ namespace Ghost.Presentation.Act3DialogGraph
             dot.GetComponent<LayoutElement>().minWidth = 26f;
             dot.GetComponent<LayoutElement>().preferredWidth = 26f;
 
-            var text = CreateText(
+            var text = GhostUITheme.Label(
                 "Legend Text",
                 row,
                 $"{label}: {detail}",
-                12,
+                GhostUITheme.TinySize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
-                SecondaryTextColor,
+                GhostUITheme.InkSoft,
                 28f);
             text.GetComponent<LayoutElement>().flexibleWidth = 1f;
         }
@@ -1499,7 +1625,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         {
             var panel = new GameObject("Ghost Check - " + FormatTestCaseTitle(testCase), typeof(RectTransform));
             panel.transform.SetParent(goalTestRoot, false);
-            ConfigurePanelSurface(panel, GoalColor, true);
+            GhostUITheme.Card(panel, GoalColor);
 
             var layoutElement = panel.AddComponent<LayoutElement>();
             layoutElement.minHeight = TestCasePreferredHeight;
@@ -1513,8 +1639,8 @@ namespace Ghost.Presentation.Act3DialogGraph
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateText("Check Title", panel.transform, FormatTestCaseTitle(testCase), 13, FontStyle.Bold, TextAnchor.MiddleLeft, RootTextColor, 18f);
-            CreateText("Check Detail", panel.transform, FormatTestCase(testCase), 11, FontStyle.Normal, TextAnchor.MiddleLeft, SecondaryTextColor, 24f);
+            GhostUITheme.Label("Check Title", panel.transform, FormatTestCaseTitle(testCase), GhostUITheme.SmallSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 18f);
+            GhostUITheme.Label("Check Detail", panel.transform, FormatTestCase(testCase), GhostUITheme.TinySize, FontStyle.Normal, TextAnchor.MiddleLeft, GhostUITheme.InkSoft, 24f);
         }
 
         private void RenderValidationControls()
@@ -1522,14 +1648,16 @@ namespace Ghost.Presentation.Act3DialogGraph
             ConfigurePanelSurface(validationControlsRoot.gameObject, ValidationColor, false);
             ConfigureValidationControlsRoot();
 
-            primaryActionButton = CreateValidateButton(validationControlsRoot, out primaryActionButtonText);
+            primaryActionButton = GhostUITheme.PushButton(validationControlsRoot, "Test Ghost's map", ButtonColor, 154f);
+            primaryActionButtonText = primaryActionButton.GetComponentInChildren<Text>();
             primaryActionButton.interactable = true;
             primaryActionButton.onClick.RemoveAllListeners();
             primaryActionButton.onClick.AddListener(HandlePrimaryAction);
 
-            validationFeedbackText = CreateValidationFeedbackText(validationControlsRoot);
+            validationFeedbackText = GhostUITheme.Label("Validation Feedback", validationControlsRoot, string.Empty, GhostUITheme.SmallSize, FontStyle.Italic, TextAnchor.MiddleLeft, GhostUITheme.InkSoft);
+            validationFeedbackText.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
             validationFeedbackText.text = PlaceholderFeedbackText;
-            validationFeedbackText.color = FeedbackNeutralColor;
+            validationFeedbackText.color = GhostUITheme.InkSoft;
             CreateTrashDropZone(validationControlsRoot);
         }
 
@@ -1538,13 +1666,13 @@ namespace Ghost.Presentation.Act3DialogGraph
             if (validationFeedbackText != null)
             {
                 validationFeedbackText.text = message ?? string.Empty;
-                validationFeedbackText.color = isCorrect ? FeedbackCorrectColor : FeedbackIncorrectColor;
+                validationFeedbackText.color = isCorrect ? GhostUITheme.Good : GhostUITheme.Bad;
             }
 
             if (ghostOutcomeText != null)
             {
                 ghostOutcomeText.text = CreateGhostOutcomeMessage(isCorrect, errors);
-                ghostOutcomeText.color = isCorrect ? FeedbackCorrectColor : FeedbackIncorrectColor;
+                ghostOutcomeText.color = isCorrect ? GhostUITheme.Good : GhostUITheme.Bad;
             }
 
             UpdateExperienceChrome();
@@ -1600,7 +1728,8 @@ namespace Ghost.Presentation.Act3DialogGraph
             if (rootLayout != null)
             {
                 rootLayout.padding = new RectOffset(36, 36, 26, 24);
-                rootLayout.spacing = 9f;
+                rootLayout.spacing = 14f;
+                rootLayout.childAlignment = TextAnchor.MiddleCenter;
                 rootLayout.childControlWidth = true;
                 rootLayout.childControlHeight = true;
                 rootLayout.childForceExpandWidth = true;
@@ -1627,14 +1756,19 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             pageHeader.SetAsFirstSibling();
+            var headerImage = GhostUITheme.Panel(pageHeader.gameObject, Color.clear);
+            headerImage.raycastTarget = false;
             var headerLayoutElement = pageHeader.GetComponent<LayoutElement>();
             if (headerLayoutElement == null)
             {
                 headerLayoutElement = pageHeader.gameObject.AddComponent<LayoutElement>();
             }
 
-            headerLayoutElement.minHeight = 56f;
-            headerLayoutElement.preferredHeight = 56f;
+            headerLayoutElement.minHeight = 44f;
+            headerLayoutElement.preferredHeight = 44f;
+            // The header is a fixed title row, but its inner horizontal group force-expands height,
+            // which reports flexible height to the page and let the header eat all the spare space.
+            headerLayoutElement.flexibleHeight = 0f;
 
             var headerLayout = pageHeader.GetComponent<HorizontalLayoutGroup>();
             if (headerLayout == null)
@@ -1643,6 +1777,7 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             headerLayout.spacing = 16f;
+            headerLayout.padding = new RectOffset(0, 220, 0, 0);
             headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
             headerLayout.childForceExpandWidth = false;
@@ -1665,7 +1800,7 @@ namespace Ghost.Presentation.Act3DialogGraph
                 titleRoot.gameObject.AddComponent<Text>();
             }
 
-            ConfigureExistingLabel(titleRoot, TitleText, 38, FontStyle.Bold, TextAnchor.MiddleLeft, RootTextColor, 56f);
+            GhostUITheme.Label(titleRoot, TitleText, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 44f);
             titleRoot.GetComponent<LayoutElement>().flexibleWidth = 1f;
 
             var progressRoot = pageHeader.Find("Phase Progress") as RectTransform;
@@ -1681,7 +1816,7 @@ namespace Ghost.Presentation.Act3DialogGraph
                 phaseProgressText = progressRoot.gameObject.AddComponent<Text>();
             }
 
-            ConfigureExistingLabel(progressRoot, string.Empty, 20, FontStyle.Bold, TextAnchor.MiddleRight, SecondaryTextColor, 56f);
+            GhostUITheme.Label(progressRoot, string.Empty, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleRight, GhostUITheme.InkSoft, 44f);
             var progressLayout = progressRoot.GetComponent<LayoutElement>();
             progressLayout.minWidth = 210f;
             progressLayout.preferredWidth = 210f;
@@ -1740,7 +1875,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private static void ConfigureListItem(GameObject item, Color color, float preferredHeight)
         {
-            ConfigurePanelSurface(item, color, true);
+            GhostUITheme.Card(item, color);
 
             var layoutElement = item.GetComponent<LayoutElement>();
             if (layoutElement == null)
@@ -1767,67 +1902,43 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private static void ConfigurePanelSurface(GameObject target, Color color, bool withOutline)
         {
-            var image = target.GetComponent<Image>();
-            if (image == null)
-            {
-                image = target.AddComponent<Image>();
-            }
-
-            image.color = color;
+            var image = GhostUITheme.Panel(target, color);
             image.raycastTarget = false;
 
             if (!withOutline)
             {
-                return;
+                var outline = target.GetComponent<Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = false;
+                }
             }
-
-            var outline = target.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = target.AddComponent<Outline>();
-            }
-
-            outline.effectColor = OutlineColor;
-            outline.effectDistance = new Vector2(2f, -2f);
         }
 
         private static void CreateSectionLabel(Transform parent, string value)
         {
-            CreateText(
+            GhostUITheme.Label(
                 value + " Label",
                 parent,
                 value,
-                18,
+                GhostUITheme.HeadingSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                RootTextColor,
+                GhostUITheme.Ink,
                 24f);
         }
 
         private static void CreateGuideSectionLabel(Transform parent, string value)
         {
-            CreateText(
+            GhostUITheme.Label(
                 value + " Guide Label",
                 parent,
                 value,
-                12,
+                GhostUITheme.TinySize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                RootTextColor,
+                GhostUITheme.Ink,
                 16f);
-        }
-
-        private static Text CreateCanvasLabel(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            return CreateText(name, parent, value, fontSize, fontStyle, alignment, color, preferredHeight);
         }
 
         private static Transform CreateHorizontalRow(string name, Transform parent, float preferredHeight, float spacing)
@@ -1857,126 +1968,6 @@ namespace Ghost.Presentation.Act3DialogGraph
             layoutElement.flexibleWidth = 1f;
         }
 
-        private static Button CreateValidateButton(Transform parent, out Text label)
-        {
-            var buttonRoot = new GameObject("Validate Button", typeof(RectTransform));
-            buttonRoot.transform.SetParent(parent, false);
-
-            var image = buttonRoot.AddComponent<Image>();
-            image.color = new Color(0.84f, 0.92f, 1f);
-            image.raycastTarget = true;
-
-            var button = buttonRoot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            var layoutElement = buttonRoot.AddComponent<LayoutElement>();
-            layoutElement.minWidth = 154f;
-            layoutElement.preferredWidth = 154f;
-
-            var labelTransform = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
-            labelTransform.SetParent(buttonRoot.transform, false);
-            labelTransform.anchorMin = Vector2.zero;
-            labelTransform.anchorMax = Vector2.one;
-            labelTransform.offsetMin = Vector2.zero;
-            labelTransform.offsetMax = Vector2.zero;
-
-            label = labelTransform.gameObject.AddComponent<Text>();
-            label.text = "Test Ghost's map";
-            label.font = GetBuiltinFont();
-            label.fontSize = 14;
-            label.fontStyle = FontStyle.Bold;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.color = new Color(0.12f, 0.18f, 0.30f);
-            label.raycastTarget = false;
-
-            return button;
-        }
-
-        private static Button CreateOnboardingButton(Transform parent, string labelText)
-        {
-            var buttonRoot = new GameObject(labelText + " Button", typeof(RectTransform));
-            buttonRoot.transform.SetParent(parent, false);
-
-            var image = buttonRoot.AddComponent<Image>();
-            image.color = new Color(0.84f, 0.92f, 1f);
-            image.raycastTarget = true;
-
-            var button = buttonRoot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            var layoutElement = buttonRoot.AddComponent<LayoutElement>();
-            layoutElement.minWidth = 190f;
-            layoutElement.preferredWidth = 190f;
-            layoutElement.minHeight = 42f;
-            layoutElement.preferredHeight = 42f;
-
-            var labelTransform = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
-            labelTransform.SetParent(buttonRoot.transform, false);
-            labelTransform.anchorMin = Vector2.zero;
-            labelTransform.anchorMax = Vector2.one;
-            labelTransform.offsetMin = Vector2.zero;
-            labelTransform.offsetMax = Vector2.zero;
-
-            var label = labelTransform.gameObject.AddComponent<Text>();
-            label.text = labelText;
-            label.font = GetBuiltinFont();
-            label.fontSize = 14;
-            label.fontStyle = FontStyle.Bold;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.color = new Color(0.12f, 0.18f, 0.30f);
-            label.raycastTarget = false;
-            return button;
-        }
-
-        private static Text CreateValidationFeedbackText(Transform parent)
-        {
-            var feedback = new GameObject("Validation Feedback", typeof(RectTransform));
-            feedback.transform.SetParent(parent, false);
-
-            var layoutElement = feedback.AddComponent<LayoutElement>();
-            layoutElement.flexibleWidth = 1f;
-
-            var text = feedback.AddComponent<Text>();
-            text.font = GetBuiltinFont();
-            text.fontSize = 13;
-            text.fontStyle = FontStyle.Italic;
-            text.alignment = TextAnchor.MiddleLeft;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-
-            return text;
-        }
-
-        private static Text CreateText(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = value;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-
-            var layoutElement = label.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-
-            return label;
-        }
-
         private void CreateBoardCenteredText(string value)
         {
             if (nodeLayer == null)
@@ -1991,14 +1982,14 @@ namespace Ghost.Presentation.Act3DialogGraph
             labelRoot.offsetMin = Vector2.zero;
             labelRoot.offsetMax = Vector2.zero;
 
-            var text = labelRoot.gameObject.AddComponent<Text>();
-            text.text = value;
-            text.font = GetBuiltinFont();
-            text.fontSize = 18;
-            text.fontStyle = FontStyle.Italic;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = SecondaryTextColor;
-            text.raycastTarget = false;
+            GhostUITheme.Label(
+                labelRoot,
+                value,
+                GhostUITheme.HeadingSize,
+                FontStyle.Italic,
+                TextAnchor.MiddleCenter,
+                GhostUITheme.InkSoft,
+                0f);
         }
 
         private static void ApplyNodePosition(RectTransform card, Vector2 normalizedPosition)
@@ -2036,22 +2027,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private static string FormatNodeConfig(DialogNode node)
         {
-            switch (node.Type)
-            {
-                case DialogNodeType.IntentBranch:
-                    return "Visitor wants help finding something.";
-                case DialogNodeType.SlotCheck:
-                    return "Check whether Ghost knows the room.";
-                case DialogNodeType.Response:
-                    if (string.Equals(node.ResponseId, Act3DialogGraphSampleData.AskForRoomResponseId, StringComparison.Ordinal))
-                    {
-                        return "Ask the visitor which room.";
-                    }
-
-                    return "Answer with the location.";
-                default:
-                    return "Begin Ghost's reply map.";
-            }
+            return FindPaletteEntryTitleOrDetail(node, wantDetail: true);
         }
 
         private static string FormatTestCaseTitle(DialogGraphTestCase testCase)
@@ -2269,33 +2245,42 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         private static string GetNodeDisplayName(DialogNode node)
         {
+            // Same source as the palette, so a card cannot be called one thing on the left and
+            // something else once it is on the board.
+            var entry = FindPaletteEntry(node);
+            return entry != null ? entry.Title : "Unknown card";
+        }
+
+        private static string FindPaletteEntryTitleOrDetail(DialogNode node, bool wantDetail)
+        {
+            var entry = FindPaletteEntry(node);
+            if (entry == null)
+            {
+                return wantDetail ? "This card is not part of Ghost's reply map." : "Unknown card";
+            }
+
+            return wantDetail ? entry.Detail : entry.Title;
+        }
+
+        private static Act3DialogGraphSampleData.PaletteEntry FindPaletteEntry(DialogNode node)
+        {
             if (node == null)
             {
-                return "Unknown card";
+                return null;
             }
 
-            switch (node.Type)
+            foreach (var entry in Act3DialogGraphSampleData.CreatePaletteEntries())
             {
-                case DialogNodeType.Start:
-                    return "Start here";
-
-                case DialogNodeType.IntentBranch:
-                    return "Recognize request";
-
-                case DialogNodeType.SlotCheck:
-                    return "Check room";
-
-                case DialogNodeType.Response:
-                    if (string.Equals(node.ResponseId, Act3DialogGraphSampleData.AskForRoomResponseId, StringComparison.Ordinal))
-                    {
-                        return "Ask which room";
-                    }
-
-                    return "Answer location";
-
-                default:
-                    return "Dialog card";
+                if (entry.Type == node.Type &&
+                    string.Equals(entry.IntentId, node.IntentId, StringComparison.Ordinal) &&
+                    string.Equals(entry.RequiredEntityType, node.RequiredEntityType, StringComparison.Ordinal) &&
+                    string.Equals(entry.ResponseId, node.ResponseId, StringComparison.Ordinal))
+                {
+                    return entry;
+                }
             }
+
+            return null;
         }
 
         private static string CreatePortKey(string nodeId, DialogTransitionCondition condition)
@@ -2334,44 +2319,6 @@ namespace Ghost.Presentation.Act3DialogGraph
             text.raycastTarget = false;
         }
 
-        private static void ConfigureExistingLabel(
-            Transform target,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            if (target == null)
-            {
-                return;
-            }
-
-            var text = target.GetComponent<Text>();
-            if (text != null)
-            {
-                text.text = value;
-                text.font = GetBuiltinFont();
-                text.fontSize = fontSize;
-                text.fontStyle = fontStyle;
-                text.alignment = alignment;
-                text.color = color;
-                text.horizontalOverflow = HorizontalWrapMode.Wrap;
-                text.verticalOverflow = VerticalWrapMode.Truncate;
-                text.raycastTarget = false;
-            }
-
-            var layoutElement = target.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = target.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-        }
-
         private static void ClearChildren(Transform root)
         {
             var children = new List<GameObject>();
@@ -2408,15 +2355,5 @@ namespace Ghost.Presentation.Act3DialogGraph
             eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
 
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

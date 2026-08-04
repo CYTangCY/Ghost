@@ -95,6 +95,26 @@ namespace Ghost.Presentation.Banter
                 return GhostNarrativeState.Act3Id;
             }
 
+            if (sceneName == ShellSceneNames.Act4SceneName)
+            {
+                return GhostNarrativeState.Act4Id;
+            }
+
+            if (sceneName == ShellSceneNames.Act5SceneName)
+            {
+                return GhostNarrativeState.Act5Id;
+            }
+
+            if (sceneName == ShellSceneNames.Act6SceneName)
+            {
+                return GhostNarrativeState.Act6Id;
+            }
+
+            if (sceneName == ShellSceneNames.FinalChapterSceneName)
+            {
+                return GhostNarrativeState.FinalChapterId;
+            }
+
             return null;
         }
 
@@ -155,14 +175,13 @@ namespace Ghost.Presentation.Banter
                 rect.sizeDelta = placement.Rect.Size;
             }
 
-            var image = panelRoot.AddComponent<Image>();
-            image.color = new Color(1f, 0.98f, 0.91f, 0.94f);
+            var image = GhostUITheme.Panel(panelRoot, new Color(1f, 0.98f, 0.91f, 0.94f));
             image.raycastTarget = true;
 
             var dragHandle = panelRoot.AddComponent<FloatingWindowDragHandle>();
             dragHandle.Configure(rect);
 
-            var outline = panelRoot.AddComponent<Outline>();
+            var outline = panelRoot.GetComponent<Outline>() ?? panelRoot.AddComponent<Outline>();
             outline.effectColor = new Color(0.62f, 0.56f, 0.78f, 0.72f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
@@ -195,22 +214,22 @@ namespace Ghost.Presentation.Banter
             layoutElement.minHeight = style.PortraitSize;
             layoutElement.preferredHeight = style.PortraitSize;
 
-            var image = portraitRoot.AddComponent<Image>();
-            image.color = new Color(1f, 0.96f, 0.88f, 0.95f);
+            var image = GhostUITheme.Card(portraitRoot, new Color(1f, 0.96f, 0.88f, 0.95f));
             image.raycastTarget = false;
 
-            var outline = portraitRoot.AddComponent<Outline>();
+            var outline = portraitRoot.GetComponent<Outline>() ?? portraitRoot.AddComponent<Outline>();
             outline.effectColor = new Color(0.66f, 0.58f, 0.78f, 0.68f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
-            placeholder = CreateFillText(
+            placeholder = GhostUITheme.Label(
                 "Portrait Label",
                 portraitRoot.transform,
                 "Lily",
                 style.PortraitFontSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleCenter,
-                new Color(0.24f, 0.16f, 0.30f));
+                GhostUITheme.Ink,
+                Vector2.zero);
             placeholder.rectTransform.offsetMin = Vector2.zero;
             placeholder.rectTransform.offsetMax = Vector2.zero;
 
@@ -233,23 +252,23 @@ namespace Ghost.Presentation.Banter
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            speakerText = CreateText(
+            speakerText = GhostUITheme.Label(
                 "Speaker Name",
                 column,
                 string.Empty,
                 style.SpeakerFontSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.13f, 0.24f),
+                GhostUITheme.Ink,
                 style.SpeakerHeight);
-            dialogueText = CreateText(
+            dialogueText = GhostUITheme.Label(
                 "Banter Line",
                 column,
                 string.Empty,
                 style.DialogueFontSize,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
-                new Color(0.30f, 0.25f, 0.36f),
+                GhostUITheme.InkSoft,
                 style.DialogueHeight);
         }
 
@@ -264,86 +283,20 @@ namespace Ghost.Presentation.Banter
             layoutElement.minHeight = style.NextButtonHeight;
             layoutElement.preferredHeight = style.NextButtonHeight;
 
-            var image = buttonRoot.AddComponent<Image>();
-            image.color = new Color(0.86f, 0.92f, 1f, 0.95f);
-            image.raycastTarget = true;
-
-            var outline = buttonRoot.AddComponent<Outline>();
-            outline.effectColor = new Color(0.50f, 0.56f, 0.78f, 0.74f);
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
-
-            var button = buttonRoot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            CreateFillText(
-                "Next Label",
-                buttonRoot.transform,
+            var button = GhostUITheme.PushButton(
+                buttonRoot,
+                "Ask Lily",
+                new Color(0.86f, 0.92f, 1f, 0.95f),
+                GhostUITheme.Ink);
+            GhostUITheme.Label(
+                button.GetComponentInChildren<Text>(),
                 "Ask Lily",
                 style.NextButtonFontSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleCenter,
-                new Color(0.12f, 0.18f, 0.30f));
+                GhostUITheme.Ink);
 
             return button;
-        }
-
-        private static Text CreateText(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = value;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-
-            var layoutElement = label.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-
-            return label;
-        }
-
-        private static Text CreateFillText(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = value;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-
-            var rect = label.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            return label;
         }
 
         private static RectTransform FindRectTransform(string objectName)
@@ -413,17 +366,6 @@ namespace Ghost.Presentation.Banter
             var eventSystemObject = new GameObject("EventSystem");
             eventSystemObject.AddComponent<EventSystem>();
             eventSystemObject.AddComponent<InputSystemUIInputModule>();
-        }
-
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         private readonly struct BanterRect
@@ -522,10 +464,10 @@ namespace Ghost.Presentation.Banter
                     8f,
                     0f,
                     76f,
-                    11,
-                    13,
+                    GhostUITheme.TinySize,
+                    GhostUITheme.SmallSize,
                     18f,
-                    13,
+                    GhostUITheme.SmallSize,
                     40f,
                     58f,
                     2f,
@@ -542,10 +484,10 @@ namespace Ghost.Presentation.Banter
                     7f,
                     0f,
                     38f,
-                    9,
-                    11,
+                    GhostUITheme.TinySize,
+                    GhostUITheme.TinySize,
                     13f,
-                    11,
+                    GhostUITheme.TinySize,
                     28f,
                     42f,
                     1f,
@@ -562,10 +504,10 @@ namespace Ghost.Presentation.Banter
                     10f,
                     1f,
                     56f,
-                    13,
-                    15,
+                    GhostUITheme.SmallSize,
+                    GhostUITheme.BodySize,
                     22f,
-                    13,
+                    GhostUITheme.SmallSize,
                     112f,
                     136f,
                     3f,
@@ -582,10 +524,10 @@ namespace Ghost.Presentation.Banter
                     10f,
                     1f,
                     58f,
-                    13,
-                    15,
+                    GhostUITheme.SmallSize,
+                    GhostUITheme.BodySize,
                     22f,
-                    14,
+                    GhostUITheme.SmallSize,
                     72f,
                     96f,
                     3f,
@@ -602,10 +544,10 @@ namespace Ghost.Presentation.Banter
                     10f,
                     1f,
                     58f,
-                    13,
-                    15,
+                    GhostUITheme.SmallSize,
+                    GhostUITheme.BodySize,
                     22f,
-                    14,
+                    GhostUITheme.SmallSize,
                     44f,
                     74f,
                     3f,

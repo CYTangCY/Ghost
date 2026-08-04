@@ -129,14 +129,36 @@ namespace Ghost.Puzzles.DialogGraph
         /// </summary>
         public DialogGraphResult ValidateCurrentState()
         {
+            return ValidateCurrentState(TestCases.Count);
+        }
+
+        /// <summary>
+        /// Validates against only the first <paramref name="testCaseCount"/> cases. Chapter 3 reveals
+        /// its visitors one at a time, so the map is judged on the requests that have actually walked
+        /// in rather than on ones the player has not been shown yet.
+        /// </summary>
+        public DialogGraphResult ValidateCurrentState(int testCaseCount)
+        {
             var incompleteErrors = CreateIncompleteGraphErrors();
             if (incompleteErrors.Count > 0)
             {
                 return new DialogGraphResult(false, incompleteErrors);
             }
 
+            var limit = testCaseCount < 0 ? 0 : testCaseCount;
+            if (limit > TestCases.Count)
+            {
+                limit = TestCases.Count;
+            }
+
+            var subset = new List<DialogGraphTestCase>();
+            for (var index = 0; index < limit; index++)
+            {
+                subset.Add(TestCases[index]);
+            }
+
             var graph = new DialogGraph(currentStartNodeId, CurrentNodes, CurrentTransitions);
-            return DialogGraphValidator.Validate(graph, TestCases);
+            return DialogGraphValidator.Validate(graph, subset);
         }
 
         private static DialogGraphTestCase[] CopyTestCases(IEnumerable<DialogGraphTestCase> source)

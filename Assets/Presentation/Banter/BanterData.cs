@@ -156,6 +156,38 @@ namespace Ghost.Presentation.Banter
             Ghost("conversation... clear.", "act3_ghost_conversation_clear")
         };
 
+        private static readonly IReadOnlyList<AmbientBanterBeat> Act4Beats = new[]
+        {
+            Lily("The threshold is Ghost's pause before speaking. Tiny slider, large responsibility.", "act4_lily_threshold"),
+            Ghost("sure... maybe?", "act4_ghost_unsure"),
+            Lily("Compare who should be answered, asked again, or handed to a person.", "act4_lily_routes"),
+            Ghost("too sure!", "act4_ghost_too_sure")
+        };
+
+        private static readonly IReadOnlyList<AmbientBanterBeat> Act5Beats = new[]
+        {
+            Lily("A red rehearsal is evidence, not a disaster. I tell myself this often.", "act5_lily_evidence"),
+            Ghost("wrong reply...", "act5_ghost_wrong_reply"),
+            Lily("Start with one failed visitor and trace only the wire that produced it.", "act5_lily_trace"),
+            Ghost("test again?", "act5_ghost_test_again")
+        };
+
+        private static readonly IReadOnlyList<AmbientBanterBeat> Act6Beats = new[]
+        {
+            Lily("Follow the fact: where it lives, how we fetch it, then how Ghost says it.", "act6_lily_fact"),
+            Ghost("8 PM... sentence?", "act6_ghost_raw"),
+            Lily("Three sockets, three different jobs. The visitor still needs one complete reply.", "act6_lily_roles"),
+            Ghost("data... action... reply.", "act6_ghost_roles")
+        };
+
+        private static readonly IReadOnlyList<AmbientBanterBeat> FinalChapterBeats = new[]
+        {
+            Lily("Build the whole route, then let the three visitors expose the weak card.", "final_lily_test"),
+            Ghost("parts... tangled.", "final_ghost_tangled"),
+            Lily("Trace what Ghost knows at each stage. The order matters as much as the card.", "final_lily_order"),
+            Ghost("try... listen...", "final_ghost_try")
+        };
+
         public static IReadOnlyList<AmbientBanterBeat> GetBeats(string actId)
         {
             switch (actId)
@@ -166,6 +198,14 @@ namespace Ghost.Presentation.Banter
                     return Act2Beats;
                 case GhostNarrativeState.Act3Id:
                     return Act3Beats;
+                case GhostNarrativeState.Act4Id:
+                    return Act4Beats;
+                case GhostNarrativeState.Act5Id:
+                    return Act5Beats;
+                case GhostNarrativeState.Act6Id:
+                    return Act6Beats;
+                case GhostNarrativeState.FinalChapterId:
+                    return FinalChapterBeats;
                 default:
                     return Array.Empty<AmbientBanterBeat>();
             }
@@ -184,6 +224,18 @@ namespace Ghost.Presentation.Banter
                 case GhostNarrativeState.Act3Id:
                     return "Ghost knows the request and the details, but it still needs a safe order. Try checking whether the room is known before Ghost answers.";
 
+                case GhostNarrativeState.Act4Id:
+                    return "Um... compare which clear requests Ghost answered with which uncertain ones should have used a safer route.";
+
+                case GhostNarrativeState.Act5Id:
+                    return "Start with the first red rehearsal. Compare what Ghost should have said with the reply its current wire produced.";
+
+                case GhostNarrativeState.Act6Id:
+                    return "I-I would separate the three jobs: where the fact lives, which action asks for it, and how Ghost says it.";
+
+                case GhostNarrativeState.FinalChapterId:
+                    return "Trace the first red visitor test. Which responsibility produced Ghost's wrong reply?";
+
                 default:
                     return "Um... try looking at what Ghost needs to understand next, without jumping straight to the answer.";
             }
@@ -201,6 +253,18 @@ namespace Ghost.Presentation.Banter
 
                 case GhostNarrativeState.Act3Id:
                     return "Um... let's keep Ghost's reply map focused on checking before answering.";
+
+                case GhostNarrativeState.Act4Id:
+                    return "Um... compare the confidence boundary with who Ghost answered, who should rephrase, and who needs a handoff.";
+
+                case GhostNarrativeState.Act5Id:
+                    return "I-I would start with the first red rehearsal and trace only the route that produced its actual reply.";
+
+                case GhostNarrativeState.Act6Id:
+                    return "Um... follow the fact: storage holds it, an action asks for it, and the response turns it into a sentence.";
+
+                case GhostNarrativeState.FinalChapterId:
+                    return "Trace one red visitor from the message to Ghost's actual reply, then question the first weak stage.";
 
                 default:
                     return "Um... let's focus on helping Ghost right now, okay?";

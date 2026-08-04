@@ -12,17 +12,17 @@ namespace Ghost.Puzzles.IntentClassification
         {
             return new[]
             {
-                new IntentCard("find-item-lost-key", "I lost my little brass key.", FindItemIntentId),
-                new IntentCard("find-item-seen-notebook", "Has anyone seen my notebook?", FindItemIntentId),
-                new IntentCard("find-item-help-look", "Can Ghost help me look for the missing lantern?", FindItemIntentId),
+                new IntentCard("find-item-lost-key", "My brass key was in my pocket, and now it is not.", FindItemIntentId),
+                new IntentCard("find-item-seen-notebook", "Has anyone handed in a blue umbrella?", FindItemIntentId),
+                new IntentCard("find-item-help-look", "Could you help me find the parcel I left by the door?", FindItemIntentId),
 
-                new IntentCard("ask-location-where-floating", "Where are you floating right now?", AskLocationIntentId),
-                new IntentCard("ask-location-which-room", "Which room are you in?", AskLocationIntentId),
-                new IntentCard("ask-location-near-door", "Are you near the old door?", AskLocationIntentId),
+                new IntentCard("ask-location-where-floating", "Whereabouts are you hiding right now?", AskLocationIntentId),
+                new IntentCard("ask-location-which-room", "Which room are you in at the moment?", AskLocationIntentId),
+                new IntentCard("ask-location-near-door", "Are you anywhere near the vending machine?", AskLocationIntentId),
 
-                new IntentCard("ask-identity-who", "Who are you?", AskIdentityIntentId),
-                new IntentCard("ask-identity-name", "What should I call this little ghost?", AskIdentityIntentId),
-                new IntentCard("ask-identity-tell-name", "Can you tell me your name?", AskIdentityIntentId)
+                new IntentCard("ask-identity-who", "Sorry - who exactly are you?", AskIdentityIntentId),
+                new IntentCard("ask-identity-name", "Do you have a name, little one?", AskIdentityIntentId),
+                new IntentCard("ask-identity-tell-name", "What should I put on the visitor log for you?", AskIdentityIntentId)
             };
         }
 

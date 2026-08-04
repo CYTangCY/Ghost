@@ -6,9 +6,14 @@ namespace Ghost.Presentation.Shell
 {
     public static class GhostNarrativeState
     {
+        public const string Chapter0Id = "chapter0";
         public const string Act1Id = "act1";
         public const string Act2Id = "act2";
         public const string Act3Id = "act3";
+        public const string Act4Id = "act4";
+        public const string Act5Id = "act5";
+        public const string Act6Id = "act6";
+        public const string FinalChapterId = "final_chapter";
         public const string DefaultPlayerName = "Junior";
         public const string BackendProfileIdPlayerPrefsKey = "Ghost.Backend.ProfileId";
         public const string BackendAccountIdPlayerPrefsKey = "Ghost.Backend.AccountId";
@@ -17,6 +22,7 @@ namespace Ghost.Presentation.Shell
         private static readonly HashSet<string> CompletedActIds = new HashSet<string>(StringComparer.Ordinal);
         private static string playerName = string.Empty;
         private static string pendingDebriefActId;
+        private static bool resumeAtHub;
 
         public static event Action StateChanged;
 
@@ -170,6 +176,22 @@ namespace Ghost.Presentation.Shell
             var actId = pendingDebriefActId;
             pendingDebriefActId = null;
             return actId;
+        }
+
+        /// <summary>
+        /// Set when the player leaves a chapter, so the shell reopens on chapter select instead of
+        /// dropping them back at the title and name entry they already went through.
+        /// </summary>
+        public static void RequestResumeAtHub()
+        {
+            resumeAtHub = true;
+        }
+
+        public static bool ConsumeResumeAtHub()
+        {
+            var resume = resumeAtHub;
+            resumeAtHub = false;
+            return resume;
         }
 
         private static void NotifyStateChanged()

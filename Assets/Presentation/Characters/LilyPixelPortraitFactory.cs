@@ -5,9 +5,12 @@ namespace Ghost.Presentation.Characters
     public static class LilyPixelPortraitFactory
     {
         private const int Size = 48;
+        private const string FullBodyResourcePath = "Characters/LilyPixelFullBody";
+        private const string PortraitResourcePath = "Characters/LilyPixelPortrait";
 
         private static Texture2D portraitTexture;
         private static Sprite portraitSprite;
+        private static Sprite fullBodySprite;
 
         // 48x48 pixel map, drawn top-down. Legend: . transparent, o outline, H hair, h hair highlight,
         // d hair shadow, S skin, s skin shadow, b blush, G black glasses frame, L lens tint, e eye,
@@ -72,6 +75,12 @@ namespace Ghost.Presentation.Characters
                 return portraitSprite;
             }
 
+            portraitSprite = LoadResourceSprite(PortraitResourcePath);
+            if (portraitSprite != null)
+            {
+                return portraitSprite;
+            }
+
             portraitTexture = new Texture2D(Size, Size, TextureFormat.RGBA32, false)
             {
                 filterMode = FilterMode.Point,
@@ -106,6 +115,36 @@ namespace Ghost.Presentation.Characters
                 Size);
             portraitSprite.hideFlags = HideFlags.HideAndDontSave;
             return portraitSprite;
+        }
+
+        public static Sprite GetFullBody()
+        {
+            if (fullBodySprite != null)
+            {
+                return fullBodySprite;
+            }
+
+            fullBodySprite = LoadResourceSprite(FullBodyResourcePath);
+            return fullBodySprite != null ? fullBodySprite : GetPortrait();
+        }
+
+        private static Sprite LoadResourceSprite(string resourcePath)
+        {
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            var sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                Mathf.Max(texture.width, texture.height));
+            sprite.name = texture.name + " Runtime Sprite";
+            return sprite;
         }
 
         private static Color32 ColorForCharacter(char pixelCharacter)

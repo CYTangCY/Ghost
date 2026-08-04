@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,13 @@ namespace Ghost.Presentation.GhostAvatar
         public void SetMood(GhostMood mood)
         {
             EnsureView();
+
+            var pixelSprite = GhostPixelSpriteFactory.GetSprite(mood);
+            if (pixelSprite != null)
+            {
+                ApplyPixelMood(pixelSprite);
+                return;
+            }
 
             switch (mood)
             {
@@ -79,6 +87,7 @@ namespace Ghost.Presentation.GhostAvatar
             bodyRect.anchoredPosition = Vector2.zero;
             bodyRect.sizeDelta = new Vector2(136f, 128f);
             bodyImage.sprite = GetBuiltinSprite();
+            bodyImage.preserveAspect = true;
             bodyImage.raycastTarget = false;
 
             leftEyeImage = EnsureImage("Left Eye", bodyRect, out leftEyeRect);
@@ -86,19 +95,30 @@ namespace Ghost.Presentation.GhostAvatar
             ConfigureEye(leftEyeImage);
             ConfigureEye(rightEyeImage);
 
-            mouthText = EnsureFillText("Mouth", bodyRect, 34, FontStyle.Bold, TextAnchor.MiddleCenter);
+            mouthText = EnsureFillText("Mouth", bodyRect, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleCenter);
             mouthText.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             mouthText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             mouthText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             mouthText.rectTransform.anchoredPosition = new Vector2(0f, -24f);
             mouthText.rectTransform.sizeDelta = new Vector2(56f, 36f);
 
-            moodMarkText = EnsureFillText("Mood Mark", bodyRect, 28, FontStyle.Bold, TextAnchor.MiddleCenter);
+            moodMarkText = EnsureFillText("Mood Mark", bodyRect, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleCenter);
             moodMarkText.rectTransform.anchorMin = new Vector2(1f, 1f);
             moodMarkText.rectTransform.anchorMax = new Vector2(1f, 1f);
             moodMarkText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             moodMarkText.rectTransform.anchoredPosition = new Vector2(-16f, -18f);
             moodMarkText.rectTransform.sizeDelta = new Vector2(32f, 32f);
+        }
+
+        private void ApplyPixelMood(Sprite sprite)
+        {
+            bodyImage.sprite = sprite;
+            bodyImage.color = Color.white;
+            bodyImage.preserveAspect = true;
+            leftEyeImage.enabled = false;
+            rightEyeImage.enabled = false;
+            mouthText.enabled = false;
+            moodMarkText.enabled = false;
         }
 
         private void ApplyMood(
@@ -109,13 +129,17 @@ namespace Ghost.Presentation.GhostAvatar
             string mouth,
             string moodMark)
         {
+            leftEyeImage.enabled = true;
+            rightEyeImage.enabled = true;
+            mouthText.enabled = true;
+            moodMarkText.enabled = true;
             bodyImage.color = bodyColor;
             SetEye(leftEyeRect, leftEyePosition, eyeSize);
             SetEye(rightEyeRect, rightEyePosition, eyeSize);
             mouthText.text = mouth;
-            mouthText.color = new Color(0.16f, 0.12f, 0.22f);
+            mouthText.color = GhostUITheme.Ink;
             moodMarkText.text = moodMark;
-            moodMarkText.color = new Color(0.22f, 0.18f, 0.34f);
+            moodMarkText.color = GhostUITheme.Ink;
         }
 
         private static void ConfigureEye(Image eye)
@@ -173,12 +197,7 @@ namespace Ghost.Presentation.GhostAvatar
                 text = existing.gameObject.AddComponent<Text>();
             }
 
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            GhostUITheme.Label(text, string.Empty, fontSize, fontStyle, alignment, GhostUITheme.Ink);
             text.raycastTarget = false;
             return text;
         }
@@ -206,15 +225,60 @@ namespace Ghost.Presentation.GhostAvatar
             return generatedSprite;
         }
 
-        private static Font GetBuiltinFont()
+    }
+    public static class GhostPixelSpriteFactory
+    {
+        private const string NeutralResourcePath = "Characters/GhostPixelNeutral";
+        private const string HappyResourcePath = "Characters/GhostPixelHappy";
+        private const string ConfusedResourcePath = "Characters/GhostPixelConfused";
+        private const string SadResourcePath = "Characters/GhostPixelSad";
+
+        private static Sprite neutralSprite;
+        private static Sprite happySprite;
+        private static Sprite confusedSprite;
+        private static Sprite sadSprite;
+
+        public static Sprite GetSprite(GhostMood mood)
         {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
+            switch (mood)
             {
-                return font;
+                case GhostMood.Happy:
+                    return happySprite != null
+                        ? happySprite
+                        : happySprite = LoadSprite(HappyResourcePath);
+                case GhostMood.Confused:
+                    return confusedSprite != null
+                        ? confusedSprite
+                        : confusedSprite = LoadSprite(ConfusedResourcePath);
+                case GhostMood.Sad:
+                    return sadSprite != null
+                        ? sadSprite
+                        : sadSprite = LoadSprite(SadResourcePath);
+                default:
+                    return neutralSprite != null
+                        ? neutralSprite
+                        : neutralSprite = LoadSprite(NeutralResourcePath);
+            }
+        }
+
+        private static Sprite LoadSprite(string resourcePath)
+        {
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
             }
 
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            var sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                Mathf.Max(texture.width, texture.height));
+            sprite.name = texture.name + " Runtime Sprite";
+            return sprite;
         }
     }
+
 }

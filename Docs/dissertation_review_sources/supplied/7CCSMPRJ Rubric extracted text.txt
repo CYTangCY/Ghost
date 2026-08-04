@@ -1,0 +1,201 @@
+King’s College London Informatics MSc Projects
+7CCSMPRJ Marking Rubric
+Introduction (10%)
+High Distinction: Defines the project area and its place within the subject, economic, customer and/or com-
+mercial context. Proceeds from the wider concerns of Informatics and other relevant disciplines to the specialised
+subject of the report by way of an orderly and natural progression of ideas.
+Mid-Low Distinction: Defines the project area and its place within the subject, economic, customer and/or
+commercial context.
+Merit: Defines the project area.
+Pass: Defines the project area.
+Fail: Defines the project area.
+Literature Review (10%)
+High Distinction: Reviews the background to the project deeply and systematically. Incorporates relevant issues
+from the specialised area succinctly. Omits the irrelevant. Identifies all the main issues, which are then analysed
+and developed. The Review is a penetrating analysis, showing an impressive grasp of the subject and excellent
+judgement in the selection of previous work that should be applied in project. It gives new insights into the project
+area, not immediately identifiable from literature.
+Mid-Low Distinction: Reviews the background to the project deeply and systematically. Incorporates relevant
+issues from the specialised area succinctly, omitting the irrelevant. Identifies all the main issues, most of which are
+then analysed and developed.
+Merit: Reviews the background to the project comprehensively. Incorporates some relevant issues. Identifies
+all the main issues, most of which are then analysed and developed.
+Pass: Reviews the background to project. Identifies the main issues, some of which are then analysed and
+developed.
+High Fail: Reviews the background to project. The review is roughly right in what it says but has little to
+show that the writer really understands the subject. Some important references are missing.
+Low Fail: Lists some issues, some of which are relevant to the project.
+Specification and Design (15%)
+High Distinction: From the Review explains the rationale behind the design for the artefact, comparing alterna-
+tives and selecting appropriate advanced approaches. Describes the requirements for the artefact succinctly, but
+in enough detail for reader to appreciate all significant points. There is something distinctly novel about what is
+being attempted and the student has carried off the attempt with style, rarely defeated by problems encountered
+and more typically finding some clever original solution. This should be publishable or marketable and it shows
+outstanding research potential.
+Mid Distinction: From the Review explains the rationale behind the design for the artefact, comparing alter-
+natives and selecting appropriate advanced approaches. Describes the requirements for the artefact succinctly, but
+February 2025
+
+in enough detail for reader to appreciate all significant points. There is something distinctly novel about what is
+being attempted and the student has carried off the attempt with style, rarely defeated by problems encountered
+and more typically finding some original solution. With some further work, this should be potentially publishable or
+marketable and it shows excellent research potential.
+Low Distinction: Explains the rationale behind the design for the artefact, comparing alternatives and select-
+ing appropriate advanced approaches. There is something distinctly ambitious about what has been attempted
+and the student has carried off the attempt with style, rarely defeated by problems encountered and more typically
+finding some clever solution. It shows good research potential.
+High Merit: Describes the requirements for the artefact succinctly, but in enough detail for reader to appre-
+ciate all significant points. There is some evidence of research potential.
+Mid-Low Merit: Describes the requirements for the artefact succinctly, but in enough detail for reader to ap-
+preciate all significant points. Reveals more than mere competence in the application of specialised knowledge.
+Pass: Explains the rationale behind the design for the artefact comparing some advanced alternatives. Describes
+the design for the artefact in enough detail for reader to appreciate all significant points. Reveals some competence
+in the application of specialised knowledge, but lacks insight.
+High Fail: Lists some design issues, most of which are relevant. Describes the artefact itself. Discusses very
+little above a ”nuts and bolts” level.
+Low Fail: Describes the artefact. Describes some aspects of the artefact but the description is incomplete.
+Implementation/Technical Achievement (25%)
+High-Mid Distinction: Displays a systematic and carefully planned approach, with a clear understanding of the
+current methodological and theoretical approaches. There is something distinctly novel about what has been at-
+tempted and the student has carried off the attempt with style, rarely defeated by problems encountered and more
+typically finding some original solution. Shows a clever application of testing and/or verification techniques as well
+as a deep knowledge and understanding of software maintenance.
+Low Distinction: Displays a systematic and carefully planned approach, with a clear understanding of the current
+methodological and theoretical approaches. Reveals more than mere competence in the application of specialised
+knowledge. There is a satisfying quality and thoroughness about the work and it is free from any significant defects.
+Shows a clever application of testing and/or verification techniques.
+Merit: The relevant problems were mostly solved and some unexpected difficulties were resolved to obtain a
+thorough result. Displays a systematic and carefully planned approach, with a clear understanding of the current
+methodological and theoretical approaches. Shows a correct application of testing and/or verification techniques.
+Pass: The student has solved a well-defined, moderately low-risk problem. The relevant challenges were mostly
+solved and some unexpected difficulties were resolved to obtain a worthwhile result. Testing and/or verification are
+poorly conducted.
+High Fail: The student has abandoned some aims when faced with unexpected difficulties. The final result is
+only partially functional, but the project could be completed to a satisfactory standard given additional time. The
+artefact is likely to be fully developed but the original aims of the project are unfulfilled.
+Low Fail: The artefact has not been fully developed.
+2
+
+Evaluation (20%)
+High-Mid Distinction: Critically evaluates the effectiveness of the artefact, comparing results expected from the-
+ory (including those for alternative designs) with those obtained in practice.
+Low Distinction: Evaluates the artefact, comparing results expected from theory with those obtained in prac-
+tice.
+Merit: Evaluates the artefact, comparing results expected from theory with those obtained in practice.
+Pass: Evaluates the artefact.
+General Scholarship (10%)
+High Distinction: Clear, coherent, logical structure to the report. Grammatical, expressive style. Appropriate use
+of references, diagrams, figures etc. Consistent formatting and correct use of bibliographical conventions. Highest
+standards of presentation. Uses critical reflection to analyse the work done, stating clear conclusions, identifying
+related problems and areas to which the work may be applied.
+Mid Distinction: High standards of presentation. Clear, coherent, logical structure to the report. Grammati-
+cal, expressive style. Appropriate use of references, diagrams, figures etc. Consistent formatting and correct use of
+bibliographical conventions. Uses critical reflection to analyse the work done, stating clear conclusions, identifying
+related problems and areas to which the work may be applied.
+Low Distinction: High standards of presentation. Clear, coherent, logical structure to the report. Grammati-
+cal, expressive style. Appropriate use of references, diagrams, figures etc. Consistent formatting and correct use
+of bibliographical conventions. States clear conclusions, identifying related problems and areas to which the work
+may be applied.
+High Merit: Good standards of presentation. Clear, coherent, logical structure to the report. Grammatical
+style, possibly with some errors. Appropriate use of references, diagrams, figures etc. Consistent formatting and
+correct use of bibliographical conventions.
+Mid-Low Merit: Good standards of presentation. Most of the conclusions that can be drawn from the work
+done.
+High Pass: Satisfactory standards of presentation. Coherent structure to the report. Grammatical style, possibly
+with some errors. Use of references, diagrams, figures etc. Consistent formatting and correct use of bibliographical
+conventions. States some conclusions that can be drawn from the work done.
+Low Pass: Satisfactory standards of presentation. Coherent structure to the report. Grammatical style, possibly
+with some errors. Use of references, diagrams, figures etc. Consistent formatting and correct use of bibliographical
+conventions. States some conclusions that can be drawn from the work done.
+High Fail: Presentational weaknesses. Structured report. Comprehensible but not necessarily grammatical style.
+Correct use of bibliographical conventions. States some conclusions that can be drawn from the work done.
+Low Fail: Displays poor, disorganized presentation. Comprehensible but not necessarily grammatical style. Correct
+use of bibliographical conventions. States some conclusions that can be drawn from the work done. Comprehen-
+sible but not necessarily grammatical style. Correct use of bibliographical conventions. States some conclusions
+that can be drawn from the work done.
+3
+
+Legal, Social, Ethical and Professional Issues (10%)
+Distinction: Clearly indicates those professional standards, codes of conduct and legislation of relevance to the
+project conducted and succinctly describes their implications. It includes a thoughtful discussion of all relevant
+aspects such as: effects on the public well-being, computer security, environmental and sustainability aspects,
+economic and commercial factors, globalization, accessibility, Intellectual Property and related issues, software
+trustworthiness.
+Merit: Indicates some professional standards, codes of conduct and legislation of relevance to the project con-
+ducted. It includes a discussion of some relevant aspects such as: effects on the public well-being, computer
+security, environmental and sustainability aspects, economic and commercial factors, globalization, accessibility,
+Intellectual Property and related issues, software trustworthiness.
+Pass: Indicates a few professional standards, codes of conduct and legislation of relevance to the project con-
+ducted. It includes a discussion of a few relevant aspects such as: effects on the public well-being, computer
+security, environmental and sustainability aspects, economic and commercial factors, globalization, accessibility,
+Intellectual Property and related issues, software trustworthiness.
+Fail: Mentions a few professional standards, codes of conduct and legislation of relevance to the project conducted.
+Presentation
+High-Mid Distinction: The presentation covers the complete scope of the project. Where a prototype has been
+developed, the presentation includes an excellent live demonstration of the prototype in addition to some slides for
+context and further information – this could be used as a tool demonstration at a reputable CS conference. There
+is excellent evidence of understanding of the overall project topic, its significance and fit in the wider computing
+space and beyond. Scenarios to be demonstrated have been carefully and judiciously selected and prepared with
+data to support the overall narrative. A clear narrative is established as part of the demonstration, clearly identifying
+user groups and scenarios to be demonstrated. The presentation is highly engaging and clearly understandable,
+delivered at pace and with excellent and clear visual aids. The student has pre-empted potential questions and
+incorporated excellent responses in the presentation.
+Low Distinction: The presentation covers the complete scope of the project. Where a prototype has been
+developed, the presentation includes a convincing live demonstration of the prototype in addition to some slides for
+context and further information. There is clear evidence of understanding of the overall project topic, its significance
+and fit in the wider computing space. There is clear evidence of careful selection of scenarios to be demonstrated. A
+clear narrative is established as part of the demonstration, clearly identifying user groups and scenarios to be demon-
+strated. The presentation is engaging and clearly understandable, delivered at pace and with appropriate visual aids.
+Merit: The presentation covers the complete scope of the project. Where a prototype has been developed,
+the presentation includes a convincing live demonstration of the prototype in addition to some slides for context
+and further information. There is clear evidence of understanding of the overall project topic, its significance and
+fit in the wider computing space. There is evidence of careful selection of scenarios to be demonstrated. A clear
+narrative is established as part of the demonstration, clearly identifying user groups and scenarios to be demon-
+strated.
+Pass: The presentation covers the complete scope of the project. Where a prototype has been developed, the
+presentation includes a live demonstration of the prototype in addition to some slides for context and further infor-
+mation. There is some evidence of understanding of the overall project topic, its significance and fit in the wider
+computing space. The presentation of project outcomes may be less well structured; in particular there is likely no
+clear narrative demonstration of the prototype developed and no evidence of careful selection of scenarios selected
+to be demonstrated.
+High Fail: The presentation describes some aspects of the project. The presentation may only include slides
+without a demonstration of the software prototype developed (where appropriate). There is some evidence of
+understanding of the overall project topic, its significance and fit in the wider computing space but an overall lack
+of clarity in the presentation of the outcomes from the project.
+4
+
+Low Fail: A presentation that does not convey the scope and outcome of the project.
+Overall
+High Distinction: An excellent report that is written to a professional polished standard. It shows deep under-
+standing beyond what expected from a project on this level. The technical achievement of the project is outstanding.
+Mid Distinction: The report is at an excellent level. It shows deep understanding beyond what is needed for
+the project. The technical achievement demonstrates ambition and clever solutions.
+Low Distinction: The report is at an excellent level. It could reach the top standard if it didn’t fail to men-
+tion several points. The technical achievement goes beyond taught material and is free from significant defects.
+Merit: The report has a clear focus, exhibiting a good level of knowledge or ability, with only one or two de-
+ficiencies. The technical achievement demonstrates competence and a systematic approach.
+Pass: The report is showing an acceptable level of basic knowledge or ability. There are no major flaws, but
+there are a significant number of deficiencies. The technical achievement mostly solves relevant problems but
+demonstrated poor validation.
+High Fail: The report is just below the expected threshold level, covering only one or two or three of the ex-
+pected topics/sections in the report. The technical achievement only partially satisfies the objective and exhibits
+defects.
+Low Fail: A significant number of major flaws, which demonstrate lack of basic knowledge or ability.
+Credit Level Sub-Classification Marks Awarded
+Distinction
+High Distinction 90-100
+Mid-Range Distinction 80-89
+Low-Range Distinction 70-79
+Merit
+High Merit 66-69
+Mid-Range Merit 63-65
+Low-Range Merit 60-62
+Pass
+High Pass 56-59
+Mid-Range Pass 53-55
+Low-Range Pass 50-52
+Fail
+High Fail 36-49
+Low Fail 7-35
+NS 0-6
+5

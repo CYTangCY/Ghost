@@ -11,11 +11,15 @@ namespace Ghost.Presentation.Act1IntentClassification
         private Action<string> cardDroppedOnUnassigned;
         private Action<string, string> cardDroppedOnPile;
         private Action<string, string> labelDroppedOnPile;
+        private Action<string> labelDroppedOnNewPile;
 
-        public void InitializeNewPile(Action<string> cardDroppedOnNewPile)
+        public void InitializeNewPile(
+            Action<string> cardDroppedOnNewPile,
+            Action<string> labelDroppedOnNewPile = null)
         {
             pileId = null;
             this.cardDroppedOnNewPile = cardDroppedOnNewPile;
+            this.labelDroppedOnNewPile = labelDroppedOnNewPile;
             cardDroppedOnUnassigned = null;
             cardDroppedOnPile = null;
             labelDroppedOnPile = null;
@@ -25,6 +29,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         {
             pileId = null;
             cardDroppedOnNewPile = null;
+            labelDroppedOnNewPile = null;
             this.cardDroppedOnUnassigned = cardDroppedOnUnassigned;
             cardDroppedOnPile = null;
             labelDroppedOnPile = null;
@@ -37,6 +42,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         {
             this.pileId = pileId;
             cardDroppedOnNewPile = null;
+            labelDroppedOnNewPile = null;
             cardDroppedOnUnassigned = null;
             this.cardDroppedOnPile = cardDroppedOnPile;
             this.labelDroppedOnPile = labelDroppedOnPile;
@@ -91,7 +97,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             if (!string.IsNullOrEmpty(pileId))
             {
                 labelDroppedOnPile?.Invoke(intentId, pileId);
+                return;
             }
+
+            // Dropping a purpose onto an empty column starts the pile from the label end.
+            labelDroppedOnNewPile?.Invoke(intentId);
         }
     }
 }

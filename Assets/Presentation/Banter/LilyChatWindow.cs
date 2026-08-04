@@ -1,6 +1,6 @@
+using Ghost.Presentation.Common;
 using System.Collections.Generic;
 using Ghost.Presentation.Backend;
-using Ghost.Presentation.Common;
 using Ghost.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,15 +26,25 @@ namespace Ghost.Presentation.Banter
         private Button closeButton;
         private Text sendButtonLabel;
         private string actId;
+        private string stateSummary;
+        private string trigger;
         private bool requestInFlight;
 
         private readonly List<ChatHistoryItem> history = new List<ChatHistoryItem>();
 
-        public static void Open(string requestedActId, string openingLine)
+        public static void Open(
+            string requestedActId,
+            string openingLine,
+            string requestedStateSummary = "",
+            string requestedTrigger = "manual_ask_lily")
         {
             EnsureEventSystem();
             var window = EnsureWindow();
-            window.OpenInternal(requestedActId, openingLine);
+            window.OpenInternal(
+                requestedActId,
+                openingLine,
+                requestedStateSummary,
+                requestedTrigger);
         }
 
         private static LilyChatWindow EnsureWindow()
@@ -97,13 +107,8 @@ namespace Ghost.Presentation.Banter
             rect.anchoredPosition = new Vector2(520f, 0f);
             rect.sizeDelta = new Vector2(560f, 520f);
 
-            var image = root.AddComponent<Image>();
-            image.color = new Color(1f, 0.98f, 0.93f, 0.98f);
+            var image = GhostUITheme.Panel(root, new Color(1f, 0.98f, 0.93f, 0.98f));
             image.raycastTarget = true;
-
-            var outline = root.AddComponent<Outline>();
-            outline.effectColor = new Color(0.47f, 0.41f, 0.62f, 0.86f);
-            outline.effectDistance = new Vector2(2f, -2f);
 
             var layout = root.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(16, 16, 14, 14);
@@ -137,8 +142,7 @@ namespace Ghost.Presentation.Banter
             headerLayoutElement.minHeight = 42f;
             headerLayoutElement.preferredHeight = 42f;
 
-            var headerImage = header.AddComponent<Image>();
-            headerImage.color = new Color(1f, 1f, 1f, 0.01f);
+            var headerImage = GhostUITheme.Card(header, new Color(1f, 1f, 1f, 0.01f));
             headerImage.raycastTarget = true;
 
             var dragHandle = header.AddComponent<FloatingWindowDragHandle>();
@@ -151,19 +155,24 @@ namespace Ghost.Presentation.Banter
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
-            var title = CreateText(
+            var title = GhostUITheme.Label(
                 "Chat Title",
                 header.transform,
                 "Ask Lily",
-                20,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.13f, 0.24f));
+                GhostUITheme.Ink);
             var titleLayout = title.gameObject.AddComponent<LayoutElement>();
             titleLayout.flexibleWidth = 1f;
             titleLayout.minHeight = 38f;
 
-            closeButton = CreateButton(header.transform, "Close", new Vector2(72f, 38f), out _);
+            closeButton = GhostUITheme.PushButton("Close Button", header.transform, "Close");
+            var closeLayout = closeButton.gameObject.AddComponent<LayoutElement>();
+            closeLayout.minWidth = 72f;
+            closeLayout.preferredWidth = 72f;
+            closeLayout.minHeight = 38f;
+            closeLayout.preferredHeight = 38f;
             closeButton.onClick.AddListener(Close);
         }
 
@@ -171,7 +180,7 @@ namespace Ghost.Presentation.Banter
         {
             var scrollRoot = new GameObject("Chat Scroll", typeof(RectTransform));
             scrollRoot.transform.SetParent(parent, false);
-            scrollRoot.AddComponent<Image>().color = new Color(1f, 0.995f, 0.96f, 0.92f);
+            GhostUITheme.Card(scrollRoot, new Color(1f, 0.995f, 0.96f, 0.92f));
 
             var scrollLayout = scrollRoot.AddComponent<LayoutElement>();
             scrollLayout.flexibleHeight = 1f;
@@ -188,8 +197,7 @@ namespace Ghost.Presentation.Banter
             viewportRect.offsetMin = new Vector2(8f, 8f);
             viewportRect.offsetMax = new Vector2(-8f, -8f);
 
-            var viewportImage = viewport.AddComponent<Image>();
-            viewportImage.color = new Color(1f, 1f, 1f, 0.01f);
+            var viewportImage = GhostUITheme.Card(viewport, new Color(1f, 1f, 1f, 0.01f));
             viewportImage.raycastTarget = true;
 
             var mask = viewport.AddComponent<Mask>();
@@ -240,11 +248,21 @@ namespace Ghost.Presentation.Banter
             inputLayout.minHeight = 44f;
             inputLayout.preferredHeight = 44f;
 
-            sendButton = CreateButton(row.transform, "Send", new Vector2(84f, 44f), out sendButtonLabel);
+            sendButton = GhostUITheme.PushButton("Send Button", row.transform, "Send");
+            var sendLayout = sendButton.gameObject.AddComponent<LayoutElement>();
+            sendLayout.minWidth = 84f;
+            sendLayout.preferredWidth = 84f;
+            sendLayout.minHeight = 44f;
+            sendLayout.preferredHeight = 44f;
+            sendButtonLabel = sendButton.GetComponentInChildren<Text>();
             sendButton.onClick.AddListener(SendCurrentMessage);
         }
 
-        private void OpenInternal(string requestedActId, string openingLine)
+        private void OpenInternal(
+            string requestedActId,
+            string openingLine,
+            string requestedStateSummary,
+            string requestedTrigger)
         {
             var normalizedActId = string.IsNullOrWhiteSpace(requestedActId)
                 ? GhostNarrativeState.Act1Id
@@ -256,6 +274,11 @@ namespace Ghost.Presentation.Banter
                 history.Clear();
                 ClearMessages();
             }
+
+            stateSummary = requestedStateSummary ?? string.Empty;
+            trigger = string.IsNullOrWhiteSpace(requestedTrigger)
+                ? "manual_ask_lily"
+                : requestedTrigger;
 
             panelRoot.gameObject.SetActive(true);
             AmbientBanterPanel.ActivePanel?.PauseForChat();
@@ -313,6 +336,8 @@ namespace Ghost.Presentation.Banter
                 message,
                 requestHistory,
                 GhostNarrativeState.PlayerName,
+                stateSummary,
+                trigger,
                 response =>
                 {
                     SetRequestInFlight(false);
@@ -344,16 +369,16 @@ namespace Ghost.Presentation.Banter
 
         private Text AppendTurn(string role, string label, string text, bool storeInHistory)
         {
-            var line = CreateText(
+            var line = GhostUITheme.Label(
                 "Chat Line",
                 messageContentRoot,
                 FormatLine(label, text),
-                14,
+                GhostUITheme.SmallSize,
                 role == "player" ? FontStyle.Bold : FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 role == "player"
-                    ? new Color(0.18f, 0.22f, 0.34f)
-                    : new Color(0.30f, 0.24f, 0.36f));
+                    ? GhostUITheme.Ink
+                    : GhostUITheme.InkSoft);
 
             line.horizontalOverflow = HorizontalWrapMode.Wrap;
             line.verticalOverflow = VerticalWrapMode.Overflow;
@@ -430,102 +455,41 @@ namespace Ghost.Presentation.Banter
             return (label ?? string.Empty) + ": " + (text ?? string.Empty).Replace("{playerName}", GhostNarrativeState.PlayerName);
         }
 
-        private static Text CreateText(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = value ?? string.Empty;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-            return label;
-        }
-
-        private static Button CreateButton(Transform parent, string label, Vector2 size, out Text labelText)
-        {
-            var buttonRoot = new GameObject(label + " Button", typeof(RectTransform));
-            buttonRoot.transform.SetParent(parent, false);
-
-            var layout = buttonRoot.AddComponent<LayoutElement>();
-            layout.minWidth = size.x;
-            layout.preferredWidth = size.x;
-            layout.minHeight = size.y;
-            layout.preferredHeight = size.y;
-
-            var image = buttonRoot.AddComponent<Image>();
-            image.color = new Color(0.86f, 0.92f, 1f, 0.98f);
-            image.raycastTarget = true;
-
-            var outline = buttonRoot.AddComponent<Outline>();
-            outline.effectColor = new Color(0.50f, 0.56f, 0.78f, 0.74f);
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
-
-            var button = buttonRoot.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            labelText = CreateText(
-                "Label",
-                buttonRoot.transform,
-                label,
-                13,
-                FontStyle.Bold,
-                TextAnchor.MiddleCenter,
-                new Color(0.12f, 0.18f, 0.30f));
-            var rect = labelText.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            return button;
-        }
 
         private static InputField CreateInputField(Transform parent)
         {
             var root = new GameObject("Chat Input", typeof(RectTransform));
             root.transform.SetParent(parent, false);
 
-            var image = root.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.98f);
+            var image = GhostUITheme.Card(root, Color.white);
             image.raycastTarget = true;
 
             var input = root.AddComponent<InputField>();
             input.lineType = InputField.LineType.SingleLine;
             input.characterLimit = 240;
 
-            var text = CreateText(
+            var text = GhostUITheme.Label(
                 "Input Text",
                 root.transform,
                 string.Empty,
-                14,
+                GhostUITheme.SmallSize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.13f, 0.24f));
+                GhostUITheme.Ink);
             var textRect = text.rectTransform;
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.offsetMin = new Vector2(10f, 4f);
             textRect.offsetMax = new Vector2(-10f, -4f);
 
-            var placeholder = CreateText(
+            var placeholder = GhostUITheme.Label(
                 "Placeholder",
                 root.transform,
                 "Ask about this act...",
-                14,
+                GhostUITheme.SmallSize,
                 FontStyle.Italic,
                 TextAnchor.MiddleLeft,
-                new Color(0.46f, 0.42f, 0.52f));
+                GhostUITheme.InkSoft);
             var placeholderRect = placeholder.rectTransform;
             placeholderRect.anchorMin = Vector2.zero;
             placeholderRect.anchorMax = Vector2.one;
@@ -549,15 +513,5 @@ namespace Ghost.Presentation.Banter
             eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
 
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

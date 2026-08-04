@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using Ghost.Presentation.Act1IntentClassification;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -62,7 +63,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
         private static void CreateStaticUi(Transform canvasTransform)
         {
-            var root = CreatePanel(
+            var root = GhostUITheme.Panel(
                 "Act 1 Intent Classification Prototype",
                 canvasTransform,
                 new Vector2(0f, 0f),
@@ -81,27 +82,27 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             var presenter = root.gameObject.AddComponent<Act1IntentClassificationStaticPresenter>();
 
-            CreateLabel(
+            GhostUITheme.Label(
                 "Title",
                 root,
                 "Act 1: Train Ghost to Greet Visitors",
-                44,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
                 62f);
 
-            CreateLabel(
+            GhostUITheme.Label(
                 "Subtitle",
                 root,
                 "Cluster transcript cards, label each purpose, then teach Ghost on unseen visitors.",
-                21,
+                GhostUITheme.TitleSize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.27f, 0.22f, 0.36f),
                 40f);
 
-            var body = CreatePanel(
+            var body = GhostUITheme.Panel(
                 "Prototype Body",
                 root,
                 new Vector2(0f, 0f),
@@ -134,7 +135,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             var groupTemplate = CreateIntentGroupTemplate(templates.transform);
 
             SetPrivateField(presenter, "cardListRoot", cardsRoot);
-            SetPrivateField(presenter, "intentGroupListRoot", groupsRoot);
+            SetPrivateField(presenter, "pileList", groupsRoot);
             SetPrivateField(presenter, "cardTemplate", cardTemplate);
             SetPrivateField(presenter, "intentGroupTemplate", groupTemplate);
             SetPrivateField(presenter, "renderOnStart", true);
@@ -145,7 +146,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
         private static RectTransform CreateColumnPanel(string title, Transform parent, float flexibleWidth)
         {
-            var panel = CreatePanel(
+            var panel = GhostUITheme.Panel(
                 title + " Panel",
                 parent,
                 new Vector2(0f, 0f),
@@ -157,7 +158,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             var image = panel.GetComponent<Image>();
             image.color = new Color(0.98f, 0.98f, 1f);
 
-            var outline = panel.gameObject.AddComponent<Outline>();
+            var outline = panel.gameObject.GetComponent<Outline>();
             outline.effectColor = new Color(0.75f, 0.70f, 0.88f);
             outline.effectDistance = new Vector2(2f, -2f);
 
@@ -173,11 +174,11 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateLabel(
+            GhostUITheme.Label(
                 title,
                 panel,
                 title,
-                28,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.18f, 0.12f, 0.28f),
@@ -206,7 +207,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
         private static GameObject CreateCardTemplate(Transform parent)
         {
-            var card = CreatePanel(
+            var card = GhostUITheme.Card(
                 "Card Template",
                 parent,
                 new Vector2(0f, 0f),
@@ -227,21 +228,23 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateLabel("MessageText", card.transform, "Message", 20, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.09f, 0.18f), 48f);
+            GhostUITheme.Label("MessageText", card.transform, "Message", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.09f, 0.18f), 48f);
 
             return card;
         }
 
         private static GameObject CreateIntentGroupTemplate(Transform parent)
         {
-            var group = CreatePanel(
+            var groupImage = GhostUITheme.DropZone(
                 "Intent Group Template",
                 parent,
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Color(0.91f, 0.96f, 1f)).gameObject;
+                new Color(0.91f, 0.96f, 1f));
+            var groupRect = groupImage.rectTransform;
+            groupRect.anchorMin = new Vector2(0f, 0f);
+            groupRect.anchorMax = new Vector2(1f, 0f);
+            groupRect.offsetMin = new Vector2(0f, 0f);
+            groupRect.offsetMax = new Vector2(0f, 0f);
+            var group = groupImage.gameObject;
 
             var layoutElement = group.AddComponent<LayoutElement>();
             layoutElement.minHeight = 200f;
@@ -257,8 +260,8 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateLabel("IntentTitleText", group.transform, "intent_id", 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 42f);
-            CreateLabel("IntentHintText", group.transform, "Purpose description", 18, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.34f, 0.44f), 52f);
+            GhostUITheme.Label("IntentTitleText", group.transform, "intent_id", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.20f, 0.32f), 42f);
+            GhostUITheme.Label("IntentHintText", group.transform, "Purpose description", GhostUITheme.HeadingSize, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.28f, 0.34f, 0.44f), 52f);
             CreateAssignmentScrollView(group.transform);
 
             return group;
@@ -274,7 +277,7 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
             layoutElement.preferredHeight = 72f;
             layoutElement.flexibleHeight = 1f;
 
-            var image = viewport.gameObject.AddComponent<Image>();
+            var image = GhostUITheme.Panel(viewport.gameObject, new Color(1f, 1f, 1f, 0.32f));
             image.color = new Color(1f, 1f, 1f, 0.32f);
             image.raycastTarget = true;
 
@@ -309,68 +312,6 @@ namespace Ghost.Presentation.Act1IntentClassification.Editor
 
             var button = viewport.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
-        }
-
-        private static RectTransform CreatePanel(
-            string name,
-            Transform parent,
-            Vector2 anchorMin,
-            Vector2 anchorMax,
-            Vector2 offsetMin,
-            Vector2 offsetMax,
-            Color color)
-        {
-            var panel = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-            panel.SetParent(parent, false);
-            panel.anchorMin = anchorMin;
-            panel.anchorMax = anchorMax;
-            panel.offsetMin = offsetMin;
-            panel.offsetMax = offsetMax;
-
-            var image = panel.gameObject.AddComponent<Image>();
-            image.color = color;
-
-            return panel;
-        }
-
-        private static Text CreateLabel(
-            string name,
-            Transform parent,
-            string text,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = text;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-
-            var layoutElement = label.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-
-            return label;
-        }
-
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         private static void SetPrivateField<T>(Act1IntentClassificationStaticPresenter presenter, string fieldName, T value)

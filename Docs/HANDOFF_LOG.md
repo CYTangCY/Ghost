@@ -634,6 +634,91 @@ Lily portrait v8–v9 baseline shipped (Claude edits); Korean-style refinement c
 feedback/reference image. Archive: `Docs/completed_tasks/M0-T46_acts13_experience_unification.md`.
 Next: M0-T47/T48/T49 chapters build-out (Codex prompt already issued).
 
+### 2026-08-03 — M0-T50: Local release packaging — Closed (verified, then superseded)
+
+Claude reviewed Run 002 in the canonical repo and verified every claim against artifacts, re-running
+the cheap checks rather than trusting the log: EditMode 147/147 (XML header matches 147 real
+`<test-case>` elements; 22 fixtures sum to 147; the log's fixture breakdown reconciles line by line),
+backend 10/10 (re-run independently), installer SHA-256 and byte size matching exactly, install/
+launch/uninstall clean with no residue, WebGL 17 files / 13,043,856 bytes with all nine scenes, and
+`git check-ignore` confirming launcher `bin/`+`obj/` excluded while the csproj stays tracked. The five
+Chapter 3 missing-script warnings are genuinely fixed — the palette drag class now lives in a
+filename-matching file, five scene refs repointed, zero null script refs across all ten scenes.
+
+Three documentation gaps were recorded (backend results had no stored artifact; the Act 3 scene change
+was a full regeneration, not five repointed refs; the Fundamentals teaching-beat deletion was not
+stated) — none blocked closure.
+
+**User decision at closure: the WebGL path is retired.** The browser build still needed the local
+backend and Ollama, so it never gave a zero-install demo, while the browser scaling layer worsened the
+project's most-reported problem (text too small). `Deployment/` scaffolding, the `.gitignore` fix, and
+the Chapter 3 repair survive; the WebGL target and the `GHOST_WEB_ROOT` block in `server.ts` are
+retired in M0-T51. The physical clean-machine check is closed as no longer applicable rather than left
+open against a replaced artifact.
+
+Archive: `Docs/completed_tasks/M0-T50_local_release_packaging.md`.
+Next: M0-T51 — global visual system + desktop build, per `Docs/M0-T51_T56_EXPERIENCE_POLISH_PLAN.md`.
+Outstanding: M0-T47/T48/T49 have no completed-task archives.
+
+### 2026-08-03 — M0-T51: Global visual system + desktop build — Closed; M0-T52/T53 started
+
+Four attempts. Raising the type scale was not the hard part; it exposed that every container had been
+sized for 13-14px text, plus two defects in Claude's own theme: `verticalOverflow = Overflow` let
+wrapped text paint over its neighbours (that is what printed the Act 3 palette titles on top of their
+descriptions), and switching to `Truncate` then clipped any label whose box equalled its font size.
+Both fixed centrally. Final scale is 26/21/17/15/14 after the first attempt at 30/24/19/17/15 proved
+too aggressive.
+
+Also closed: the "Ask Lily" drag bug (the clamp ignored the window's anchors — verified standalone
+across five anchor configurations), Return to Hub now lands on chapter select, a wrong answer
+highlights Ask Lily instead of opening it, and the redundant "Basics" block is gone entirely.
+
+Chapter 1 was rebuilt twice more after the user reported it had got worse. Claude's error both times
+was deciding what the player needed to see without seeing it: hiding pile contents behind "+N more"
+removed the only feedback about their own work. The user's proposal — three side-by-side pile columns —
+was adopted and removed the need for a scroll container.
+
+**Process lesson recorded:** Codex Run 002's automated gates all passed while the game was visually
+broken, because its screenshots were captured on the onboarding screen and skipped Chapters 3 and 5.
+Visual evidence must be in-level and cover every scene.
+
+**Workflow change (user):** Codex is retired — a run was costing about £20. Claude writes code
+directly; the user runs Unity and reports.
+
+**Open before authored-data work:** EditMode has not been run since the Fundamentals removal; expected
+153 (147 − 1 + 7). Archive: `Docs/completed_tasks/M0-T51_global_visual_system.md`.
+Next: M0-T52 question variety, M0-T53 Chapters 2 and 3.
+Outstanding: M0-T47/T48/T49 still unarchived.
+
+### 2026-08-04 — M0-T52/T53/T54 closed, T55 mostly done, T56 specified (Claude direct implementation)
+
+Codex retired after M0-T51. Claude writes code directly; the user runs Unity. Pure logic is executed in
+a standalone .NET harness before hand-off, because Claude can neither compile nor render.
+
+Closed and user-verified: global interaction fixes (Ask Lily drag clamp, Return to Hub, highlight
+instead of auto-open, Basics removed); Chapters 1-3 depth and layout; Chapter 4 redesign. Chapter 5
+gained bidirectional wiring. Chapter 6 already had card return; the ending murmur is in.
+
+**Chapter 4 was rebuilt twice.** The first two-handle version was still arithmetic: the scores were on
+screen and a perfect setting existed. The shipped design makes the confidence score a proxy - one
+visitor scores 52 while being clear, another 68 while being ambiguous - so exhaustive search over all
+5151 settings confirms **no setting pleases everyone**. Passing is a hard floor plus a trade-off
+scoreboard, and scores stay hidden until the first run.
+
+**Deliberate deviation:** Chapter 5 keeps one buggy map containing all three fault classes rather than
+one map per visitor. Several faults in one system that tests localise is closer to real debugging, and
+the difficulty requirement was already met.
+
+**Recurring lesson recorded in the run log:** three separate chapters shipped puzzles whose passing
+state the player could not reach, while every rule-level test stayed green. A correct rule is not a
+reachable solution. Reachability guards now exist for Chapters 2, 3 and 4.
+
+Run log: `Docs/codex_runs/M0-T52_T56_001_claude_direct_implementation.md`.
+Next: M0-T56 Final Chapter integration redesign - spec appended to
+`Docs/M0-T51_T56_EXPERIENCE_POLISH_PLAN.md`, not yet implemented.
+Expected EditMode count: 184.
+Outstanding: M0-T47/T48/T49 still unarchived.
+
 ---
 
 ## Entry Template

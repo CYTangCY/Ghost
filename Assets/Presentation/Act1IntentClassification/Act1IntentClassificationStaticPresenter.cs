@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using System;
 using System.Collections.Generic;
 using Ghost.Presentation.GhostAvatar;
@@ -7,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Ghost.Presentation.Act1IntentClassification
@@ -14,13 +16,19 @@ namespace Ghost.Presentation.Act1IntentClassification
     public sealed class Act1IntentClassificationStaticPresenter : MonoBehaviour
     {
         private const float CardPreferredHeight = 52f;
-        private const float PilePreferredHeight = 128f;
+
+        // A transcript sitting in a pile is already sorted, so it does not need the full reading height
+        // it gets in the left-hand list. Compact rows are what let a pile show all of its contents
+        // without swallowing the column.
+        private const float CardInPileHeight = 46f;
+        private const float PileMinHeight = 150f;
+        private const int PileColumnCount = 3;
         private const float LabelChipHeight = 38f;
-        private const float ObjectiveStripHeight = 48f;
+        private const float ObjectiveStripHeight = 40f;
         private const float OnboardingPanelHeight = 180f;
-        private const float ConversationPanelHeight = 170f;
-        private const float TeachingPanelPreferredHeight = 54f;
-        private const float ControlsPreferredHeight = 92f;
+        private const float ConversationPanelHeight = 178f;
+        private const float TeachingPanelPreferredHeight = 96f;
+        private const float ControlsPreferredHeight = 96f;
 
         private const string TitleText = "Act 1: Train Ghost to Greet Visitors";
         private const string InstructionText =
@@ -48,12 +56,9 @@ namespace Ghost.Presentation.Act1IntentClassification
         private static readonly Color TeachingPanelColor = new Color(1f, 0.96f, 0.82f, 0.96f);
         private static readonly Color TeachingPanelOutlineColor = new Color(0.86f, 0.58f, 0.22f, 0.95f);
         private static readonly Color ObjectiveStripColor = new Color(0.14f, 0.18f, 0.32f);
-        private static readonly Color FeedbackNeutralColor = new Color(0.24f, 0.22f, 0.30f);
-        private static readonly Color FeedbackCorrectColor = new Color(0.08f, 0.42f, 0.18f);
-        private static readonly Color FeedbackIncorrectColor = new Color(0.62f, 0.16f, 0.13f);
 
         [SerializeField] private RectTransform cardListRoot;
-        [SerializeField] private RectTransform intentGroupListRoot;
+        [SerializeField, FormerlySerializedAs("pileList")] private RectTransform pileList;
         [SerializeField] private GameObject cardTemplate;
         [SerializeField] private GameObject intentGroupTemplate;
         [SerializeField] private bool renderOnStart = true;
@@ -108,7 +113,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         public void RenderSampleData()
         {
             if (cardListRoot == null ||
-                intentGroupListRoot == null ||
+                pileList == null ||
                 cardTemplate == null ||
                 intentGroupTemplate == null)
             {
@@ -144,7 +149,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(cardListRoot);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(intentGroupListRoot);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(pileList);
         }
 
         private void ClearRenderedState()
@@ -154,19 +159,19 @@ namespace Ghost.Presentation.Act1IntentClassification
             cardOutlinesById.Clear();
             labelImagesByIntentId.Clear();
             ClearChildren(cardListRoot);
-            ClearChildren(intentGroupListRoot);
+            ClearChildren(pileList);
         }
 
         private void RenderUnpiledCards()
         {
-            ConfigureExistingLabel(
+            GhostUITheme.Label(
                 cardListRoot.parent,
                 "Sample Message Cards",
                 "Transcript Cards",
-                22,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
+                GhostUITheme.Ink,
                 30f);
 
             foreach (var cardId in controller.UnpiledCardIds)
@@ -182,33 +187,36 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private void RenderLabelPaletteAndPiles()
         {
-            ConfigureExistingLabel(
-                intentGroupListRoot.parent,
+            GhostUITheme.Label(
+                pileList.parent,
                 "Intent Group Areas",
                 "Training Piles",
-                22,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.18f, 0.12f, 0.28f),
+                GhostUITheme.Ink,
                 30f);
 
-            CreateLabelPalette(intentGroupListRoot);
-            CreateNewPileDropZone(intentGroupListRoot);
+            CreateNowInstruction(pileList);
 
-            foreach (var pile in controller.Piles)
+            // Before the Build step the piles cannot be used, so showing the label palette and the
+            // drop zone just presented controls that quietly did nothing.
+            var canBuild = controller.Phase == Act1TeachingPhase.Build ||
+                controller.Phase == Act1TeachingPhase.Demo ||
+                controller.Phase == Act1TeachingPhase.Complete;
+
+            if (!canBuild)
             {
-                CreatePileView(intentGroupListRoot, pile);
+                return;
             }
 
-            if (controller.Piles.Count == 0)
-            {
-                CreatePlaceholder(intentGroupListRoot, "Drag a transcript to the new-pile zone to start Ghost's training data.", 40f);
-            }
+            CreateLabelPalette(pileList);
+            CreatePileColumns(pileList);
         }
 
         private void CreateLabelPalette(Transform parent)
         {
-            var palette = CreatePanel("Purpose Label Chips", parent, new Color(1f, 1f, 1f, 0f));
+            var palette = GhostUITheme.Panel("Purpose Label Chips", parent, new Color(1f, 1f, 1f, 0f)).rectTransform;
             var paletteLayoutElement = palette.gameObject.AddComponent<LayoutElement>();
             paletteLayoutElement.minHeight = 88f;
             paletteLayoutElement.preferredHeight = 88f;
@@ -220,7 +228,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateSmallText(palette, "Purpose labels", 13, FontStyle.Bold, TextAnchor.MiddleLeft, 18f);
+            GhostUITheme.Label("Purpose Labels", palette, "Purpose labels", GhostUITheme.SmallSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 18f);
 
             var row = new GameObject("Purpose Label Row", typeof(RectTransform)).GetComponent<RectTransform>();
             row.SetParent(palette, false);
@@ -243,7 +251,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private void CreateLabelChip(Transform parent, string intentId)
         {
-            var chip = CreatePanel("Purpose Label - " + intentId, parent, LabelColor);
+            var chip = GhostUITheme.Chip("Purpose Label - " + intentId, parent, LabelColor).rectTransform;
             ConfigureLayoutElement(chip.gameObject, 110f, LabelChipHeight, 1f);
 
             var image = chip.GetComponent<Image>();
@@ -261,32 +269,184 @@ namespace Ghost.Presentation.Act1IntentClassification
             var drag = chip.gameObject.AddComponent<Act1IntentClassificationLabelDragView>();
             drag.Initialize(intentId, rootCanvas);
 
-            var label = CreateFillText(chip, GetPurposeLabel(intentId), 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+            var label = GhostUITheme.Label(chip, GetPurposeLabel(intentId), GhostUITheme.SmallSize, FontStyle.Bold, TextAnchor.MiddleCenter);
             label.color = new Color(0.10f, 0.18f, 0.30f);
+        }
+
+        /// <summary>
+        /// Three side-by-side columns, one per purpose. Stacking piles vertically meant that once the
+        /// third pile existed the panel overflowed with no way to scroll, so the player could not see
+        /// what they had built. There are exactly three purposes, so three columns always fit.
+        /// </summary>
+        private void CreatePileColumns(Transform parent)
+        {
+            var row = new GameObject("Pile Columns", typeof(RectTransform)).GetComponent<RectTransform>();
+            row.SetParent(parent, false);
+
+            var element = row.gameObject.AddComponent<LayoutElement>();
+            element.minHeight = 210f;
+            element.flexibleHeight = 1f;
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            for (var i = 0; i < PileColumnCount; i++)
+            {
+                if (i < controller.Piles.Count)
+                {
+                    CreatePileView(row, controller.Piles[i]);
+                }
+                else
+                {
+                    CreateNewPileDropZone(row);
+                }
+            }
         }
 
         private void CreateNewPileDropZone(Transform parent)
         {
-            var zone = CreatePanel("New Pile Drop Zone", parent, new Color(1f, 0.985f, 0.90f));
-            ConfigureLayoutElement(zone.gameObject, 0f, 48f, 0f);
+            var zone = GhostUITheme.DropZone("New Pile Drop Zone", parent, new Color(1f, 0.985f, 0.90f)).rectTransform;
+            zone.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
             var outline = zone.gameObject.AddComponent<Outline>();
             SetOutline(outline, new Color(0.86f, 0.58f, 0.22f, 0.95f), new Vector2(1.5f, -1.5f));
 
             var button = zone.gameObject.AddComponent<Button>();
             button.targetGraphic = zone.GetComponent<Image>();
-            button.onClick.AddListener(() => controller.MoveSelectedCardToNewPile());
+            button.onClick.AddListener(() =>
+            {
+                if (controller.HasSelectedLabel)
+                {
+                    controller.AssignSelectedLabelToNewPile();
+                    return;
+                }
+
+                controller.MoveSelectedCardToNewPile();
+            });
 
             var drop = zone.gameObject.AddComponent<Act1IntentTeachingDropTarget>();
-            drop.InitializeNewPile(controller.MoveCardToNewPile);
+            drop.InitializeNewPile(controller.MoveCardToNewPile, controller.AssignLabelToNewPile);
 
-            var text = CreateFillText(zone, "Drop a transcript here to start a new training pile", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
+            var text = GhostUITheme.Label(zone, "Drop a transcript here\nto start this pile", GhostUITheme.SmallSize, FontStyle.Italic, TextAnchor.MiddleCenter);
             text.color = new Color(0.34f, 0.25f, 0.14f);
+        }
+
+        /// <summary>
+        /// A plain "do this next" line inside the panel where the doing happens. The objective strip at
+        /// the top of the page carries the same phase, but players were reading the play area and
+        /// finding no statement of what they were meant to be doing there.
+        /// </summary>
+        private void CreateNowInstruction(Transform parent)
+        {
+            var banner = GhostUITheme.Card("Now Instruction", parent, new Color(1f, 0.95f, 0.80f)).rectTransform;
+            ConfigureLayoutElement(banner.gameObject, 0f, 86f, 1f);
+
+            var layout = banner.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(12, 12, 8, 8);
+            layout.spacing = 2f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var heading = GhostUITheme.Label(
+                banner,
+                "Now Heading",
+                GetNowHeading(),
+                GhostUITheme.BodySize,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                GhostUITheme.Ink,
+                24f);
+            heading.raycastTarget = false;
+
+            var detail = GhostUITheme.Label(
+                banner,
+                "Now Detail",
+                GetNowDetail(),
+                GhostUITheme.SmallSize,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft,
+                GhostUITheme.InkSoft,
+                44f);
+            detail.raycastTarget = false;
+        }
+
+        private bool IsReadyToTeach()
+        {
+            if (controller.UnpiledCardIds.Count > 0 || controller.Piles.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var pile in controller.Piles)
+            {
+                if (string.IsNullOrEmpty(pile.IntentLabelId) || pile.CardIds.Count == 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private string GetNowHeading()
+        {
+            switch (controller.Phase)
+            {
+                case Act1TeachingPhase.Intro:
+                    return "Now: watch Ghost get it wrong";
+                case Act1TeachingPhase.Build:
+                    if (controller.Piles.Count == 0)
+                    {
+                        return "Now: start your first pile";
+                    }
+
+                    return IsReadyToTeach()
+                        ? "Now: press Teach Ghost"
+                        : "Now: sort every transcript, then label each pile";
+                case Act1TeachingPhase.Demo:
+                    return "Now: teach Ghost and watch a new visitor";
+                case Act1TeachingPhase.Complete:
+                    return "Done - Ghost answers by purpose now";
+                default:
+                    return "Now: read Lily's loop above";
+            }
+        }
+
+        private string GetNowDetail()
+        {
+            switch (controller.Phase)
+            {
+                case Act1TeachingPhase.Intro:
+                    return "Press Next in Ghost's panel until the visitor runs out of patience.";
+                case Act1TeachingPhase.Build:
+                    if (controller.Piles.Count == 0)
+                    {
+                        return "Drag a transcript - or a purpose label - onto one of the empty columns below.";
+                    }
+
+                    return IsReadyToTeach()
+                        ? "Every transcript is sorted and every pile is labelled. See what Ghost learned."
+                        : "Drag more transcripts onto a pile, then drop a purpose label onto its socket.";
+                case Act1TeachingPhase.Demo:
+                    return "Press Next visitor to hear each one, and watch which pile Ghost leans on.";
+                case Act1TeachingPhase.Complete:
+                    return "Press Complete Act to take this back to Lily.";
+                default:
+                    return "Ghost only repeats sentences it has heard word for word.";
+            }
         }
 
         private void CreatePileView(Transform parent, Act1IntentPileState pile)
         {
-            var pileView = CreatePanel("Training Pile - " + pile.Id, parent, PileColor);
-            ConfigureLayoutElement(pileView.gameObject, 0f, PilePreferredHeight, 0f);
+            var pileView = GhostUITheme.DropZone("Training Pile - " + pile.Id, parent, PileColor).rectTransform;
+            var pileElement = pileView.gameObject.AddComponent<LayoutElement>();
+            pileElement.minHeight = PileMinHeight;
+            pileElement.flexibleWidth = 1f;
 
             var image = pileView.GetComponent<Image>();
             image.color = controller.HasSelectedCard || controller.HasSelectedLabel ? PileReadyColor : PileColor;
@@ -327,7 +487,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         {
             var header = new GameObject("Pile Header", typeof(RectTransform)).GetComponent<RectTransform>();
             header.SetParent(parent, false);
-            ConfigureLayoutElement(header.gameObject, 0f, 32f, 0f);
+            ConfigureLayoutElement(header.gameObject, 0f, 34f, 0f);
 
             var layout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 8f;
@@ -336,25 +496,37 @@ namespace Ghost.Presentation.Act1IntentClassification
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
 
-            var socket = CreatePanel("Label Socket", header, string.IsNullOrEmpty(pile.IntentLabelId) ? new Color(1f, 1f, 1f, 0.55f) : LabelColor);
-            ConfigureLayoutElement(socket.gameObject, 0f, 30f, 1f);
+            var socket = GhostUITheme.DropZone("Label Socket", header, string.IsNullOrEmpty(pile.IntentLabelId) ? new Color(1f, 1f, 1f, 0.55f) : LabelColor).rectTransform;
+            ConfigureLayoutElement(socket.gameObject, 0f, 32f, 1f);
             var socketButton = socket.gameObject.AddComponent<Button>();
             socketButton.targetGraphic = socket.GetComponent<Image>();
             socketButton.onClick.AddListener(() => controller.AssignSelectedLabelToPile(pile.Id));
-            var socketText = CreateFillText(
+            var socketText = GhostUITheme.Label(
                 socket,
-                string.IsNullOrEmpty(pile.IntentLabelId) ? "Drop purpose label here" : GetPurposeLabel(pile.IntentLabelId),
-                13,
+                string.IsNullOrEmpty(pile.IntentLabelId) ? "Drop label" : GetPurposeLabel(pile.IntentLabelId),
+                GhostUITheme.SmallSize,
                 string.IsNullOrEmpty(pile.IntentLabelId) ? FontStyle.Italic : FontStyle.Bold,
                 TextAnchor.MiddleCenter);
-            socketText.color = new Color(0.12f, 0.18f, 0.30f);
+            socketText.color = GhostUITheme.Ink;
 
-            var clear = CreatePanel("Clear Label", header, new Color(1f, 0.94f, 0.90f));
-            ConfigureLayoutElement(clear.gameObject, 72f, 30f, 0f);
+            // How many transcripts are in here. Previously you had to count the visible cards, and the
+            // list was clipped, so the number was simply not knowable.
+            var count = GhostUITheme.Chip("Card Count", header, new Color(0.83f, 0.90f, 1f)).rectTransform;
+            ConfigureLayoutElement(count.gameObject, 34f, 32f, 0f);
+            var countText = GhostUITheme.Label(
+                count,
+                pile.CardIds.Count.ToString(),
+                GhostUITheme.SmallSize,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter);
+            countText.color = GhostUITheme.Ink;
+
+            var clear = GhostUITheme.Chip("Clear Label", header, new Color(1f, 0.94f, 0.90f)).rectTransform;
+            ConfigureLayoutElement(clear.gameObject, 52f, 32f, 0f);
             var clearButton = clear.gameObject.AddComponent<Button>();
             clearButton.targetGraphic = clear.GetComponent<Image>();
             clearButton.onClick.AddListener(() => controller.ClearPileLabel(pile.Id));
-            var clearText = CreateFillText(clear, "Clear", 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+            var clearText = GhostUITheme.Label(clear, "Clear", GhostUITheme.TinySize, FontStyle.Bold, TextAnchor.MiddleCenter);
             clearText.color = new Color(0.34f, 0.14f, 0.12f);
         }
 
@@ -362,7 +534,7 @@ namespace Ghost.Presentation.Act1IntentClassification
         {
             var cardRoot = new GameObject("Pile Cards", typeof(RectTransform)).GetComponent<RectTransform>();
             cardRoot.SetParent(parent, false);
-            ConfigureLayoutElement(cardRoot.gameObject, 0f, 74f, 1f);
+            ConfigureLayoutElement(cardRoot.gameObject, 0f, 0f, 1f);
 
             var layout = cardRoot.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 4f;
@@ -377,6 +549,9 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
+            // Every transcript stays visible. Grouping them IS the puzzle, so hiding the contents
+            // behind a "+N more" summary took away the only feedback the player has about their own
+            // work. They are rendered compactly instead - see CardInPileHeight.
             foreach (var cardId in pile.CardIds)
             {
                 CreateCardView(cardRoot, controller.GetCard(cardId), true);
@@ -401,15 +576,14 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private void ConfigureCardContainer(GameObject view, string cardId, bool isInPile)
         {
-            var image = view.GetComponent<Image>();
-            if (image == null)
-            {
-                image = view.AddComponent<Image>();
-            }
-
             var isSelected = controller.SelectedCardId == cardId;
             var isHighlighted = controller.IsCardHighlighted(cardId);
-            image.color = isHighlighted ? CardMisleadingColor : isSelected ? CardSelectedColor : isInPile ? CardInPileColor : CardDefaultColor;
+            var color = isHighlighted
+                ? CardMisleadingColor
+                : isSelected
+                    ? CardSelectedColor
+                    : isInPile ? CardInPileColor : CardDefaultColor;
+            var image = GhostUITheme.Card(view, color);
             image.raycastTarget = true;
 
             var outline = view.GetComponent<Outline>();
@@ -441,7 +615,18 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             draggable.Initialize(cardId, rootCanvas);
 
-            ConfigureLayoutElement(view, 0f, CardPreferredHeight, 0f);
+            ConfigureLayoutElement(view, 0f, isInPile ? CardInPileHeight : CardPreferredHeight, 0f);
+
+            if (isInPile)
+            {
+                // The template styles transcripts at TitleSize for the wide left-hand list. In a
+                // third-width column that size wraps to three lines and gets clipped.
+                var message = FindChildText(view.transform, "MessageText");
+                if (message != null)
+                {
+                    GhostUITheme.Label(message, message.text, GhostUITheme.SmallSize, FontStyle.Normal, TextAnchor.MiddleLeft, GhostUITheme.Ink);
+                }
+            }
 
             var layout = view.GetComponent<VerticalLayoutGroup>();
             if (layout == null)
@@ -464,14 +649,22 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             EnsureTeachingPanel(transform);
             ConfigureColumnPanelLayout(cardListRoot.parent);
-            ConfigureColumnPanelLayout(intentGroupListRoot.parent);
+            ConfigureColumnPanelLayout(pileList.parent);
             ConfigureListRoot(cardListRoot, 6f);
-            ConfigureListRoot(intentGroupListRoot, 8f);
+            ConfigureListRoot(pileList, 8f);
             ConfigurePanelSurface(cardListRoot.parent, new Color(1f, 0.985f, 0.94f), new Color(0.82f, 0.70f, 0.90f, 0.85f));
-            ConfigurePanelSurface(intentGroupListRoot.parent, PanelColor, new Color(0.60f, 0.72f, 0.90f, 0.90f));
+            ConfigurePanelSurface(pileList.parent, PanelColor, new Color(0.60f, 0.72f, 0.90f, 0.90f));
 
             prototypeBody = cardListRoot.parent != null ? cardListRoot.parent.parent as RectTransform : null;
             var bodyLayout = prototypeBody != null ? prototypeBody.GetComponent<HorizontalLayoutGroup>() : null;
+            if (prototypeBody != null)
+            {
+                var bodyElement = prototypeBody.GetComponent<LayoutElement>() ??
+                    prototypeBody.gameObject.AddComponent<LayoutElement>();
+                bodyElement.minHeight = 96f;
+                bodyElement.flexibleHeight = 1f;
+            }
+
             if (bodyLayout != null)
             {
                 bodyLayout.spacing = 18f;
@@ -492,7 +685,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             pageHeader.SetAsFirstSibling();
-            ConfigureLayoutElement(pageHeader.gameObject, 0f, 56f, 0f);
+            GhostUITheme.Panel(pageHeader.gameObject, Color.clear).raycastTarget = false;
+            ConfigureLayoutElement(pageHeader.gameObject, 0f, 44f, 0f);
+            // The header is a fixed title row, but its inner horizontal group force-expands height,
+            // which reports flexible height to the page and let the header eat all the spare space.
+            pageHeader.GetComponent<LayoutElement>().flexibleHeight = 0f;
             var headerLayout = pageHeader.GetComponent<HorizontalLayoutGroup>();
             if (headerLayout == null)
             {
@@ -500,6 +697,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             headerLayout.spacing = 16f;
+            headerLayout.padding = new RectOffset(0, 220, 0, 0);
             headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
             headerLayout.childForceExpandWidth = false;
@@ -523,8 +721,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 title = titleRoot.gameObject.AddComponent<Text>();
             }
 
-            ConfigureHeaderText(title, TitleText, 38, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.12f, 0.28f));
-            ConfigureLayoutElement(titleRoot.gameObject, 0f, 56f, 1f);
+            GhostUITheme.Label(title, TitleText, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink);
+            ConfigureLayoutElement(titleRoot.gameObject, 0f, 44f, 1f);
 
             var progressRoot = pageHeader.Find("Phase Progress") as RectTransform;
             if (progressRoot == null)
@@ -539,8 +737,8 @@ namespace Ghost.Presentation.Act1IntentClassification
                 phaseProgressText = progressRoot.gameObject.AddComponent<Text>();
             }
 
-            ConfigureHeaderText(phaseProgressText, string.Empty, 20, FontStyle.Bold, TextAnchor.MiddleRight, new Color(0.35f, 0.32f, 0.45f));
-            ConfigureLayoutElement(progressRoot.gameObject, 210f, 56f, 0f);
+            GhostUITheme.Label(phaseProgressText, string.Empty, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleRight, GhostUITheme.InkSoft);
+            ConfigureLayoutElement(progressRoot.gameObject, 210f, 44f, 0f);
 
             var subtitle = transform.Find("Subtitle");
             if (subtitle != null)
@@ -549,24 +747,6 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
         }
 
-        private static void ConfigureHeaderText(
-            Text text,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color)
-        {
-            text.text = value;
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-        }
 
         private void EnsureConversationPanel()
         {
@@ -583,13 +763,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 conversationPanel.SetSiblingIndex(teachingPanel.GetSiblingIndex() + 1);
             }
 
-            var image = conversationPanel.GetComponent<Image>();
-            if (image == null)
-            {
-                image = conversationPanel.gameObject.AddComponent<Image>();
-            }
-
-            image.color = new Color(0.94f, 0.975f, 1f, 0.96f);
+            var image = GhostUITheme.Panel(conversationPanel.gameObject, new Color(0.94f, 0.975f, 1f, 0.96f));
             image.raycastTarget = false;
 
             var outline = conversationPanel.GetComponent<Outline>();
@@ -601,6 +775,9 @@ namespace Ghost.Presentation.Act1IntentClassification
             SetOutline(outline, new Color(0.54f, 0.66f, 0.86f, 0.90f), new Vector2(2f, -2f));
 
             ConfigureLayoutElement(conversationPanel.gameObject, 0f, ConversationPanelHeight, 0f);
+            // Same trap as the header: the inner group force-expands height, so without this the
+            // panel reports flexible height and stretches down the rest of the page.
+            conversationPanel.GetComponent<LayoutElement>().flexibleHeight = 0f;
 
             var layout = conversationPanel.GetComponent<HorizontalLayoutGroup>();
             if (layout == null)
@@ -608,7 +785,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = conversationPanel.gameObject.AddComponent<HorizontalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(16, 14, 10, 10);
+            layout.padding = new RectOffset(12, 12, 12, 12);
             layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -617,9 +794,9 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             ghostFaceView = EnsureGhostFace(conversationPanel);
             var textColumn = EnsureConversationTextColumn(conversationPanel);
-            visitorText = EnsureConversationText(textColumn, "Visitor Line", 17, FontStyle.Bold, 34f);
-            ghostReplyText = EnsureConversationText(textColumn, "Ghost Reply", 18, FontStyle.Bold, 42f);
-            conversationNoteText = EnsureConversationText(textColumn, "Conversation Note", 14, FontStyle.Italic, 32f);
+            visitorText = EnsureConversationText(textColumn, "Visitor Line", GhostUITheme.BodySize, FontStyle.Bold, 34f);
+            ghostReplyText = EnsureConversationText(textColumn, "Ghost Reply", GhostUITheme.HeadingSize, FontStyle.Bold, 42f);
+            conversationNoteText = EnsureConversationText(textColumn, "Conversation Note", GhostUITheme.SmallSize, FontStyle.Italic, 32f);
             conversationAdvanceButton = EnsureConversationButton(conversationPanel, out conversationAdvanceButtonText);
             conversationAdvanceButton.onClick.RemoveAllListeners();
             conversationAdvanceButton.onClick.AddListener(() => controller.AdvanceConversation());
@@ -627,7 +804,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
         private void EnsureControls()
         {
-            var parent = intentGroupListRoot.parent;
+            var parent = pileList.parent;
             controlsRoot = parent.Find("Validation Controls") as RectTransform;
             if (controlsRoot == null)
             {
@@ -637,13 +814,7 @@ namespace Ghost.Presentation.Act1IntentClassification
 
             controlsRoot.SetAsLastSibling();
 
-            var image = controlsRoot.GetComponent<Image>();
-            if (image == null)
-            {
-                image = controlsRoot.gameObject.AddComponent<Image>();
-            }
-
-            image.color = new Color(1f, 0.99f, 0.94f, 0.94f);
+            var image = GhostUITheme.Panel(controlsRoot.gameObject, new Color(1f, 0.99f, 0.94f, 0.94f));
             image.raycastTarget = false;
             ConfigureLayoutElement(controlsRoot.gameObject, 0f, ControlsPreferredHeight, 0f);
 
@@ -866,15 +1037,15 @@ namespace Ghost.Presentation.Act1IntentClassification
             switch (feedback.Kind)
             {
                 case Act1IntentClassificationFeedbackKind.Correct:
-                    feedbackText.color = FeedbackCorrectColor;
+                    feedbackText.color = GhostUITheme.Good;
                     feedbackText.fontStyle = FontStyle.Bold;
                     break;
                 case Act1IntentClassificationFeedbackKind.Incorrect:
-                    feedbackText.color = FeedbackIncorrectColor;
+                    feedbackText.color = GhostUITheme.Bad;
                     feedbackText.fontStyle = FontStyle.Bold;
                     break;
                 default:
-                    feedbackText.color = FeedbackNeutralColor;
+                    feedbackText.color = GhostUITheme.InkSoft;
                     feedbackText.fontStyle = FontStyle.Normal;
                     break;
             }
@@ -912,7 +1083,10 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             layout.padding = new RectOffset(36, 36, 26, 24);
-            layout.spacing = 9f;
+            layout.spacing = 14f;
+            // Blocks size to their content now, so centre whatever slack is left instead of
+            // letting one of them absorb it.
+            layout.childAlignment = TextAnchor.MiddleCenter;
 
             var image = transform.GetComponent<Image>();
             if (image != null)
@@ -975,13 +1149,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 panel.SetSiblingIndex(subtitle.GetSiblingIndex() + 1);
             }
 
-            var image = panel.GetComponent<Image>();
-            if (image == null)
-            {
-                image = panel.gameObject.AddComponent<Image>();
-            }
-
-            image.color = TeachingPanelColor;
+            var image = GhostUITheme.Panel(panel.gameObject, TeachingPanelColor);
             image.raycastTarget = false;
 
             var outline = panel.GetComponent<Outline>();
@@ -999,7 +1167,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(16, 12, 7, 7);
+            layout.padding = new RectOffset(12, 12, 12, 12);
             layout.spacing = 0f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -1038,11 +1206,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = true;
 
-            ConfigureOrCreateLabel(
+            GhostUITheme.Label(
                 row,
                 "Teaching Note Text",
                 TeachingPanelBodyText,
-                15,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.25f, 0.20f, 0.18f),
@@ -1059,15 +1227,13 @@ namespace Ghost.Presentation.Act1IntentClassification
                 strip.SetParent(root, false);
             }
 
-            var image = strip.GetComponent<Image>();
-            if (image == null)
-            {
-                image = strip.gameObject.AddComponent<Image>();
-            }
-
-            image.color = ObjectiveStripColor;
+            var image = GhostUITheme.Panel(strip.gameObject, ObjectiveStripColor);
             image.raycastTarget = false;
             ConfigureLayoutElement(strip.gameObject, 0f, ObjectiveStripHeight, 0f);
+
+            // ConfigureLayoutElement's last argument is flexibleWidth, so height was never pinned and
+            // the strip swallowed all the spare space during setup, before the puzzle body exists.
+            strip.GetComponent<LayoutElement>().flexibleHeight = 0f;
 
             var layout = strip.GetComponent<HorizontalLayoutGroup>();
             if (layout == null)
@@ -1075,20 +1241,20 @@ namespace Ghost.Presentation.Act1IntentClassification
                 layout = strip.gameObject.AddComponent<HorizontalLayoutGroup>();
             }
 
-            layout.padding = new RectOffset(18, 18, 7, 7);
+            layout.padding = new RectOffset(12, 12, 4, 4);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            ConfigureOrCreateLabel(
+            GhostUITheme.Label(
                 strip,
                 "Objective Text",
                 string.Empty,
-                18,
+                GhostUITheme.HeadingSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                Color.white,
+                GhostUITheme.InkOnDark,
                 34f);
             label = strip.Find("Objective Text").GetComponent<Text>();
             return strip;
@@ -1103,13 +1269,7 @@ namespace Ghost.Presentation.Act1IntentClassification
                 panel.SetParent(root, false);
             }
 
-            var image = panel.GetComponent<Image>();
-            if (image == null)
-            {
-                image = panel.gameObject.AddComponent<Image>();
-            }
-
-            image.color = TeachingPanelColor;
+            var image = GhostUITheme.Panel(panel.gameObject, TeachingPanelColor);
             image.raycastTarget = false;
 
             var outline = panel.GetComponent<Outline>();
@@ -1134,20 +1294,20 @@ namespace Ghost.Presentation.Act1IntentClassification
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            ConfigureOrCreateLabel(
+            GhostUITheme.Label(
                 panel,
                 "Onboarding Title",
                 OnboardingTitleText,
-                20,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.28f, 0.18f, 0.08f),
                 26f);
-            ConfigureOrCreateLabel(
+            GhostUITheme.Label(
                 panel,
                 "Onboarding Body",
                 OnboardingBodyText,
-                17,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.UpperLeft,
                 new Color(0.25f, 0.20f, 0.18f),
@@ -1212,19 +1372,14 @@ namespace Ghost.Presentation.Act1IntentClassification
                 text.SetParent(parent, false);
             }
 
-            var label = text.GetComponent<Text>();
-            if (label == null)
-            {
-                label = text.gameObject.AddComponent<Text>();
-            }
-
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = TextAnchor.MiddleLeft;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.color = new Color(0.14f, 0.16f, 0.24f);
+            var label = text.GetComponent<Text>() ?? text.gameObject.AddComponent<Text>();
+            GhostUITheme.Label(
+                label,
+                string.Empty,
+                fontSize,
+                fontStyle,
+                TextAnchor.MiddleLeft,
+                GhostUITheme.Ink);
             label.raycastTarget = false;
             ConfigureLayoutElement(text.gameObject, 0f, preferredHeight, 0f);
             return label;
@@ -1239,28 +1394,15 @@ namespace Ghost.Presentation.Act1IntentClassification
                 root.SetParent(parent, false);
             }
 
-            var image = root.GetComponent<Image>();
-            if (image == null)
-            {
-                image = root.gameObject.AddComponent<Image>();
-            }
-
-            image.color = new Color(0.84f, 0.92f, 1f);
-            image.raycastTarget = true;
+            var button = GhostUITheme.PushButton(
+                root.gameObject,
+                "Next",
+                new Color(0.84f, 0.92f, 1f),
+                GhostUITheme.Ink);
             ConfigureLayoutElement(root.gameObject, 128f, 42f, 0f);
-
-            var button = root.GetComponent<Button>();
-            if (button == null)
-            {
-                button = root.gameObject.AddComponent<Button>();
-            }
-
-            button.targetGraphic = image;
-            label = EnsureButtonText(root, "Next");
-            label.color = new Color(0.12f, 0.18f, 0.30f);
+            label = button.GetComponentInChildren<Text>();
             return button;
         }
-
         private static Button EnsureControlButton(Transform parent, string name, string text, float width)
         {
             var root = parent.Find(name) as RectTransform;
@@ -1270,57 +1412,13 @@ namespace Ghost.Presentation.Act1IntentClassification
                 root.SetParent(parent, false);
             }
 
-            var image = root.GetComponent<Image>();
-            if (image == null)
-            {
-                image = root.gameObject.AddComponent<Image>();
-            }
-
-            image.color = new Color(0.84f, 0.92f, 1f);
-            image.raycastTarget = true;
+            var button = GhostUITheme.PushButton(
+                root.gameObject,
+                text,
+                new Color(0.84f, 0.92f, 1f),
+                GhostUITheme.Ink);
             ConfigureLayoutElement(root.gameObject, width, 42f, 0f);
-
-            var button = root.GetComponent<Button>();
-            if (button == null)
-            {
-                button = root.gameObject.AddComponent<Button>();
-            }
-
-            button.targetGraphic = image;
-            var label = EnsureButtonText(root, text);
-            label.color = new Color(0.12f, 0.18f, 0.30f);
             return button;
-        }
-
-        private static Text EnsureButtonText(Transform parent, string value)
-        {
-            var labelRoot = parent.Find("Button Text") as RectTransform;
-            if (labelRoot == null)
-            {
-                labelRoot = new GameObject("Button Text", typeof(RectTransform)).GetComponent<RectTransform>();
-                labelRoot.SetParent(parent, false);
-            }
-
-            labelRoot.anchorMin = Vector2.zero;
-            labelRoot.anchorMax = Vector2.one;
-            labelRoot.offsetMin = Vector2.zero;
-            labelRoot.offsetMax = Vector2.zero;
-
-            var label = labelRoot.GetComponent<Text>();
-            if (label == null)
-            {
-                label = labelRoot.gameObject.AddComponent<Text>();
-            }
-
-            label.text = value;
-            label.font = GetBuiltinFont();
-            label.fontSize = 13;
-            label.fontStyle = FontStyle.Bold;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-            return label;
         }
 
         private static Text EnsureFeedbackText(Transform parent)
@@ -1333,94 +1431,33 @@ namespace Ghost.Presentation.Act1IntentClassification
             }
 
             ConfigureLayoutElement(root.gameObject, 0f, 58f, 1f);
-            var text = root.GetComponent<Text>();
-            if (text == null)
-            {
-                text = root.gameObject.AddComponent<Text>();
-            }
-
-            text.font = GetBuiltinFont();
-            text.fontSize = 14;
-            text.alignment = TextAnchor.MiddleLeft;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            var text = root.GetComponent<Text>() ?? root.gameObject.AddComponent<Text>();
+            GhostUITheme.Label(
+                text,
+                string.Empty,
+                GhostUITheme.SmallSize,
+                FontStyle.Normal,
+                TextAnchor.MiddleLeft,
+                GhostUITheme.InkSoft);
             text.raycastTarget = false;
             return text;
         }
-
         private static void CreatePlaceholder(Transform parent, string message, float height)
         {
-            var text = new GameObject("Placeholder", typeof(RectTransform)).AddComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.text = message;
-            text.font = GetBuiltinFont();
-            text.fontSize = 13;
-            text.fontStyle = FontStyle.Italic;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = new Color(0.42f, 0.40f, 0.50f);
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            var text = GhostUITheme.Label(
+                "Placeholder",
+                parent,
+                message,
+                GhostUITheme.SmallSize,
+                FontStyle.Italic,
+                TextAnchor.MiddleCenter,
+                GhostUITheme.InkSoft,
+                height);
             text.raycastTarget = false;
-            ConfigureLayoutElement(text.gameObject, 0f, height, 0f);
         }
 
-        private static Text CreateSmallText(Transform parent, string message, int fontSize, FontStyle style, TextAnchor alignment, float height)
-        {
-            var text = new GameObject("Small Text", typeof(RectTransform)).AddComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.text = message;
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = style;
-            text.alignment = alignment;
-            text.color = new Color(0.22f, 0.19f, 0.30f);
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-            ConfigureLayoutElement(text.gameObject, 0f, height, 0f);
-            return text;
-        }
 
-        private static RectTransform CreatePanel(string name, Transform parent, Color color)
-        {
-            var panel = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-            panel.SetParent(parent, false);
-            var image = panel.gameObject.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = true;
-            return panel;
-        }
 
-        private static Text CreateFillText(Transform parent, string value, int fontSize, FontStyle fontStyle, TextAnchor alignment)
-        {
-            var textObject = parent.Find("Text") as RectTransform;
-            if (textObject == null)
-            {
-                textObject = new GameObject("Text", typeof(RectTransform)).GetComponent<RectTransform>();
-                textObject.SetParent(parent, false);
-            }
-
-            textObject.anchorMin = Vector2.zero;
-            textObject.anchorMax = Vector2.one;
-            textObject.offsetMin = new Vector2(6f, 2f);
-            textObject.offsetMax = new Vector2(-6f, -2f);
-
-            var text = textObject.GetComponent<Text>();
-            if (text == null)
-            {
-                text = textObject.gameObject.AddComponent<Text>();
-            }
-
-            text.text = value;
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-            return text;
-        }
 
         private static void ConfigureLayoutElement(GameObject view, float preferredWidth, float preferredHeight, float flexibleWidth)
         {
@@ -1445,78 +1482,7 @@ namespace Ghost.Presentation.Act1IntentClassification
             layoutElement.flexibleWidth = flexibleWidth;
         }
 
-        private static void ConfigureExistingLabel(
-            Transform root,
-            string childName,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            if (root == null)
-            {
-                return;
-            }
 
-            var child = root.Find(childName);
-            if (child == null)
-            {
-                return;
-            }
-
-            var text = child.GetComponent<Text>();
-            if (text != null)
-            {
-                text.text = value;
-                text.font = GetBuiltinFont();
-                text.fontSize = fontSize;
-                text.fontStyle = fontStyle;
-                text.alignment = alignment;
-                text.color = color;
-                text.horizontalOverflow = HorizontalWrapMode.Wrap;
-                text.verticalOverflow = VerticalWrapMode.Truncate;
-                text.raycastTarget = false;
-            }
-
-            ConfigureLayoutElement(child.gameObject, 0f, preferredHeight, 0f);
-        }
-
-        private static void ConfigureOrCreateLabel(
-            Transform root,
-            string childName,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            var child = root.Find(childName) as RectTransform;
-            if (child == null)
-            {
-                child = new GameObject(childName, typeof(RectTransform)).GetComponent<RectTransform>();
-                child.SetParent(root, false);
-            }
-
-            var text = child.GetComponent<Text>();
-            if (text == null)
-            {
-                text = child.gameObject.AddComponent<Text>();
-            }
-
-            text.text = value;
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-            ConfigureLayoutElement(child.gameObject, 0f, preferredHeight, 0f);
-        }
 
         private static void ConfigurePanelSurface(Transform root, Color color, Color outlineColor)
         {
@@ -1525,17 +1491,20 @@ namespace Ghost.Presentation.Act1IntentClassification
                 return;
             }
 
-            var image = root.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = color;
-            }
+            var image = GhostUITheme.Panel(root.gameObject, color);
+            image.raycastTarget = color.a > 0.01f;
 
             var outline = root.GetComponent<Outline>();
             if (outline != null)
             {
                 SetOutline(outline, outlineColor, new Vector2(2f, -2f));
             }
+        }
+
+        private static Text FindChildText(Transform root, string childName)
+        {
+            var child = root.Find(childName);
+            return child == null ? null : child.GetComponent<Text>();
         }
 
         private static void SetChildText(Transform root, string childName, string value)
@@ -1579,11 +1548,11 @@ namespace Ghost.Presentation.Act1IntentClassification
             switch (intentId)
             {
                 case Act1IntentClassificationSampleData.FindItemIntentId:
-                    return "find something";
+                    return "looking for something";
                 case Act1IntentClassificationSampleData.AskLocationIntentId:
-                    return "where is Ghost";
+                    return "asking where Ghost is";
                 case Act1IntentClassificationSampleData.AskIdentityIntentId:
-                    return "who is Ghost";
+                    return "asking who Ghost is";
                 default:
                     return "shared purpose";
             }
@@ -1623,15 +1592,5 @@ namespace Ghost.Presentation.Act1IntentClassification
             eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
 
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

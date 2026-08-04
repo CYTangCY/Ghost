@@ -45,6 +45,11 @@ namespace Ghost.Presentation.Shell
         private static readonly ShellDialogueBeat[] ActBeats =
         {
             new ShellDialogueBeat(
+                GhostNarrativeState.Chapter0Id,
+                DebriefPhaseId,
+                LilySpeakerName,
+                "So... that's Ghost. First we'll work out what a visitor wants, then teach each part of a useful reply. One small repair at a time."),
+            new ShellDialogueBeat(
                 GhostNarrativeState.Act1Id,
                 IntroPhaseId,
                 LilySpeakerName,
@@ -68,12 +73,47 @@ namespace Ghost.Presentation.Shell
                 GhostNarrativeState.Act3Id,
                 IntroPhaseId,
                 LilySpeakerName,
-                "Last piece: Ghost knows what people want and the details, but it blurts things out of order. Could you build it a little conversation map, ask when it's unsure, answer when it knows?"),
+                "Ghost knows what people want and the details, but it blurts things out of order. Could you build a conversation map that asks when it is unsure and answers when it knows?"),
             new ShellDialogueBeat(
                 GhostNarrativeState.Act3Id,
                 DebriefPhaseId,
                 LilySpeakerName,
                 "...It actually held a conversation. We did it, {playerName}."),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act4Id,
+                IntroPhaseId,
+                LilySpeakerName,
+                "Um, {playerName}... Ghost is either answering guesses too bravely or freezing on everyone. Could you tune its confidence dial and give it safe routes?"),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act4Id,
+                DebriefPhaseId,
+                LilySpeakerName,
+                "That felt safer. Ghost answered when it really knew, asked when it did not, and handed the hard case to me. N-nicely done."),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act5Id,
+                IntroPhaseId,
+                LilySpeakerName,
+                "Ghost's reply map looks finished, but rehearsals keep reaching the wrong answers. Could we run every test, compare the mismatches, and repair the wires?"),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act5Id,
+                DebriefPhaseId,
+                LilySpeakerName,
+                "All four rehearsals stayed green after the repairs. Testing the whole map again really did catch what one preview missed. Nicely debugged."),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act6Id,
+                IntroPhaseId,
+                LilySpeakerName,
+                "The route is tested, but Ghost still needs a real fact before it can answer. Build the backend chain: choose the data source, run the matching action, then turn the result into a complete reply."),
+            new ShellDialogueBeat(
+                GhostNarrativeState.Act6Id,
+                DebriefPhaseId,
+                LilySpeakerName,
+                "The backend found the closing time, and the response template turned that raw result into a useful sentence. Ghost can answer with real information now."),
+            new ShellDialogueBeat(
+                GhostNarrativeState.FinalChapterId,
+                IntroPhaseId,
+                LilySpeakerName,
+                "Every lesson repaired one part of Ghost's voice. Now connect the full path, carry one visitor message through it, and see whether Ghost can finally speak clearly."),
             new ShellDialogueBeat(
                 GhostNarrativeState.Act3Id,
                 ClosingPhaseId,
@@ -88,7 +128,7 @@ namespace Ghost.Presentation.Shell
                 case TitleScreenId:
                     return new ShellDialogueLine(
                         LilySpeakerName,
-                        "Um... hi. I'm Lily from the lab. Ghost's messages are getting tangled, so maybe we can help it understand what people mean.");
+                        "Um... hi. I'm Lily from the lab. Something unusual happened during the late shift, and I could use a lab partner.");
                 case NameEntryScreenId:
                     return new ShellDialogueLine(
                         LilySpeakerName,
@@ -96,7 +136,7 @@ namespace Ghost.Presentation.Shell
                 case ActHubScreenId:
                     return new ShellDialogueLine(
                         LilySpeakerName,
-                        "Okay, {playerName}. First Ghost learns what people want, then the details, then how to reply in order. I'll stay nearby if that helps.");
+                        "Chapter 0 tells how we met. Chapters 1 through 6 teach one repair each. The Final Chapter combines them when you're ready, {playerName}.");
                 default:
                     throw new ArgumentException("Unknown shell dialogue screen id.", nameof(screenId));
             }
@@ -116,16 +156,50 @@ namespace Ghost.Presentation.Shell
             throw new ArgumentException("Unknown shell dialogue beat.", nameof(actId));
         }
 
+        public static ShellDialogueLine GetAct6Intro(bool allEarlierActsComplete)
+        {
+            if (allEarlierActsComplete)
+            {
+                return GetBeat(GhostNarrativeState.Act6Id, IntroPhaseId);
+            }
+
+            return new ShellDialogueLine(
+                LilySpeakerName,
+                "A few earlier lessons are not marked complete yet, but this workbench is still open. Here you'll connect a data source, a backend action, and a response template so Ghost can answer with a real fact.");
+        }
+
+        public static ShellDialogueLine GetFinalChapterIntro(bool allTeachingChaptersComplete)
+        {
+            if (allTeachingChaptersComplete)
+            {
+                return GetBeat(GhostNarrativeState.FinalChapterId, IntroPhaseId);
+            }
+
+            return new ShellDialogueLine(
+                LilySpeakerName,
+                "The final workbench is open, though a few teaching chapters are not marked complete. You can try the full voice path now, or revisit any lesson first.");
+        }
+
         public static string GetActTitle(string actId)
         {
             switch (actId)
             {
+                case GhostNarrativeState.Chapter0Id:
+                    return "Chapter 0";
                 case GhostNarrativeState.Act1Id:
-                    return "Act 1";
+                    return "Chapter 1";
                 case GhostNarrativeState.Act2Id:
-                    return "Act 2";
+                    return "Chapter 2";
                 case GhostNarrativeState.Act3Id:
-                    return "Act 3";
+                    return "Chapter 3";
+                case GhostNarrativeState.Act4Id:
+                    return "Chapter 4";
+                case GhostNarrativeState.Act5Id:
+                    return "Chapter 5";
+                case GhostNarrativeState.Act6Id:
+                    return "Chapter 6";
+                case GhostNarrativeState.FinalChapterId:
+                    return "Final Chapter";
                 default:
                     throw new ArgumentException("Unknown act id.", nameof(actId));
             }

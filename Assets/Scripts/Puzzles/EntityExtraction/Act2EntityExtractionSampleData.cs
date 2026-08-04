@@ -34,6 +34,11 @@ namespace Ghost.Puzzles.EntityExtraction
             var laboratory = "Ghost heard humming in the laboratory.";
             var lantern = "Ghost tucked the lantern under the desk.";
 
+            // Harder cases. Each one targets a specific way entity extraction goes wrong.
+            var lanternRoom = "Ghost hummed in the lantern-room at 8am.";
+            var carryToLibrary = "Ghost carried the lantern to the library at 6pm.";
+            var tuneDecoy = "Ghost hummed the Lonely Corridor tune at 7pm.";
+
             return new[]
             {
                 new SampleMessage(
@@ -57,6 +62,38 @@ namespace Ghost.Puzzles.EntityExtraction
                     new[]
                     {
                         CreateSpan(lantern, "lantern", objectType)
+                    }),
+
+                // Same word, different entity: "lantern" was an object above; here it names the room.
+                new SampleMessage(
+                    "lantern-room-context",
+                    lanternRoom,
+                    new[]
+                    {
+                        CreateSpan(lanternRoom, "lantern-room", roomType),
+                        CreateSpan(lanternRoom, "8am", timeType)
+                    }),
+
+                // All three slots at once, with "lantern" back to being an object right after the
+                // message above used "lantern-room" as a place.
+                new SampleMessage(
+                    "carry-to-library",
+                    carryToLibrary,
+                    new[]
+                    {
+                        CreateSpan(carryToLibrary, "lantern", objectType),
+                        CreateSpan(carryToLibrary, "library", roomType),
+                        CreateSpan(carryToLibrary, "6pm", timeType)
+                    }),
+
+                // Decoy: "Lonely Corridor" reads like a room but is the name of a tune, so the time is
+                // the only entity here.
+                new SampleMessage(
+                    "tune-decoy",
+                    tuneDecoy,
+                    new[]
+                    {
+                        CreateSpan(tuneDecoy, "7pm", timeType)
                     })
             };
         }

@@ -31,11 +31,11 @@ namespace Ghost.Puzzles.IntentClassification
                 },
                 {
                     Act1IntentClassificationSampleData.AskLocationIntentId,
-                    "Ghost: I am floating near the lab shelves."
+                    "Ghost: I am drifting by the second-floor noticeboard."
                 },
                 {
                     Act1IntentClassificationSampleData.AskIdentityIntentId,
-                    "Ghost: I am Ghost, the little lab haunt."
+                    "Ghost: I am Ghost. I mostly haunt the stairwell."
                 }
             };
         }
@@ -46,7 +46,7 @@ namespace Ghost.Puzzles.IntentClassification
             {
                 new TestMessage(
                     "find-flask",
-                    "Visitor: I can't find my flask anywhere.",
+                    "Visitor: I cannot find my bike lights anywhere.",
                     Act1IntentClassificationSampleData.FindItemIntentId,
                     new[]
                     {
@@ -56,7 +56,7 @@ namespace Ghost.Puzzles.IntentClassification
                     }),
                 new TestMessage(
                     "find-badge",
-                    "Visitor: My lab badge vanished again.",
+                    "Visitor: My door card has vanished again.",
                     Act1IntentClassificationSampleData.FindItemIntentId,
                     new[]
                     {

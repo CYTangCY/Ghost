@@ -1,0 +1,307 @@
+Ghost Chatbot: A Multi-Game-Type Narrative
+Approach to Teaching IBM SkillsBuild
+Chatbot/NLP Concepts
+Preliminary Project Report
+7CCSMPRJ Individual Project
+Chao-Yang Tang
+Department of Informatics
+King’s College London
+April 2026
+
+1 Introduction
+1.1 Background and Motivation
+The rapid adoption of conversational AI across enterprise, healthcare, and public services has generated
+significant demand for practitioners who understand the principles of chatbot design. IBM SkillsBuild’s
+courseBuild Your First Chatbot Using IBM watsonxprovides a structured vocational curriculum covering
+Intent classification, Entity extraction, Dialog Node configuration, Confidence scoring, Fallback design, and
+system integration. However, substantial parts of the delivery format remain passive: video lectures, static
+text, and predefined multiple-choice assessments. Research on multimedia learning suggests that such formats
+produce shallow rather than transferable understanding in technical domains, particularly for learners without
+prior programming experience [9].
+Game-based learning (GBL) has been proposed as a theoretically grounded alternative for complex, skill-
+based domains [13]. Educational games are designed to situate abstract concepts within meaningful problem
+contexts, require learners to apply knowledge through consequential decisions, and provide immediate
+low-stakes feedback. Despite this evidence base, the intersection of GBL and vocational chatbot design
+literacy has received limited attention in the published literature.
+This project responds to that gap by designingGhost Chatbot, a narrative puzzle game in which the IBM
+SkillsBuild chatbot curriculum is covered across 24 specified levels using a variety of puzzle mechanic types,
+each intrinsically tied to the challenge structure of its target NLP concept. A playable prototype covering
+one representative level per Act will be implemented for evaluation purposes. The player trains an AI entity,
+Ghost, which is trapped in a smart home system, and guides its communicative ability from system menus
+and emoji to natural human speech in direct correspondence with the NLP concepts operationalised in each
+Act. A postdoctoral researcher character, Lily, powered by a locally hosted large language model (IBM
+Granite via Ollama), will provide tiered scaffolded dialogue in prototype contexts.
+1.2 Problem Statement
+Three interrelated problems motivate this work.
+Problem 1: Substantial parts of the IBM SkillsBuild chatbot curriculum are delivered through
+passive instruction.Concepts such as Intent, Entity, Dialog Node, and Confidence Score are often presented
+through video demonstrations and predefined questions rather than through design decisions with observable
+consequences. The design-reasoning competencies required for vocational chatbot literacy are not developed
+through this approach [9, 15].
+Problem 2: Published interventions using a multi-game-type approach to operationalise
+vocational chatbot concepts appear to be scarce.While GBL has been applied to programming,
+mathematics, and science, to the best of the author’s knowledge no game-based intervention targeting
+chatbot design concepts as the primary subject of learning has been identified in the literature. In existing
+interventions, structurally distinct puzzle mechanics are not employed for different concept types. Block-based
+environments and platform-guided labs are oriented toward procedural familiarity rather than system-design
+reasoning [12].
+Problem 3: In existing pedagogical agent research, an agent’s communicative capability is not
+coupled mechanically to the player’s completion of concept-specific in-game tasks.Existing
+work examines agent appearance, voice, and expertise style [10, 7]. In this project, Ghost’s expressive range,
+from emoji to natural speech, is coupled to the player’s completion of concept-specific in-game tasks, so that
+Ghost’s changing speech ability makes the game’s concept progression visible to the player.
+1.3 Research Approach
+A design-based research (DBR) paradigm is adopted [1]. The primary research output is the designed artefact,
+Ghost Chatbot, in which three theoretical mechanisms are embodied: game-based learning, narrative-centred
+learning environments (NCLE), and pedagogical agent (PA) theory. Under DBR, the research question is
+directed at the artefact’s internal validity and system-level correctness rather than at learner outcomes.
+The design validity and system behaviour ofGhost Chatbotare evaluated in this study; learning outcomes
+are not. No user study is conducted. This reflects the practical scope of an MSc-level project, in which a
+full empirical evaluation of learning outcomes would require ethical approval, participant recruitment, and
+1
+
+controlled conditions that are not feasible within the project timeline. WhetherGhost Chatbotproduces
+measurable learning gains is identified as a priority direction for future empirical work.
+1.4 Research Question
+To what extent does a multi-game-type narrative game design operationalise selected IBM
+SkillsBuild chatbot/NLP concepts through intrinsically integrated puzzle mechanics within a
+playable prototype?
+This question is answered through three design and system analyses conducted without user participants
+(Table 1).
+Evaluation focus Method Evidence produced
+Curriculum operationalisa-
+tion and intrinsic integra-
+tion
+Curriculum mapping matrix; NCLE-
+inspired design checklist [14]; subset
+consistency check (where feasible)
+IBM concept-to-level matrix;
+intrinsic/partial/extraneous
+integration judgements with
+written justification
+LLM scaffolding behaviour Fixed prompt bank (one per Act,
+three hint tiers; each prompt sub-
+mitted three times); three-dimension
+rubric
+Rubric scores per evaluated
+Act and tier; qualitative fail-
+ure mode categories
+Narrative-pedagogical cou-
+pling
+Document analysis of Game Design
+Document (GDD)
+Concept-to-capability corre-
+spondence table for Acts 0–6;
+preliminary consistency anal-
+ysis
+Table 1: Evaluation foci, methods, and evidence.
+1.5 Technical Specifications
+•Game client:Unity 6 (C#), WebGL build target for local browser-based demonstration; single-player
+• Puzzle mechanics:Eight structurally distinct interaction types: drag-and-drop classification, span an-
+notation, node assembly, slider calibration, flow diagram construction, multiple choice, form configuration,
+and ordered list
+• Prototype scope:A 24-level curriculum is fully specified in the GDD; a playable prototype implementing
+one complete level per Act (8 levels) will be developed for evaluation
+• AI tutor:IBM Granite via Ollama, accessed through a local Node.js proxy during prototype evaluation;
+constrained by a curriculum-specific system prompt
+•Backend:Node.js with TypeScript; REST API used for progress synchronisation and attempt logging
+•Database:SQLite for prototype development and local evaluation
+• Progress profile:A local pseudonymous profile will be used to associate prototype progress and attempt
+logs with a test session
+•Analytics:Puzzle attempt logs and hint triggers will be recorded for internal prototype validation
+1.6 Contributions
+Design contribution:The intended design contribution is a fully specified 24-level curriculum-to-game
+design and an 8-level playable prototype, in which each puzzle mechanic will be intrinsically integrated with
+a specific chatbot design concept.
+Conceptual contribution:A character-as-system coupling mechanism is proposed, in which a pedagogical
+agent’s communicative capability evolves in direct mechanical correspondence with the player’s completion
+of concept-specific in-game tasks, extending prior pedagogical agent research [10, 7].
+Methodological contribution:The intended methodological contribution is a structured approach for
+evaluating design-based learning systems through curriculum mapping, system testing, and design analysis
+prior to empirical evaluation.
+2
+
+Scope boundary:This project is scoped to the IBM SkillsBuild chatbot/NLP curriculum. Whether the
+multi-game-type framework generalises to other IBM vocational curricula is identified as a direction for
+future work, as different curricula may require structurally different mechanic types.
+2 Background and Literature Review
+2.1 Game-Based Learning and Intrinsic Integration
+Game-based learning has been proposed as an approach in which abstract knowledge is situated within
+goal-directed tasks with observable consequences [13]. Mayer (2019) reviews evidence on computer games in
+education and argues that claims about educational games should be tested through rigorous research and
+grounded in evidence-based theories of learning. For this project, the key design implication is that game
+mechanics should embody the target knowledge rather than merely decorate instructional content. InGhost
+Chatbot, each puzzle mechanic is designed such that solving the puzzle constitutes the act of demonstrating
+understanding of the target concept. Sweller’s (1988) cognitive load theory is also relevant here: intrinsic
+cognitive load may exceed working memory capacity in complex technical domains, and this risk is addressed
+through progressive complexity, with one new conceptual component introduced per Act.
+2.2 Narrative-Centred Learning Environments
+A narrative-centred learning framework is proposed by Lester et al. (2014), in which story provides the
+semantic context within which new concepts acquire meaning. Rowe et al. (2011) examine narrative-centred
+learning environments as systems that integrate learning, problem solving, and engagement. In this project,
+this perspective is operationalised through evaluation criteria covering narrative-driven goals, responsive
+characters, problem-solving episodes embedded in the story world, and assessment that is presented as
+natural game feedback. Narrative integration is applied throughoutGhost Chatbotsuch that educational
+concepts function as plot mechanisms: Ghost is unable to communicate beyond system menus in Act 0
+because Intent classification has not been trained, and contextual memory is not retained in early Act 3
+because Context Variables have not been implemented.
+2.3 Pedagogical Agents and Character-as-System Coupling
+Moreno et al. (2001) reported evidence that pedagogical agent-mediated instruction can produce deeper
+learning than equivalent text-only instruction through social agency effects. Kim and Baylor (2006) distinguish
+companion-style agents from expert tutors, noting that companion agents may support motivation and
+self-efficacy under certain conditions. InGhost Chatbot, Lily is designed as a companion character who does
+not disclose puzzle solutions. Ghost represents an extension of existing agent research: rather than exhibiting
+a fixed personality, Ghost’s communicative capability evolves in direct mechanical correspondence with the
+NLP concepts operationalised by the player’s in-game task progression. This character-as-system coupling
+design has received limited explicit treatment in the published literature.
+2.4 Chatbot Education and the Design Literacy Gap
+Winkler and Söllner (2018) survey chatbot applications in education and identify common usage patterns
+such as FAQ systems and content delivery agents, but their focus is on chatbots as educational tools rather
+than chatbot design and training as the learning subject. Pérez et al. (2020), reviewing 80 studies, confirm
+the dominance of chatbots as delivery tools and identify the teaching of chatbot design concepts as an area
+with limited prior investigation. Graesser et al. (2001) identify conversational dialogue as a core mechanism
+in intelligent tutoring systems, where tutors present problems and questions and support learners through
+multi-turn dialogue, which informs the design of Lily’s LLM interaction model. The reviewed approaches
+share one limitation relevant to this project: chatbot design decisions are rarely turned into playable actions
+with visible, narratively consequential outcomes.
+2.5 Large Language Models as Educational Scaffolding
+Kasneci et al. (2023) outline opportunities and risks of large language models in education, including
+personalised feedback and hallucination. Huber et al. (2024) argue that GBL can mitigate LLM over-reliance
+risk, as games require active decision-making that conversational LLMs cannot enforce; this argument
+supports the design choice to constrain Lily from providing direct puzzle solutions. Goslen et al. (2025)
+provide empirical support for LLM-based student plan generation intended to support adaptive scaffolding in
+the Crystal Island game-based learning environment, within a related narrative-centred game-based learning
+3
+
+tradition. Gong et al. (2026) demonstrate learning gains and reduced cognitive load under LLM scaffolding
+in a game-based AI literacy setting. As Nye et al. (2023) note, prompt constraints play an important role
+in shaping tutor-appropriate LLM behaviour; accordingly, Lily’s system prompt is curriculum-specific and
+prohibits answer disclosure.
+2.6 Theoretical Integration
+These three mechanisms, GBL, NCLE, and pedagogical agent design, are treated as interdependent in this
+project. Narrative provides the motivation that sustains engagement with the puzzles; the puzzles provide the
+design decisions that give Ghost’s growth its semantic meaning; and Ghost’s growth provides the feedback
+that makes narrative investment educationally productive. The design therefore depends on the interaction
+between mechanics, narrative, and agents, rather than on any one element in isolation. The three evaluations
+are designed to assess whether each mechanism has been correctly operationalised within the integrated
+design.
+3 Proposed System and Evaluation Methodology
+3.1 System Overview
+Ghost Chatbotis designed as a single-player narrative puzzle game in which the IBM SkillsBuild chatbot
+curriculum is operationalised through structurally distinct puzzle mechanics across 24 levels. A design-based
+research methodology is adopted [1]: requirements for the system are derived from the theoretical literature
+and the IBM SkillsBuild course content, and evaluation is directed at whether those requirements are satisfied
+in the artefact. The final report will present a requirements traceability matrix linking literature-derived
+design principles, IBM course concepts, implemented mechanics, and evaluation evidence.
+A playable prototype covering one complete level per Act (8 levels) will be implemented for evaluation. The
+full 24-level design is specified in the Game Design Document (GDD). The Acts and their corresponding
+NLP topics are as follows:
+•Act 0:Chatbot fundamentals (definitions, rule-based vs. AI-enabled, five components, four challenges)
+•Act 1:Intent (classification, training examples)
+•Act 2:Entity (extraction, synonyms, system vs. custom entities)
+• Act * (supplementary):NLP pipeline, tokenisation, POS tagging, named entity recognition, sentiment
+analysis; implemented in the prototype but excluded from the primary Evaluation 2 and Evaluation 3
+scope
+•Act 3:Dialog (nodes, branching, slots, response types, context variables)
+•Act 4:Confidence and fallback (scoring, threshold calibration, disambiguation)
+•Act 5:Testing and debugging
+• Act 6:Integration and deployment (represented as a deployment design puzzle, not a production chatbot
+deployment)
+3.2 Evaluation Design
+The research question is answered through three complementary analyses as summarised in Table 1. No user
+study is conducted and no participant recruitment is required.
+The curriculum mapping matrix (Evaluation 1) is constructed by mapping each IBM SkillsBuild learning
+objective to the corresponding level in the full 24-level GDD, and assessing whether the puzzle mechanic
+requires the player to apply the concept (intrinsic) or merely observe it (extraneous), following the criterion
+established by Mayer (2019). Implementation evidence from the 8-level prototype is then used to confirm
+whether the representative levels realise the mapped mechanics in practice. The LLM prompt bank (Evaluation
+2) consists of one test prompt per Act across three hint tiers, producing 21 test cases in total (Acts 0–6;
+Act * is excluded from the primary evaluation scope as an optional supplementary Act). Each test case will
+be submitted three times to account for output variability, resulting in 63 LLM responses for rubric scoring
+across curriculum relevance, scaffolding tier adherence, and factual accuracy. For Evaluation 3, a preliminary
+analysis has been conducted against the current GDD. The final report will present the full correspondence
+4
+
+table and identify strong, partial, or weak mappings across the 21 Act 0–6 correspondences.
+3.3 LLM Scaffolding Architecture
+Lily’s responses are generated by IBM Granite via Ollama, a locally hosted large language model. The model
+is constrained by a curriculum-specific system prompt that restricts responses to the current Act’s concept
+scope and prohibits direct disclosure of puzzle solutions. A hint tier system governs response depth: at tiers
+1 and 2, Socratic prompting is used; at tier 3 and above, direct explanation is permitted. These constraints
+form the basis of Evaluation 2.
+4 Project Schedule
+The project is planned across seven phases between April 2026 and August 2026, as summarised in Table 2.
+Work package Apr May Jun Jul Aug
+Preliminary report X
+Unity core infrastructure X
+Prototype level implementation X X X
+Backend and LLM integration X X
+Evaluation X X
+Final report writing X X X
+Final build and submission X
+Table 2: High-level project timeline (April–August 2026).
+Phase 1: Preliminary report(by 30 April 2026)
+Phase 2: Unity core infrastructure(May 2026) — Core UI components will be developed (DropZone,
+DialogueBox, ChoiceButton, SliderPuzzle, FormPanel, OrderableList), the Ghost system and HintSystem
+will be implemented, and scene management will be set up. DraggableNode is already complete.
+Phase 3: Prototype level implementation(May to July 2026) — One complete level will be implemented
+per Act (8 levels in total). Priority will be given to Acts 0, 1, and 2, as these introduce the most commonly
+reused mechanic types. Target: 5 July 2026.
+Phase 4: Backend and LLM integration(June to July 2026) — A Node.js and SQLite backend will be
+set up with REST API endpoints. IBM Granite via Ollama will be integrated and the Lily system prompt
+will be configured. Unity will be connected to the backend via ApiClient. Target: 19 July 2026.
+Phase 5: Evaluation(July to early August 2026) — Evaluation 1 (curriculum mapping) will be conducted
+against the full GDD. Evaluation 2 (LLM prompt bank) will be conducted after backend integration. A
+preliminary version of Evaluation 3 has already been completed. Target: 2 August 2026.
+Phase 6: Final report writing(June to August 2026) — Chapters 1 to 3 are substantially drafted.
+Chapters 4 to 6 will be written after evaluation is complete. Target: 9 August 2026.
+Phase 7: Final build and submission(by 16 August 2026) — A WebGL build will be produced, the
+code repository will be prepared, and the final report will be submitted via KEATS.
+Prototype scope:The target prototype covers one level per Act (8 levels). The guaranteed minimum
+covers five structurally distinct mechanics: drag-and-drop classification, slider calibration, node assembly,
+span annotation, and multiple choice. If LLM integration is delayed, static hints are used as a gameplay
+fallback, and the LLM scaffolding evaluation is reported as a limitation or deferred component.
+References
+[1] Brown, A. L. (1992). Design experiments: Theoretical and methodological challenges in creating complex
+interventions in classroom settings.Journal of the Learning Sciences,2(2), 141–178.
+[2] Gong, Y., Wang, M., He, L., Xu, C., & Yu, Y. (2026). Asking, playing, learning: Investigating large
+language model-based scaffolding in digital game-based learning for elementary artificial intelligence
+education.Journal of Educational Computing Research,64(2), 311–343.
+[3] Goslen, A., Kim, Y. J., Rowe, J., & Lester, J. (2025). LLM-based student plan generation for adaptive
+5
+
+scaffolding in game-based learning environments.International Journal of Artificial Intelligence in
+Education,35(2), 533–558.
+[4] Graesser, A. C., VanLehn, K., Rosé, C. P., Jordan, P. W., & Harter, D. (2001). Intelligent tutoring
+systems with conversational dialogue.AI Magazine,22(4), 39–51.
+[5] Huber, S. E., Kiili, K., Nebel, S., Ryan, R. M., Sailer, M., & Ninaus, M. (2024). Leveraging the potential
+of large language models in education through playful and game-based learning.Educational Psychology
+Review,36(1), Article 25.
+[6] Kasneci, E., Seßler, K., Küchemann, S., Bannert, M., Dementieva, D., Fischer, F., & Kasneci, G. (2023).
+ChatGPT for good? On opportunities and challenges of large language models for education.Learning
+and Individual Differences,103, 102274.
+[7] Kim, Y., & Baylor, A. L. (2006). A social-cognitive framework for pedagogical agents as learning
+companions.Educational Technology Research and Development,54(6), 569–596.
+[8] Lester, J. C., Spires, H. A., Nietfeld, J. L., Minogue, J., Mott, B. W., & Lobene, E. V. (2014). Designing
+game-based learning environments for elementary science education: A narrative-centered learning
+perspective.Information Sciences,264, 4–18.
+[9] Mayer, R. E. (2019). Computer games in education.Annual Review of Psychology,70, 531–549.
+[10] Moreno, R., Mayer, R. E., Spires, H. A., & Lester, J. C. (2001). The case for social agency in computer-
+based teaching: Do students learn more deeply when they interact with animated pedagogical agents?
+Cognition and Instruction,19(2), 177–213.
+[11] Nye, B., Mee, D., & Core, M. G. (2023). Generative large language models for dialog-based tutoring:
+An early consideration of opportunities and concerns. InProceedings of the AIED 2023 Workshop:
+Empowering Education with LLMs(CEUR Workshop Proceedings, Vol. 3487, pp. 78–88).
+[12] Pérez, J. Q., Daradoumis, T., & Puig, J. M. M. (2020). Rediscovering the use of chatbots in education:
+A systematic literature review.Computer Applications in Engineering Education,28(6), 1549–1565.
+[13] Plass, J. L., Homer, B. D., & Kinzer, C. K. (2015). Foundations of game-based learning.Educational
+Psychologist,50(4), 258–283.
+[14] Rowe, J. P., Shores, L. R., Mott, B. W., & Lester, J. C. (2011). Integrating learning, problem solving, and
+engagement in narrative-centered learning environments.International Journal of Artificial Intelligence
+in Education,21(1–2), 115–133.
+[15] Sweller, J. (1988). Cognitive load during problem solving: Effects on learning.Cognitive Science,12(2),
+257–285.
+[16] Winkler, R., & Söllner, M. (2018). Unleashing the potential of chatbots in education: A state-of-the-
+art analysis. InAcademy of Management Annual Meeting Proceedings(Article 15903). Academy of
+Management.
+6

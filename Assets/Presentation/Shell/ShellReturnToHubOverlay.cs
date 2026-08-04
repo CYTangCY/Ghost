@@ -1,3 +1,5 @@
+using Ghost.Presentation.Common;
+using Ghost.Presentation.Act6VoicePipeline;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -10,6 +12,7 @@ namespace Ghost.Presentation.Shell
     {
         private const string OverlayCanvasName = "Shell Return To Hub Overlay Canvas";
         private const string OverlayButtonName = "Shell Return To Hub Overlay";
+        private const string CheatButtonName = "Shell Test Pass Button";
         private const int OverlaySortingOrder = 32767;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -32,21 +35,64 @@ namespace Ghost.Presentation.Shell
                 return;
             }
 
-            if (GameObject.Find(OverlayButtonName) != null)
-            {
-                return;
-            }
-
             EnsureEventSystem();
             var canvas = CreateOverlayCanvas();
-            CreateReturnButton(canvas.transform);
+            if (GameObject.Find(OverlayButtonName) == null)
+            {
+                CreateReturnButton(canvas.transform);
+            }
+
+            if (GameObject.Find(CheatButtonName) == null)
+            {
+                CreateCheatButton(canvas.transform, scene.name);
+            }
         }
 
         private static bool ShouldShowOverlay(string sceneName)
         {
-            return sceneName == ShellSceneNames.Act1SceneName ||
+            return sceneName == ShellSceneNames.Chapter0SceneName ||
+                sceneName == ShellSceneNames.Act1SceneName ||
                 sceneName == ShellSceneNames.Act2SceneName ||
-                sceneName == ShellSceneNames.Act3SceneName;
+                sceneName == ShellSceneNames.Act3SceneName ||
+                sceneName == ShellSceneNames.Act4SceneName ||
+                sceneName == ShellSceneNames.Act5SceneName ||
+                sceneName == ShellSceneNames.Act6SceneName ||
+                sceneName == ShellSceneNames.FinalChapterSceneName;
+        }
+
+        public static string GetChapterIdForScene(string sceneName)
+        {
+            if (sceneName == ShellSceneNames.Chapter0SceneName)
+            {
+                return GhostNarrativeState.Chapter0Id;
+            }
+            if (sceneName == ShellSceneNames.Act1SceneName)
+            {
+                return GhostNarrativeState.Act1Id;
+            }
+            if (sceneName == ShellSceneNames.Act2SceneName)
+            {
+                return GhostNarrativeState.Act2Id;
+            }
+            if (sceneName == ShellSceneNames.Act3SceneName)
+            {
+                return GhostNarrativeState.Act3Id;
+            }
+            if (sceneName == ShellSceneNames.Act4SceneName)
+            {
+                return GhostNarrativeState.Act4Id;
+            }
+            if (sceneName == ShellSceneNames.Act5SceneName)
+            {
+                return GhostNarrativeState.Act5Id;
+            }
+            if (sceneName == ShellSceneNames.Act6SceneName)
+            {
+                return GhostNarrativeState.Act6Id;
+            }
+            return sceneName == ShellSceneNames.FinalChapterSceneName
+                ? GhostNarrativeState.FinalChapterId
+                : string.Empty;
         }
 
         private static Canvas CreateOverlayCanvas()
@@ -100,82 +146,84 @@ namespace Ghost.Presentation.Shell
             rect.anchoredPosition = new Vector2(-28f, -24f);
             rect.sizeDelta = new Vector2(210f, 48f);
 
-            var image = buttonRoot.AddComponent<Image>();
-            image.color = new Color(0.93f, 0.95f, 1f, 0.96f);
-            image.raycastTarget = true;
-
-            var outline = buttonRoot.AddComponent<Outline>();
-            outline.effectColor = new Color(0.52f, 0.57f, 0.78f, 0.85f);
-            outline.effectDistance = new Vector2(2f, -2f);
-
-            var button = buttonRoot.AddComponent<Button>();
-            button.onClick.AddListener(SetPendingDebriefForActiveScene);
+            var button = GhostUITheme.PushButton(
+                buttonRoot,
+                "Return to Hub",
+                new Color(0.93f, 0.95f, 1f, 0.96f),
+                GhostUITheme.Ink);
+            GhostUITheme.Label(
+                button.GetComponentInChildren<Text>(),
+                "Return to Hub",
+                GhostUITheme.HeadingSize,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                GhostUITheme.Ink);
 
             var navigation = buttonRoot.AddComponent<ShellSceneNavigationButton>();
             navigation.Configure(ShellSceneNames.GameShellSceneName);
-
-            CreateLabel(buttonRoot.transform);
         }
-
-        private static void SetPendingDebriefForActiveScene()
+        private static void CreateCheatButton(Transform parent, string sceneName)
         {
-            var actId = GetActIdForScene(SceneManager.GetActiveScene().name);
-            if (!string.IsNullOrWhiteSpace(actId))
-            {
-                GhostNarrativeState.SetPendingDebriefAct(actId);
-            }
-        }
+            var buttonRoot = new GameObject(CheatButtonName, typeof(RectTransform));
+            buttonRoot.transform.SetParent(parent, false);
 
-        private static string GetActIdForScene(string sceneName)
-        {
-            if (sceneName == ShellSceneNames.Act1SceneName)
-            {
-                return GhostNarrativeState.Act1Id;
-            }
-
-            if (sceneName == ShellSceneNames.Act2SceneName)
-            {
-                return GhostNarrativeState.Act2Id;
-            }
-
-            if (sceneName == ShellSceneNames.Act3SceneName)
-            {
-                return GhostNarrativeState.Act3Id;
-            }
-
-            return null;
-        }
-
-        private static void CreateLabel(Transform parent)
-        {
-            var labelObject = new GameObject("Return Label", typeof(RectTransform));
-            labelObject.transform.SetParent(parent, false);
-
-            var rect = labelObject.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
+            // Top right, tucked under Return to Hub and over the right end of the objective strip.
+            // It used to sit in the bottom-left corner, where every chapter puts its palette column -
+            // this overlay canvas draws above everything, so it was swallowing clicks meant for the
+            // palette. The strip is a label, so covering its empty end costs the player nothing.
+            var rect = buttonRoot.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.one;
             rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            rect.pivot = Vector2.one;
+            rect.anchoredPosition = new Vector2(-28f, -80f);
+            rect.sizeDelta = new Vector2(104f, 26f);
 
-            var text = labelObject.AddComponent<Text>();
-            text.text = "Return to Hub";
-            text.font = GetBuiltinFont();
-            text.fontSize = 18;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = new Color(0.12f, 0.16f, 0.28f);
-            text.raycastTarget = false;
+            var button = GhostUITheme.PushButton(
+                buttonRoot,
+                "TEST PASS",
+                new Color(0.22f, 0.20f, 0.28f, 0.88f),
+                new Color(1f, 0.86f, 0.55f));
+            GhostUITheme.Label(
+                button.GetComponentInChildren<Text>(),
+                "TEST PASS",
+                GhostUITheme.TinySize,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                new Color(1f, 0.86f, 0.55f));
+            button.onClick.AddListener(
+                () => CompleteChapterAndReturn(sceneName));
         }
-
-        private static Font GetBuiltinFont()
+        private static void CompleteChapterAndReturn(string sceneName)
         {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
+            var chapterId = GetChapterIdForScene(sceneName);
+            if (string.IsNullOrWhiteSpace(chapterId))
             {
-                return font;
+                return;
             }
 
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
+            if (chapterId == GhostNarrativeState.FinalChapterId)
+            {
+                var presenter =
+                    Object.FindFirstObjectByType<FinalChapterConversationPresenter>();
+                if (presenter == null)
+                {
+                    Debug.LogWarning("TEST PASS could not find the Final Chapter presenter.");
+                    return;
+                }
+
+                var overlayCanvas = GameObject.Find(OverlayCanvasName);
+                if (overlayCanvas != null)
+                {
+                    overlayCanvas.SetActive(false);
+                }
+                presenter.StartEndingForTesting();
+                return;
+            }
+
+            GhostNarrativeState.MarkActCompleted(chapterId);
+            GhostNarrativeState.RequestResumeAtHub();
+            SceneManager.LoadScene(ShellSceneNames.GameShellSceneName);
         }
+
     }
 }

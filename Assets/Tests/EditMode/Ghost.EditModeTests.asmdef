@@ -2,7 +2,8 @@
     "name": "Ghost.EditModeTests",
     "rootNamespace": "Ghost.Tests.EditMode",
     "references": [
-        "Ghost.Runtime"
+        "Ghost.Runtime",
+        "Ghost.Presentation"
     ],
     "includePlatforms": [
         "Editor"

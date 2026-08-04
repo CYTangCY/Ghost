@@ -1952,3 +1952,578 @@ runtime.
 No new Inspector setup is required. Use the existing Act 1 and Act 3 scene presenter wiring. The new
 onboarding panels, objective strips, Act 3 Ghost face, and action-button states are created at runtime;
 the existing scene-load hooks create floating banter/chat affordances.
+
+---
+
+## M0-T47 Run 001: Act 4 Confidence and Fallback
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project and wait for script compilation.
+2. Confirm these new Act 4 scripts import without Console compile errors:
+   - `Assets/Scripts/Puzzles/ConfidenceFallback/Act4ConfidenceModels.cs`
+   - `Assets/Scripts/Puzzles/ConfidenceFallback/Act4ConfidenceDemoData.cs`
+   - `Assets/Scripts/Puzzles/ConfidenceFallback/Act4ConfidenceValidator.cs`
+   - `Assets/Presentation/Act4ConfidenceFallback/Act4ConfidenceInteractionController.cs`
+   - `Assets/Presentation/Act4ConfidenceFallback/Act4ConfidenceStaticPresenter.cs`
+   - `Assets/Presentation/Act4ConfidenceFallback/Editor/Act4ConfidencePrototypeSceneBuilder.cs`
+3. Confirm the updated Shell scripts import without errors and still load Acts 1-3.
+
+### EditMode Test Check
+
+1. Open `Window > General > Test Runner`.
+2. Run the full EditMode suite.
+3. Confirm `Act4ConfidenceValidatorTests` passes:
+   - reference threshold plus fallback/handoff passes
+   - threshold outside the authored range fails
+   - missing fallback/handoff fails
+   - very low and very high thresholds create the intended wrong outcomes
+4. Expected automated result from Codex run: 60/60 EditMode tests passed, including 5/5 Act 4 tests.
+
+### Scene / Build Settings Check
+
+1. Select `Ghost > Build Act 4 Confidence and Fallback Scene` if the scene needs refreshing.
+2. Confirm `Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` exists.
+3. Select `Ghost > Build Game Shell Scene` if the hub needs refreshing.
+4. Open Unity Build Settings / Build Profiles.
+5. Confirm `Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` is enabled in Build Settings.
+6. Confirm no ProjectSettings changes were made except the approved Act 4 Build Settings scene entry.
+
+### Shell Hub Check
+
+1. Open `Assets/Scenes/GameShellPrototype.unity`.
+2. Enter Play Mode.
+3. Click `Start / Continue` and reach the Act Hub.
+4. Confirm the hub shows `Act 4: Confidence` with a `Start Act 4` button.
+5. Click `Start Act 4`.
+6. Confirm Lily plays the Act 4 intro beat, then the continue button loads `Act4ConfidenceFallbackPrototype`.
+7. Confirm the runtime `Return to Hub` overlay appears in Act 4.
+
+### Act 4 Play Mode Check
+
+1. Open `Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` directly or enter Act 4 from the Shell.
+2. Set the Game view to 1920x1080 and enter Play Mode.
+3. Confirm the page order is header, objective strip, Lily onboarding, Ghost conversation panel, then puzzle body after onboarding.
+4. Confirm the first screen says the goal is to stop Ghost bluffing, defines confidence score, explains the answer threshold, and names both safe routes.
+5. Confirm the conversation example explicitly shows that a vague 62% guess passes the starting 30% threshold.
+6. Click `Show me the controls` and confirm the controls unlock with threshold 30%, fallback missing, and handoff missing.
+7. Confirm `Reply Safety Map` shows the `score >= threshold` answer rule and a three-step `Your task` guide.
+8. Confirm the visitor queue explains what its percentages mean and each ordinary row labels the value as confidence.
+9. Drag the confidence slider and confirm the live sentence reads `Answer only when confidence is N% or higher` from 0 to 100.
+10. Confirm the slider labels explain the low-threshold bluffing risk and high-threshold rejection risk without overlapping other controls.
+11. Attach and detach `Fallback`; confirm its route card explains that it handles scores below the threshold.
+12. Attach and detach `Handoff`; confirm its route card explains that it handles upset / complex requests.
+13. With threshold very low, fallback attached, and handoff attached, click `Run the day` and step through visitors.
+14. Confirm each ordinary visitor displays its exact comparison, such as `62% >= 30% threshold -> Intent reply`.
+15. Confirm the garbled/ambiguous visitors can produce wrong intent replies and the failed run returns to editable controls with `Try again`.
+16. With threshold very high, fallback attached, and handoff attached, run the day again.
+17. Confirm clear visitors are asked to rephrase and the failed run returns to editable controls.
+18. With threshold around 70 and fallback missing, run the day and confirm uncertain visitors have no safe route.
+19. With threshold around 70 and handoff missing, run the day and confirm the upset/complex archive case displays its special rule and melts down.
+20. Set threshold to 70, attach both fallback and handoff, and run the day.
+21. Confirm clear requests receive intent replies, uncertain/garbled requests ask for rephrasing, and the upset/complex case calls Lily.
+22. Finish the day and confirm the completion state shows `Complete Act`.
+23. Click `Complete Act` and confirm the Shell loads and plays the Act 4 debrief through the pending-debrief path.
+24. Confirm all text fits at 1920x1080 and no Console errors appear throughout the Act 4 run.
+
+### Scope / Determinism Check
+
+1. Confirm correctness comes only from `Act4ConfidenceValidator` and authored demo data.
+2. Confirm the LLM does not score, gate, or decide any Act 4 outcome.
+3. Confirm existing Acts 1-3 validators, sessions, sample data, and demo engines are unchanged.
+4. Confirm Act 4 is a lean first version: one threshold slider, fallback attach, handoff attach, day-run playback, retry, and Shell completion.
+
+### Inspector Setup
+
+No manual Inspector setup is required if scenes are generated through the menu builders. `Act4ConfidencePrototypeSceneBuilder` creates the canvas, EventSystem, root object, and `Act4ConfidenceStaticPresenter`; the presenter creates the onboarding panel, objective strip, Ghost conversation/result panel, visitor queue, threshold slider, route controls, retry, and completion button at runtime. `GameShellSceneBuilder` wires the Act 4 hub button into `GameShellPresenter`.
+## M0-T48 Run 001: Act 5 Testing and Debugging
+
+### Import / Compile Check
+
+1. Open the Ghost Unity project and wait for script compilation and meta generation.
+2. Confirm the new TestingDebugging runtime, Act5TestingDebugging presentation, shared dialog-graph wire host, and Act 5 editor builder compile without Console errors.
+3. Confirm Act 3 still compiles after its input/output port presenter field changes to IDialogGraphWireInteractionHost.
+
+### EditMode Test Check
+
+1. Open Window > General > Test Runner.
+2. Run Ghost.Tests.EditMode.Act5TestSuiteRunnerTests.
+3. Confirm the seeded buggy graph is incorrect with 0/4 authored conversations passing.
+4. Confirm the reference fixed graph is correct with 4/4 passing and no validator errors.
+5. Confirm the room test reports expected answer_object_location versus actual ask_for_room.
+6. Confirm the greeting test reports no response while its start branch is missing.
+7. Run the full EditMode suite and confirm Acts 1-4 remain green.
+8. Expected automated result from Codex run 002: 4/4 focused Act 5 tests and 64/64 full EditMode tests passed.
+
+### Scene / Build Settings Check
+
+1. Select Ghost > Build Act 5 Testing and Debugging Scene.
+2. Confirm Assets/Scenes/Act5TestingDebuggingPrototype.unity exists.
+3. Select Ghost > Build Game Shell Scene.
+4. Open Build Settings / Build Profiles.
+5. Confirm Act5TestingDebuggingPrototype is enabled after the existing Act 4 scene.
+6. Confirm no ProjectSettings changes exist except the approved Act 4/Act 5 scene entries.
+
+### Shell Hub Check
+
+1. Open Assets/Scenes/GameShellPrototype.unity and enter Play Mode.
+2. Reach the Act Hub and confirm an Act 5: Testing card and Start Act 5 button appear.
+3. Click Start Act 5 and confirm Lily's testing/debugging intro appears.
+4. Continue and confirm Act5TestingDebuggingPrototype loads.
+5. Confirm the Return to Hub overlay appears in Act 5.
+
+### Act 5 Play Mode Check
+
+1. Set Game view to 1920x1080 and enter Act 5 Play Mode.
+2. Confirm the first screen explains why a tidy graph still needs testing, what red expected/actual cards mean, how to reconnect a wire, and why every test must be rerun.
+3. Confirm the conversation example shows the lab-hours visitor receiving an ask-for-room reply.
+4. Click Open the test bench.
+5. Confirm the page shows a pre-built graph on the left and four NOT RUN test cards on the right.
+6. Confirm graph nodes and wires do not overlap incoherently, all nine node titles fit, and blue/green/orange port meanings are readable.
+7. Click Run all tests.
+8. Confirm the seeded graph reports 0/4 and all four cards show visitor, expected, actual, and FAIL.
+9. Confirm the Ghost conversation panel focuses the first failed case instead of only showing a generic error count.
+10. Drag the green room-known output to Reply: search in room.
+11. Confirm the prior result cards become yellow/stale and the objective asks for a full rerun.
+12. Click Rerun all tests and confirm the room-known test turns green while remaining faults stay red.
+13. Drag the orange room-missing output to Reply: ask for room.
+14. Drag the Intent: lab hours blue output to Reply: lab closes at 8.
+15. Drag the Start blue output to the left input of Intent: greeting; confirm existing start branches remain connected.
+16. Rerun all tests and confirm 4/4 pass simultaneously.
+17. Confirm Ghost is happy, the objective says Complete, and the primary button becomes Complete Act.
+18. Click Complete Act and confirm the Shell returns and plays the Act 5 debrief.
+19. Confirm no Console errors occur throughout.
+
+### Act 3 Regression Check
+
+1. Open Assets/Scenes/Act3DialogGraphPrototype.unity.
+2. Enter Play Mode and confirm palette placement, node dragging, output-port wire dragging, input-port drops, wire replacement, validation, and completion still behave as before.
+3. This verifies the shared wire-host interface changed only presenter typing, not Act 3 behaviour.
+
+### Scope / Determinism Check
+
+1. Confirm Act 5 calls the existing DialogGraphValidator and DialogGraphSimulator.
+2. Confirm no LLM, backend response, or presentation state decides pass/fail.
+3. Confirm the existing DialogGraph pure logic, sessions, sample data, and tests are unchanged.
+4. Confirm the player repairs a pre-built graph rather than rebuilding Act 3 from an empty canvas.
+
+### Inspector Setup
+
+No manual Inspector setup is required when using the menu builders. Act5TestingPrototypeSceneBuilder creates the canvas, EventSystem, full-screen root, and Act5TestingStaticPresenter. GameShellSceneBuilder creates and serializes the Act 5 hub button into GameShellPresenter. The presenter creates all graph nodes, ports, wires, test cards, Ghost face, and buttons at runtime.
+## M0-T48 Run 003: Act 5 Wire and Usability Repair
+
+### Import / Compile Check
+
+1. Exit the currently running Play Mode and wait for Unity to import Act5TestingStaticPresenterTests.cs and its meta file.
+2. Confirm Act5TestingStaticPresenter.cs, Act5TestingStaticPresenterTests.cs, and the updated Ghost.EditModeTests asmdef compile without Console errors.
+3. Confirm no Act 3 source or presentation behaviour changed in this run.
+
+### EditMode Test Check
+
+1. Run Ghost.Tests.EditMode.Act5TestingStaticPresenterTests.
+2. Confirm DrawLine_UsesCenteredWireLayerCoordinatesWithoutBoardOffset passes.
+3. Run Ghost.Tests.EditMode.Act5TestSuiteRunnerTests and confirm the existing 4/4 focused tests remain green.
+4. Run the full EditMode suite and confirm all tests pass.
+
+### Act 5 Play Mode Check
+
+1. Re-enter Assets/Scenes/Act5TestingDebuggingPrototype.unity at 1920x1080.
+2. Confirm every existing wire begins and ends on a visible socket; no line crosses from outside the board or floats in the lower-left corner.
+3. Open the test bench and confirm Step 1 points to the right-side Run all 4 tests button.
+4. Before the first run, confirm right-side output sockets look muted and dragging is intentionally locked.
+5. Click 1. Run all 4 tests and confirm 0/4 plus red expected-versus-actual cards appear.
+6. Confirm node labels explain LEFT input and RIGHT output, and the colored output sockets become fully saturated.
+7. Drag a colored RIGHT socket to the expected reply's blue LEFT socket; confirm the temporary wire stays attached to the cursor and the committed wire touches both sockets after drop.
+8. Confirm edited results become stale and the graph guide plus button clearly show Step 3: rerun all four tests.
+9. Repair all four routes, rerun, and confirm 4/4 plus Complete Act.
+10. Open Act 3 and confirm its drag/drop wires still behave as before.
+
+### Inspector Setup
+
+No manual Inspector setup is required. The change is runtime presenter geometry and text; the existing generated Act 5 scene remains valid.
+
+
+## M0-T49 Run 001: [SUPERSEDED by Run 003 chapter split - historical record] Chapter 6 Repair Ghost's Voice and Ending
+
+### Import / Compile Check
+
+1. Exit Play Mode, return focus to Unity, and wait for script compilation and meta generation.
+2. Confirm the new VoicePipeline runtime, Act6VoicePipeline presentation, Act 6 editor builder, and Act6PipelineValidatorTests compile without Console errors.
+3. Confirm the updated Shell scripts and GameShell scene builder compile, and Acts 1-5 still load.
+4. Confirm all Chapter 6 C# remains ASCII-only and no existing pure puzzle logic was modified.
+
+### EditMode Test Check
+
+1. Open Window > General > Test Runner.
+2. Run Ghost.Tests.EditMode.Act6PipelineValidatorTests.
+3. Confirm all 6 focused tests pass:
+   - the five canonical stages plus backend side link pass
+   - swapped opening stages fail first at UI input
+   - a partial path identifies response generation as the first missing stage
+   - a correct main path without backend still fails
+   - backend cannot replace a main-path stage
+   - duplicate main components fail deterministically
+4. Run the full EditMode suite and confirm Acts 1-5 remain green.
+5. External Codex verification before Unity import: runtime/presentation/test/editor projects compiled with 0 errors; a standalone validator smoke test reported correct=True, errors=0 and missingBackend=False, firstBroken=backend_integration.
+6. Automated Unity result from M0-T49 verification run 002: 6/6 focused Chapter 6 tests and 71/71 full EditMode tests passed.
+
+### Scene / Build Settings Check
+
+1. Select Ghost > Build Chapter 6 Repair Ghost's Voice Scene.
+2. Confirm Assets/Scenes/Act6VoicePipelinePrototype.unity exists.
+3. Select Ghost > Build Game Shell Scene.
+4. Open Build Settings / Build Profiles.
+5. Confirm Act6VoicePipelinePrototype is enabled after the existing Act 5 scene.
+6. Confirm the only new ProjectSettings change is the approved Chapter 6 Build Settings scene append.
+7. Open the generated scene and confirm it contains one camera, one 1920x1080-scaled canvas, one Input System EventSystem, and an Act6PipelineStaticPresenter root.
+
+### Shell Hub Check
+
+1. Open Assets/Scenes/GameShellPrototype.unity and enter Play Mode.
+2. Reach Chapter Select and confirm six chapter cards fit in a stable 3-by-2 grid.
+3. Confirm Chapter 6 is titled Repair Ghost's Voice and has a Start Chapter 6 button.
+4. With one or more of Acts 1-5 incomplete, start Chapter 6 and confirm Lily gently suggests finishing earlier repairs but still allows Continue.
+5. With Acts 1-5 complete, start Chapter 6 and confirm Lily uses the standard final-repair intro without the incomplete-work suggestion.
+6. Continue and confirm Act6VoicePipelinePrototype loads.
+7. Confirm the Return to Hub overlay recognizes Chapter 6.
+
+### Chapter 6 Onboarding Check
+
+1. Set Game view to 1920x1080 and enter Chapter 6 Play Mode.
+2. Confirm the first screen clearly says the purpose is to reconnect every repair so one visitor message can enter, be understood, choose a route, become a reply, and return.
+3. Confirm Lily explicitly says to drag five main components into slots 1-5.
+4. Confirm Lily explicitly says Backend integration belongs in the separate side socket because it fetches data rather than replacing a main stage.
+5. Confirm the onboarding explains that Run the voice path stops at the first broken job on failure and carries the visitor message end-to-end on success.
+6. Click Open the repair board.
+7. Confirm a persistent Lily note repeats the direction of travel and backend exception.
+8. Confirm Replay Lily returns to onboarding without losing the ability to resume configuration.
+
+### Placement / Failure Check
+
+1. Confirm the shuffled palette contains UI input, NLP engine, Dialogue management, Response generation, UI output, and Backend integration.
+2. Confirm the main board has five numbered stable slots with visible arrows from 1 to 5 and a visually separate backend side socket.
+3. Confirm the palette instruction says cards can be dragged, or clicked and followed by a destination click.
+4. Drag a main component into a numbered slot and confirm it stays placed without moving or resizing the slot.
+5. Click-select another component, then click a numbered slot and confirm the fallback placement works.
+6. Move a placed card to an occupied slot and confirm the two main components swap predictably.
+7. Try putting Backend integration in a numbered slot and confirm the status says it belongs in the separate side data socket.
+8. Try putting a main component in the backend socket and confirm the status says only Backend integration fits there.
+9. Build an incorrect order, attach backend, and click Run the voice path.
+10. Confirm Ghost becomes confused and feedback names the first broken stage's visible consequence.
+11. Build the correct five-stage main path but leave backend unattached; run and confirm feedback says the lab closing time cannot be fetched.
+12. Click Reset and confirm all six components return to the palette and prior validation clears.
+
+### Correct Path / Playback Check
+
+1. Assemble this exact main order: UI input -> NLP engine -> Dialogue management -> Response generation -> UI output.
+2. Attach Backend integration to the separate side socket.
+3. Confirm every correctly placed component reveals its job and authored prior-work line:
+   - NLP engine names the Act 1 intent piles and Act 2 entity slots
+   - Dialogue management names the Act 3 reply map and Act 4 confidence/fallback/handoff
+   - Response generation names the Act 5 tested route
+4. Click Run the voice path.
+5. Confirm configuration locks into playback and the active component is highlighted.
+6. Advance through all six authored beats:
+   - UI input receives Hi Ghost, when does the lab close?
+   - NLP engine identifies lab hours and the lab detail
+   - Dialogue management selects the tested, confidence-safe route
+   - Backend integration fetches 8 PM through the side link
+   - Response generation forms the full reply
+   - UI output returns it to the visitor
+7. Confirm Ghost's first complete answer appears exactly as: The lab closes at 8 PM. I can show you the way.
+8. Confirm no LLM or presentation state decides pass/fail; only Act6PipelineValidator does.
+
+### Ending / Return Check
+
+1. Click Hear Ghost speak.
+2. Confirm the ending overlay fades in and Ghost appears happy, glowing, floating, and gently pulsing.
+3. Confirm Ghost thanks the current GhostNarrativeState.PlayerName.
+4. Confirm Lily's closing line remains proud, slightly hesitant, and in character.
+5. Confirm Ghost and the heading clear before the credits scroll, so text does not overlap.
+6. Confirm credits show GHOST, the game description, credits, the player's name, and a thank-you line.
+7. Let the full sequence finish and confirm Chapter 6 is marked complete and GameShellPrototype returns to the title screen.
+8. Replay Chapter 6, start the ending, click Skip ending immediately, and confirm the same completion/title state is reached.
+9. Confirm the ending uses unscaled time and no Console errors occur.
+
+### 1080p / Regression Check
+
+1. Confirm all onboarding text, palette cards, five slots, arrows, backend socket, feedback, Ghost panel, buttons, and playback text fit at 1920x1080 without overlap or clipping.
+2. Confirm placed/selected/highlighted states do not resize the board.
+3. Confirm the Shell six-card grid fits without nested cards or text overflow.
+4. Run or spot-check Acts 1-5, especially Act 3 and Act 5 drag interactions, and confirm Chapter 6 did not change their puzzle logic or presentation.
+5. Confirm Ambient Banter and Return to Hub overlays do not permanently block Chapter 6 interaction.
+
+### Inspector Setup
+
+No manual Inspector setup is required when using the menu builders. Act6VoicePipelinePrototypeSceneBuilder creates the camera, scaled canvas, EventSystem, root, and Act6PipelineStaticPresenter. The presenter creates all cards, drag/drop views, slots, Ghost panel, playback state, and ending references at runtime. GameShellSceneBuilder creates the two-row chapter grid and serializes the Chapter 6 button into GameShellPresenter.
+
+## M0-T49 Run 003: [SUPERSEDED by Run 005 remediation checklist - historical record] Chapter 0 / Chapter 6 Teaching / Final Chapter Split
+
+This checklist supersedes the Run 001 assumption that the voice-pipeline capstone is Chapter 6.
+
+### Automated Import and Test Result
+
+1. Unity 6000.4.11f1 batchmode compiled the new Story and BackendResponse assemblies without C# errors.
+2. Chapter0StorySceneBuilder, Act6BackendResponseSceneBuilder, Act6VoicePipelinePrototypeSceneBuilder, and GameShellSceneBuilder all completed successfully.
+3. Ghost.Tests.EditMode.Act6BackendResponseValidatorTests passed 6/6.
+4. Ghost.Tests.EditMode.Act6PipelineValidatorTests passed 6/6 as the Final Chapter validator suite.
+5. The complete EditMode suite passed 77/77 with 0 failed and 0 skipped.
+6. Automated Play Mode visual/interaction verification was not run; complete the checks below in the Unity Game view.
+
+### Scene and Build Settings Check
+
+1. Select Ghost > Build Chapter 0 Opening Story Scene.
+2. Select Ghost > Build Chapter 6 Backend Action and Response Scene.
+3. Select Ghost > Build Final Chapter Repair Ghost's Voice Scene.
+4. Select Ghost > Build Game Shell Scene last.
+5. Open Build Settings / Build Profiles.
+6. Confirm enabled scene order is GameShellPrototype, Chapter0OpeningStory, Chapters 1-5, Act6BackendResponsePrototype, then Act6VoicePipelinePrototype.
+7. Confirm SampleScene remains after the Ghost route and no existing scene entry was deleted.
+8. Confirm no Console errors occur.
+
+### Shell Route Check
+
+1. Open Assets/Scenes/GameShellPrototype.unity at 1920x1080 and enter Play Mode.
+2. Start a fresh in-memory session, enter a player name, and confirm Chapter0OpeningStory loads before Chapter Select.
+3. Finish or skip Chapter 0 and confirm the Shell shows Lily's one-time opening debrief, then Chapter Select.
+4. Confirm the page states that Chapter 0 is story, Chapters 1-6 are lessons, and Final Chapter combines the repairs.
+5. Confirm Replay Chapter 0 and Final Chapter are separate story-route buttons.
+6. Confirm six teaching cards remain in a stable 3-by-2 grid.
+7. Confirm Chapter 6 is Backend Reply, not Repair Ghost's Voice.
+8. Confirm Chapter 6 opens Act6BackendResponsePrototype.
+9. Confirm Final Chapter opens Act6VoicePipelinePrototype after Lily's separate capstone intro.
+10. Confirm all buttons fit and remain clickable without overlapping Lily's dialogue frame.
+
+### Chapter 0 Opening Check
+
+1. Open Assets/Scenes/Chapter0OpeningStory.unity and enter Play Mode.
+2. Confirm the header reads Chapter 0: The Late Shift and progress starts at Opening story 1/6.
+3. Confirm the lab backdrop, Lily portrait, and Ghost face are visible in the first frame.
+4. Advance through all six beats and confirm the speaking character receives the stronger frame highlight.
+5. Confirm the entered player name appears in Lily's first line.
+6. Confirm Ghost's text is brief and tangled while Lily explains the story premise without teaching a lesson.
+7. On the last beat, confirm the action label changes to Enter the lab.
+8. Replay and use Skip opening; confirm both paths return to the Shell without score or validator UI.
+9. Confirm no text overlaps the character frames, dialogue action, header, or progress label at 1920x1080.
+
+### Chapter 6 Purpose and Task Check
+
+1. Open Assets/Scenes/Act6BackendResponsePrototype.unity and enter Play Mode.
+2. Confirm the title reads Chapter 6: Backend Action and Response.
+3. Confirm onboarding explains the purpose: Ghost needs a real fact before it can answer When does the lab close?
+4. Confirm Lily explains all three jobs before interaction:
+   - DATA SOURCE stores the needed fact
+   - ACTION fetches the matching fact
+   - RESPONSE turns the raw result into a visitor-facing sentence
+5. Confirm the action to open the workbench is visible and clickable.
+6. Confirm the board has exactly three stable sockets connected left-to-right by arrows.
+7. Confirm the palette has six cards: three lab-hours cards and three object-room distractors.
+8. Confirm the persistent task text says cards may be dragged or click-selected and then placed in a matching socket.
+9. Confirm Ghost's status panel is readable and does not cover the palette or sockets.
+
+### Chapter 6 Interaction and Failure Check
+
+1. Drag a card into its matching role socket and confirm it stays inside the fixed socket.
+2. Click another card, then click its matching socket; confirm the fallback placement works.
+3. Drop an ACTION card on DATA SOURCE and confirm explicit wrong-role feedback appears.
+4. Fill the three sockets with room-directory distractors and run the reply.
+5. Confirm Ghost becomes confused and feedback identifies the first broken role.
+6. Replace only DATA SOURCE with Lab records and rerun; confirm ACTION is now the first broken role.
+7. Replace ACTION with Fetch lab closing time and rerun; confirm RESPONSE is now the first broken role.
+8. Click Reset and confirm every card returns to the palette, playback clears, and socket dimensions do not shift.
+
+### Chapter 6 Correct Playback and Completion Check
+
+1. Build this exact chain: Lab records -> Fetch lab closing time -> Lab-hours response.
+2. Click Run reply and confirm configuration locks into playback.
+3. Advance through all five steps: visitor request, selected data source, backend action, raw closing_time = 8 PM result, and final delivered response.
+4. Confirm the final reply is exactly The lab closes at 8 PM.
+5. Confirm Ghost becomes happy only after the deterministic validator passes.
+6. Complete the chapter and confirm the Shell plays the Chapter 6 backend/response debrief.
+7. Confirm Chapter 6 is marked complete independently from Final Chapter.
+8. Use Return to Hub before completion and confirm it does not mark Final Chapter complete.
+
+### Final Chapter Regression Check
+
+1. Open Assets/Scenes/Act6VoicePipelinePrototype.unity and enter Play Mode.
+2. Confirm the player-facing title reads Final Chapter: Repair Ghost's Voice.
+3. Confirm Chapter 6 is referenced as prior backend/response work inside the capstone.
+4. Complete the existing five-stage path plus backend side link and run all playback beats.
+5. Confirm the ending still plays and Skip ending reaches the same finish path.
+6. Confirm completion uses FinalChapterId, not Act6Id.
+7. Confirm Return to Hub is available but does not mark the Final Chapter complete.
+8. Confirm the final credits and Lily/Ghost text do not overlap at 1920x1080.
+
+### Inspector Setup
+
+No manual Inspector setup is required when scenes are regenerated with the menu builders. For manual inspection only:
+
+1. Chapter0OpeningStory root must contain Chapter0StoryPresenter with Render On Start enabled.
+2. Act6BackendResponsePrototype root must contain Act6BackendStaticPresenter with Render On Start enabled.
+3. Act6VoicePipelinePrototype root must contain Act6PipelineStaticPresenter with Render On Start enabled.
+4. GameShellPresenter must have non-null Chapter 0, Chapters 1-6, Final Chapter, narrative Continue, and Back to Title button references.
+5. ShellReturnToHubOverlay must recognize Chapters 1-6 and Final Chapter; Chapter 0 uses its own Skip/Continue controls.
+## M0-T49 Run 005: [CURRENT END-TO-END CHECKLIST] Chapter Build-Out Remediation
+
+This is the only current end-to-end checklist for the Chapter 0 / Chapters 1-6 / Final Chapter build. Run 001 and Run 003 above remain historical records.
+
+### Import, Builders, and Automated Tests
+
+1. Let Unity finish importing all six `Assets/Resources/Characters/LilyPixel*` / `GhostPixel*` PNGs and compiling.
+2. Run `Ghost > Build Chapter 0 Opening Story Scene`.
+3. Run `Ghost > Build Chapter 6 Backend Action and Response Scene`.
+4. Run `Ghost > Build Final Chapter Repair Ghost's Voice Scene`.
+5. Run `Ghost > Build Game Shell Scene` last.
+6. Run the complete EditMode suite. Confirm the Return overlay source guard, Chapter 6 per-role validation test, and filled-role return test pass.
+7. Confirm no builder changed unrelated ProjectSettings or removed/renamed any `.meta` file.
+
+### Current End-to-End Play Mode Check
+
+1. Set the Game view to 1920x1080 and start `GameShellPrototype` with fresh in-memory progress.
+2. Enter a player name and confirm Chapter 0 opens before the hub.
+3. Confirm Lily is a crisp low-resolution RPG sprite, not smooth or semi-realistic: high blonde ponytail, deep navy-blue blazer, red KCL lanyard, and black leather Oxford shoes. Confirm Ghost uses the same chunky pixel scale, stronger outlined body, large dark eyes, small arms, and wavy tail.
+4. Finish Chapter 0 and confirm its story finish, not a puzzle validator, opens the Shell debrief and hub.
+5. Confirm the hub fits inside the 664px body, including the chapter-intro `Continue to Chapter` button, Back to Title, and Lily dialogue frame; no overlap or hidden content is allowed.
+6. Enter each of Chapters 1-6 one at a time and immediately press `Return to Hub`. Confirm none becomes complete and no success debrief plays.
+7. Complete Chapter 1 through its validated success path and confirm its explicit `Complete Act` button returns to the correct debrief.
+8. Complete all authored Act 2 errands. Confirm the new `Complete Act` button appears only after the final successful validator result, returns to the Act 2 debrief, and marks Chapter 2 complete.
+9. In Chapter 3, drag at least one wire between sockets and confirm temporary and committed lines still land on their ports. Complete only through the validated success path.
+10. In Chapters 4 and 5, confirm success/debrief remains gated by their deterministic validator/test-suite success paths.
+11. In Chapter 6, place cards without running. Confirm every filled socket remains neutral and says `PLACED - run the route to test this responsibility.`
+12. Click a filled Chapter 6 socket once. Confirm exactly one action occurs: the card returns to the palette, no stale selection appears, and the socket becomes empty.
+13. Test drag/drop and palette click-select into an empty socket. Run an incorrect route and confirm per-slot repair states and first-broken-stage feedback appear only after Run.
+14. Repair Chapter 6, run the correct route, advance all playback steps, and complete through its explicit validated completion action.
+15. Enter the Final Chapter and immediately press `Return to Hub`. Confirm Final remains incomplete.
+16. Complete the five-stage voice pipeline plus backend side link. Confirm the ending shows the happy Ghost sprite, then the matching low-resolution Lily sprite during Lily's line, then credits without overlap. No duplicate programmatic eyes or text mouth may appear over Ghost.
+17. Test both full ending and Skip ending. Confirm both mark only `FinalChapterId`, return to Shell, and allow Back to Title.
+
+### Inspector Setup
+
+No manual Inspector wiring is required after running the four builders. Confirm each generated scene has exactly one Camera, Canvas, and EventSystem; presenter `Render On Start` remains enabled; and GameShellPresenter has non-null Chapter 0, Chapters 1-6, Final Chapter, narrative Continue, and Back to Title references.
+
+## M0-T49 Run 022: Guided Final Chapter and Later Ask Lily Check
+
+This section supersedes the Run 018 Final Chapter board and visual checks. The validator and three
+visitor cases are unchanged; only the way the player builds and repairs the path is different.
+
+### Automated checks
+
+1. Run the complete EditMode suite and confirm all 94 tests pass.
+2. Run `Ghost.Tests.EditMode.Act6PipelineStaticPresenterTests` and confirm the board creates six
+   progress controls and two choice buttons, with no `Component Palette`.
+3. Run `Ghost.Tests.EditMode.Act6PipelineValidatorTests` and confirm the six guided candidate pairs
+   and existing deterministic results pass.
+4. Run `Ghost.Tests.EditMode.LaterChapterHintContextTests` and confirm Chapter 4, Chapter 5,
+   Chapter 6, and Final Chapter state summaries are available without internal answer identifiers.
+5. From `Backend/`, run `npm test` and confirm all 10 route tests pass.
+
+### Final Chapter guided board
+
+1. Open `Assets/Scenes/Act6VoicePipelinePrototype.unity` and enter Play Mode.
+2. Open the repair board and confirm it shows step 1 of 6, a short question, and exactly two concrete
+   choices. The old twelve-card palette and six empty sockets must not appear.
+3. Choose an option and confirm the board advances to the next incomplete step.
+4. Use the six progress buttons to revisit and change an earlier choice.
+5. Confirm `Run 3 tests` cannot be used until all six steps have a choice.
+6. Make one shortcut choice, finish the other steps, and run the tests. Confirm expected and actual
+   Ghost replies appear and the board focuses the first broken step.
+7. Change that choice and confirm previous results become stale until the three tests are run again.
+8. Choose the learned method at all six steps, run the tests, and confirm all three pass before final
+   playback begins.
+9. Finish and skip the ending in separate runs; both paths must complete only the Final Chapter.
+10. Check the board at the target Game view size and confirm its short prompt, two choices, progress
+    row, test cards, feedback, and action button remain readable without overlap.
+
+### Ask Lily in later chapters
+
+1. In Chapter 4, set a very high or low threshold, press `Ask Lily`, and confirm chat opens with
+   guidance about the current routing problem.
+2. In Chapter 5, run a failing rehearsal, press `Ask Lily`, and confirm the reply refers to comparing
+   the failed expected and actual result without naming the correct wire.
+3. In Chapter 6, place at least one mismatched component, press `Ask Lily`, and confirm the reply is
+   about the selected backend source, action, or response role.
+4. In the Final Chapter, select a shortcut or run a failing test, press `Ask Lily`, and confirm the
+   reply relates to the focused step or first failed case without stating the correct choice.
+5. Repeat one check with the backend stopped and confirm a static Lily reply appears.
+6. Confirm opening or closing Lily chat does not change puzzle choices, validation, completion, or
+   chapter navigation.
+
+### Inspector setup
+
+No manual Inspector setup is required. The new Final Chapter board and four `Ask Lily` buttons are
+created by the existing runtime presenters.
+
+
+## M0-T49 Run 023: Free-Form Final Chapter and Floating Lily Check
+
+This section supersedes the Run 022 guided Final Chapter checklist.
+
+### Automated checks
+
+1. Run the complete EditMode suite and confirm all 96 tests pass.
+2. Confirm `ConfigureBoardRendersFixedEndpointsShortcutsAndThreeTests` passes.
+3. Confirm `PaletteCardsUseConcisePlayerFacingText` passes.
+4. Confirm `LaterScenesUseTheFloatingPortraitBanterPanel` passes.
+5. Confirm `FinalChapterCardChoiceUpdatesFloatingLilyReaction` passes.
+6. From `Backend/`, run `npm test` and confirm all 10 route tests pass.
+
+### Final Chapter board
+
+1. Open `Assets/Scenes/Act6VoicePipelinePrototype.unity` and enter Play Mode.
+2. Confirm the board shows twelve cards, five main stages, one backend side socket, two fixed
+   endpoints, and three visitor tests.
+3. Confirm every palette card contains a short name and one short job line. No guided two-choice
+   panel or long chapter explanation should appear on a card.
+4. Drag a card to a stage, select another card and click a stage, and swap two occupied stages.
+5. Confirm Lily's floating line changes after each selection or placement but does not mark the
+   position correct.
+6. Place a backend action on the main path and a main skill on the backend socket. Confirm Lily gives
+   a different wrong-role hint for each case.
+7. Reset the board and confirm Lily gives a clean-start hint.
+8. Build a partly wrong route and run all three visitor tests. Confirm different cases can pass or
+   fail and the expected/actual replies remain visible.
+9. Change one card and confirm the old test results become stale.
+10. Build the correct route, rerun all three tests, follow playback, and complete the ending.
+
+### Floating Ask Lily
+
+1. Open Chapters 4, 5, 6, and the Final Chapter in separate Play Mode runs.
+2. Confirm each scene shows the same draggable floating panel style as Chapters 1-3.
+3. Confirm the panel contains a small Lily or Ghost portrait, a short dialogue line, and Ask Lily.
+4. Drag the panel and confirm chapter controls remain usable.
+5. Change the puzzle state, press Ask Lily, and confirm the chat window uses the current chapter
+   state.
+6. Close the chat and confirm the floating dialogue resumes.
+7. Stop the backend and repeat once; confirm the local static Lily reply appears.
+
+### Inspector setup
+
+No manual Inspector wiring is required. The runtime hook creates the panel and portrait.
+
+## M0-T50 Run 002: Canonical WebGL and installer check
+
+This section records the current deployment result from `D:\Code\Ghost` and supersedes the test
+totals in the earlier Final Chapter checklist sections.
+
+### Automated and release checks
+
+1. The complete Unity EditMode suite passed 147 of 147 tests. The XML result is
+   `Build/editmode-results.xml`.
+2. The backend route suite passed 10 of 10 tests, and the TypeScript production build completed.
+3. Unity 6000.4.11f1 built all nine release scenes for WebGL. The new build log contains no
+   missing-script warning.
+4. The staged release passed with a restricted `PATH`. Its launcher verified WebGL, REST, SQLite,
+   packaged Granite discovery, and one model-backed hint.
+5. `GhostSetup.exe` installed into a new directory, passed the same launcher self-test, uninstalled,
+   and left no application directory behind.
+6. A fresh Edge profile loaded the packaged WebGL page. The Unity loading overlay cleared, no
+   browser warning appeared, and the 960 by 600 canvas was present.
+7. `npm audit --omit=dev` reported zero production vulnerabilities in both the source backend and
+   the staged backend.
+
+### Manual check still required
+
+A separate Windows 10/11 x64 computer or virtual machine was not available in this run. Repeat the
+installer test there, record the hardware and first-start time, and play through Chapter 3 before
+describing the package as clean-machine tested. Unity Editor Play Mode was also not rerun in this
+deployment repair; the recorded interaction checks remain in the chapter-specific runs above.

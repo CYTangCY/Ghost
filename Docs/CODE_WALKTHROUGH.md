@@ -919,7 +919,7 @@ None in the scene. The static runtime hook creates a dedicated `Shell Return To 
 
 ### Runtime Role
 
-After scene load, it checks the active scene name. If Act 1, Act 2, or Act 3 is active and no return overlay exists, it creates an EventSystem if needed, then creates a dedicated high-sorting overlay Canvas and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`. Before the button loads the shell, it records the active act in `GhostNarrativeState` so the hub can play the matching debrief.
+After scene load, it checks the active scene name. If a teaching chapter or Final Chapter is active and no return overlay exists, it creates an EventSystem if needed, then creates a dedicated high-sorting overlay Canvas and adds a top-right `Return to Hub` button wired with `ShellSceneNavigationButton`. Run 005 makes this button pure navigation: it never sets pending debrief state or marks a chapter complete.
 
 ### Important Fields
 
@@ -929,10 +929,9 @@ No Inspector fields.
 
 - `RegisterSceneHook()`: registers the scene-loaded callback.
 - `CreateForScene(...)`: creates the overlay only for supported act scenes.
-- `ShouldShowOverlay(...)`: returns true for Act 1, Act 2, and Act 3 scene names.
+- `ShouldShowOverlay(...)`: returns true for Chapters 1-6 and the Final Chapter scene names.
 - `CreateOverlayCanvas(...)`: builds a separate top-layer Canvas so act prototype UI canvases cannot cover the return button.
 - `CreateReturnButton(...)`: builds the placeholder UGUI return button.
-- `SetPendingDebriefForActiveScene()`: maps the current act scene to an act id before returning to the shell.
 
 ### Input
 
@@ -940,7 +939,7 @@ Unity scene-load events and return button clicks.
 
 ### Output
 
-A small `Return to Hub` button in Act 1, Act 2, and Act 3 that marks the pending debrief act and loads `GameShellPrototype`.
+A small `Return to Hub` button in Chapters 1-6 and Final Chapter that loads `GameShellPrototype` without changing completion or debrief state.
 
 ### Failure Cases
 
@@ -1701,8 +1700,9 @@ GhostMood.cs / GhostFaceView.cs
 
 ### Purpose
 
-Defines a shared programmatic Ghost face with `Neutral`, `Happy`, `Confused`, and `Sad` moods. The view
-creates its face from Unity UI objects and a runtime-generated sprite, with no external art assets.
+Defines a shared Ghost avatar with `Neutral`, `Happy`, `Confused`, and `Sad` moods. Run 006 uses
+four authored 96x96 low-resolution RPG sprites first; the earlier Unity-UI face remains only as a
+missing-resource fallback.
 
 ### Attached GameObject
 
@@ -1711,9 +1711,10 @@ conversation/consequence panels. Future acts can reuse it.
 
 ### Runtime Role
 
-`SetMood(GhostMood)` changes the face colour, eyes, mouth, and small confused mark so Ghost visibly
-reacts to intro failures and teaching-demo outcomes. The UI sprite is generated in memory rather than
-loaded from Unity's old `UI/Skin/*.psd` built-in resources, avoiding missing-resource Console warnings.
+`SetMood(GhostMood)` asks `GhostPixelSpriteFactory` for the matching low-resolution sprite, hides
+the old programmatic eye/mouth layers, and keeps point filtering. If a resource is missing, the same
+method restores the former colour/eyes/mouth/mood-mark UI so Ghost remains visible without Console
+resource warnings. Shell and ambient banter use the neutral Ghost sprite when no serialized portrait is assigned.
 
 ### Unity Test
 
@@ -4115,3 +4116,1658 @@ NUnit pass/fail results.
 ### Unity Test
 
 Run the EditMode tests in Unity Test Runner. This script has no Play Mode behaviour.
+
+---
+
+## Act 4 Confidence and Fallback
+
+### Script Name
+
+Act4ConfidenceModels.cs
+
+### Purpose
+
+Defines the pure C# data model for Act 4 confidence routing: visitor messages, player configuration, route outcomes, per-visitor run results, and validation results.
+
+### Attached GameObject
+
+None. This is pure `Ghost.Runtime` logic and should not be attached to a GameObject.
+
+### Runtime Role
+
+Used by the Act 4 validator, demo data, tests, and presentation controller to describe the deterministic day-run state.
+
+### Important Fields
+
+No serialized Unity fields. Key values include threshold, fallback wiring, handoff wiring, confidence scores, expected route outcomes, and visitor outcome lines.
+
+### Important Methods
+
+- `Act4VisitorMessage(...)`: validates visitor ids, message text, and 0-100 confidence scores.
+- `Act4ConfidenceConfiguration(...)`: validates the player threshold and stores fallback/handoff wiring.
+- `Act4ConfidenceValidationResult.IsCorrect`: true only when there are no deterministic validation errors.
+
+### Input
+
+Constructor values supplied by authored data or the presentation controller.
+
+### Output
+
+Immutable data objects consumed by `Act4ConfidenceValidator` and the Act 4 UI.
+
+### Failure Cases
+
+Invalid ids, empty visitor text, or out-of-range confidence/threshold values throw exceptions before validation.
+
+### Unity Test
+
+Run `Act4ConfidenceValidatorTests` in EditMode.
+
+---
+
+### Script Name
+
+Act4ConfidenceDemoData.cs
+
+### Purpose
+
+Provides the authored Act 4 visitor queue, starting threshold, and acceptable threshold range. The data includes clear messages, ambiguous messages, a garbled message, and one upset/complex handoff case.
+
+### Attached GameObject
+
+None. This is pure static authored data.
+
+### Runtime Role
+
+The validator tests and Act 4 presentation controller create fresh visitor queues from this class.
+
+### Important Fields
+
+- `AcceptableThresholdMinimum`: 65.
+- `AcceptableThresholdMaximum`: 80.
+- `StartingThreshold`: 30.
+- `CreateVisitorMessages()`: returns the six authored visitor messages and their deterministic expected outcomes.
+
+### Input
+
+None.
+
+### Output
+
+A fresh visitor queue for each validation or UI run.
+
+### Failure Cases
+
+If authored confidence scores or expected outcomes are changed, the validator tests should be updated to keep the intended low/high threshold failures covered.
+
+### Unity Test
+
+Run `Act4ConfidenceValidatorTests` in EditMode and confirm the reference configuration passes while low/high thresholds fail.
+
+---
+
+### Script Name
+
+Act4ConfidenceValidator.cs
+
+### Purpose
+
+Deterministically validates the Act 4 player configuration. It checks the threshold range, fallback wiring, handoff wiring, and every authored visitor route outcome.
+
+### Attached GameObject
+
+None. This is pure C# puzzle logic in `Ghost.Runtime`.
+
+### Runtime Role
+
+Called by `Act4ConfidenceInteractionController.RunDay()` when the player chooses `Run the day`.
+
+### Important Fields
+
+No serialized fields.
+
+### Important Methods
+
+- `Validate(...)`: checks configuration-level requirements and runs every visitor through `RunVisitor(...)`.
+- `RunVisitor(...)`: returns `IntentReply`, `Fallback`, `Handoff`, `NoSafeRoute`, or `Meltdown` from authored data and player wiring.
+
+### Input
+
+An `Act4ConfidenceConfiguration` plus the authored visitor queue.
+
+### Output
+
+An `Act4ConfidenceValidationResult` with per-visitor outcomes and error messages for UI feedback.
+
+### Failure Cases
+
+- Threshold below 65 or above 80 fails the range check.
+- Missing fallback fails wiring and uncertain-message outcomes.
+- Missing handoff makes the upset/complex case melt down.
+- Empty visitor queues or null visitors produce validation errors.
+
+### Unity Test
+
+Run the full EditMode suite or `Ghost.Tests.EditMode.Act4ConfidenceValidatorTests`.
+
+---
+
+### Script Name
+
+Act4ConfidenceInteractionController.cs
+
+### Purpose
+
+Owns Act 4 presentation state: the concrete low-threshold bluff example, threshold value, route attachments, day-run playback, retry state, completion state, Ghost mood, backend attempt logging, and ambient Lily hint requests after incorrect runs.
+
+### Attached GameObject
+
+None. This is a plain C# controller created by `Act4ConfidenceStaticPresenter`.
+
+### Runtime Role
+
+The presenter creates one controller per rendered Act 4 session. UI buttons and sliders call into it, and it raises `StateChanged` whenever the presenter should rebuild the visible UI.
+
+### Important Fields
+
+No serialized fields. Runtime state includes current phase, threshold, fallback/handoff wiring, current visitor index, last validation result, status line, and Ghost mood.
+
+### Important Methods
+
+- `BeginAfterOnboarding()`: unlocks configuration after Lily's first beat.
+- `ReplayOnboarding()`: replays Lily's onboarding while preserving configuration state.
+- `SetThreshold(...)`: clamps the slider value to 0-100.
+- `ToggleFallbackWiring()` / `ToggleHandoffWiring()`: attach or detach the two safe routes.
+- `RunDay()`: validates the current configuration and starts visitor playback.
+- `AdvancePlayback()`: steps through the queue and finishes the run.
+- `FinishDayRun()`: enters complete state on success or returns to configuration with retry feedback on failure.
+
+### Input
+
+UI events from the Act 4 presenter: onboarding button, route buttons, threshold slider, `Run the day`, `Next visitor`, `Finish the day`, `Try again`, and `Complete Act`.
+
+### Output
+
+Updated state, Ghost mood, status text, validation feedback, backend attempt logging, and non-spoiler ambient Lily hint requests on failed runs.
+
+### Failure Cases
+
+If validation fails, controls become editable again and the primary action becomes `Try again`. Severe failures set the Ghost face to sad; wrong threshold outcomes set it to confused.
+
+### Unity Test
+
+Open `Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` in Play Mode and run through low threshold, high threshold, missing fallback, missing handoff, and the passing configuration.
+
+---
+
+### Script Name
+
+Act4ConfidenceStaticPresenter.cs
+
+### Purpose
+
+Builds the Act 4 UGUI page at runtime: header, phase progress, persistent objective strip, explicit goal/routing tutorial, three-step task guide, Ghost conversation panel, labelled visitor confidence scores, threshold trade-off labels, fallback/handoff controls, per-visitor rule comparisons, retry feedback, and completion button.
+
+### Attached GameObject
+
+Attached to the root object in `Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` by the scene builder.
+
+### Runtime Role
+
+On `Start`, creates the interaction controller and renders the current state. Each controller state change clears and rebuilds the generated UI.
+
+### Important Fields
+
+- `renderOnStart`: when true, renders the sample Act 4 data in Play Mode.
+
+### Important Methods
+
+- `RenderSampleData()`: ensures an EventSystem, creates a controller, subscribes to state changes, and renders the first state.
+- `CreateHeader()`, `CreateObjectiveStrip()`, `CreateOnboardingPanel()`, `CreateConversationPanel()`, `CreateMainBody()`: build the M0-T46 page composition while keeping the goal and current task visible. - `CreateConfidenceControls(...)`: explains the answer/fallback rule and the three player actions before presenting controls. - `CreateThresholdSlider(...)`: builds the 0-100 confidence slider with a live minimum-answer rule and low/high trade-off labels. - `GetConversationLabel()`: shows the exact confidence-versus-threshold comparison during playback, or the upset/complex handoff rule.
+- `CreateRouteControl(...)`: builds the fallback and handoff attach buttons.
+- `HandlePrimaryAction()`: routes the main button to run/playback/complete behaviour.
+
+### Input
+
+Unity UI button and slider events.
+
+### Output
+
+A playable Act 4 scene with deterministic Ghost face moods and Shell debrief handoff through `GhostNarrativeState.SetPendingDebriefAct(GhostNarrativeState.Act4Id)`.
+
+### Failure Cases
+
+If the scene lacks an EventSystem, the presenter creates one. If the controller is missing, render calls exit without changing UI. If Shell constants are missing, completion cannot return through the debrief path.
+
+### Unity Test
+
+Use the Act 4 Play Mode checklist in `Docs/UNITY_TEST_CHECKLIST.md`.
+
+---
+
+### Script Name
+
+Act4ConfidencePrototypeSceneBuilder.cs
+
+### Purpose
+
+Editor-only scene builder for Act 4. It creates the camera, canvas, EventSystem, Act 4 root object, attaches `Act4ConfidenceStaticPresenter`, saves the generated scene, and appends the scene to Build Settings.
+
+### Attached GameObject
+
+None. This is an Editor menu utility under `Assets/Presentation/Act4ConfidenceFallback/Editor`.
+
+### Runtime Role
+
+No runtime role. It is compiled only in the Editor assembly.
+
+### Important Fields
+
+No serialized fields.
+
+### Important Methods
+
+- `BuildAct4ConfidencePrototypeScene()`: available from `Ghost > Build Act 4 Confidence and Fallback Scene`.
+- `AppendSceneToBuildSettings(...)`: adds Act 4 if it is not already present.
+
+### Input
+
+Manual Unity Editor menu action or batchmode `-executeMethod`.
+
+### Output
+
+`Assets/Scenes/Act4ConfidenceFallbackPrototype.unity` and the Act 4 Build Settings entry.
+
+### Failure Cases
+
+If scripts do not compile, the menu item and batchmode method cannot run. If Build Settings already contain the Act 4 scene, no duplicate entry is added.
+
+### Unity Test
+
+Run the menu builder, open the generated scene, and enter Play Mode.
+
+---
+
+### Script Name
+
+Act4ConfidenceValidatorTests.cs
+
+### Purpose
+
+Tests the Act 4 deterministic confidence/fallback validator.
+
+### Attached GameObject
+
+None. This is an EditMode test script.
+
+### Runtime Role
+
+Runs only in Unity EditMode Test Runner.
+
+### Important Fields
+
+No serialized fields.
+
+### Important Methods
+
+NUnit tests cover:
+- reference threshold plus both routes passes the day
+- threshold outside the authored range fails
+- missing fallback and handoff fail wiring and outcomes
+- very low and very high thresholds produce the intended wrong authored outcomes
+
+### Input
+
+`Act4ConfidenceDemoData.CreateVisitorMessages()` plus test configurations.
+
+### Output
+
+NUnit pass/fail results.
+
+### Failure Cases
+
+Failed assertions indicate the validator no longer enforces the intended threshold range, safe-route wiring, or low/high threshold consequences.
+
+### Unity Test
+
+Run `Ghost.Tests.EditMode.Act4ConfidenceValidatorTests` or the full EditMode suite.
+
+---
+
+### Shell Integration Note
+
+M0-T47 extends the existing Shell scripts with Act 4 constants, hub card wiring, intro/debrief beats, return-to-hub overlay support, and Build Settings registration. The generated `GameShellPrototype.unity` scene now serializes the Act 4 hub card/button, and `Act4ConfidenceFallbackPrototype.unity` returns through the same pending-debrief path used by Acts 1-3.
+## Act 5 Testing and Debugging
+
+### Script Name
+
+Act5TestingModels.cs
+
+### Purpose
+
+Defines the authored test-conversation wrapper, per-conversation expected/actual result, and full suite result used by Act 5.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime logic.
+
+### Runtime Role
+
+Carries visitor text beside the existing DialogGraphTestCase and exposes stable case results, validation errors, correctness, and passed count to tests and presentation code.
+
+### Important Methods
+
+- Act5TestConversation(...): validates the authored id/message and creates the existing dialog-graph test case.
+- Act5TestCaseResult(...): compares the simulator response id with the authored expected response id.
+- Act5TestSuiteResult.PassedCount: counts green cases without introducing a second scoring rule.
+
+### Failure Cases
+
+Empty ids/messages and null conversations are rejected. Correctness still comes from the existing DialogGraphValidator result.
+
+### Unity Test
+
+Run Act5TestSuiteRunnerTests in EditMode.
+
+---
+
+### Script Name
+
+Act5BuggyGraphData.cs
+
+### Purpose
+
+Provides the Act 5 nodes, three seeded wiring faults, reference fixed transitions, four test conversations, player-facing response lines, and graph-node labels.
+
+### Attached GameObject
+
+None. This is pure authored data.
+
+### Runtime Role
+
+Creates a buggy graph with swapped room routes, a wrong lab-hours reply, and a missing greeting branch. CreateFixedGraph supplies the deterministic reference used by tests only.
+
+### Important Methods
+
+- CreateBuggyGraph(): builds the starting graph that fails all four conversations.
+- CreateFixedGraph(): builds the reference graph that passes all four.
+- CreateNodes(), CreateBuggyTransitions(), CreateFixedTransitions(): provide fresh immutable graph parts.
+- CreateTestConversations(): returns the four authored preview conversations.
+- GetResponseLine(...), GetNodeTitle(...): translate stable ids into visible Act 5 copy.
+
+### Failure Cases
+
+Changing a node id, response id, or expected route without updating all related transitions/tests can invalidate the seeded-fault contract.
+
+### Unity Test
+
+Confirm the buggy graph reports 0/4 and the fixed graph reports 4/4.
+
+---
+
+### Script Name
+
+Act5TestSuiteRunner.cs
+
+### Purpose
+
+Runs Act 5 through the existing DialogGraphValidator and DialogGraphSimulator, then packages per-case expected/actual results for the UI.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime logic.
+
+### Runtime Role
+
+Called whenever the player chooses Run all tests or Rerun all tests.
+
+### Important Methods
+
+- Run(...): validates the graph against every authored test and simulates each conversation with a fresh DialogContext.
+- CopyConversations(...): rejects null suite entries before simulation.
+
+### Failure Cases
+
+Null graph/suite arguments throw. Structural graph errors and response mismatches remain visible through Act5TestSuiteResult.ValidationErrors.
+
+### Unity Test
+
+Run Act5TestSuiteRunnerTests in EditMode.
+
+---
+
+### Script Name
+
+IDialogGraphWireInteractionHost.cs
+
+### Purpose
+
+Defines the four pointer callbacks required by the existing Act 3 input/output port views so more than one presenter can reuse the same wire-drag interaction.
+
+### Attached GameObject
+
+None. This is a presentation interface.
+
+### Runtime Role
+
+Act3DialogGraphStaticPresenter and Act5TestingStaticPresenter both implement it. Act 3 input/output port behaviour is unchanged; only the held presenter type was generalized.
+
+### Important Methods
+
+BeginWireDrag(...), UpdateWireDrag(...), EndWireDrag(...), and CompleteWireDrop(...) form the shared drag/drop contract.
+
+### Failure Cases
+
+A host that does not clean up cancelled drag wires can leave a temporary visual line. Both current presenters handle cleanup.
+
+### Unity Test
+
+Play Act 3 once to confirm existing graph wiring still works, then test Act 5 reconnection.
+
+---
+
+### Script Name
+
+Act5TestingInteractionController.cs
+
+### Purpose
+
+Owns Act 5 state, mutable transition wiring, suite runs, stale-result state, Ghost mood, backend attempt logging, and completion.
+
+### Attached GameObject
+
+None. The Act 5 presenter creates this plain C# controller.
+
+### Runtime Role
+
+Starts from Act5BuggyGraphData, allows legal Act 3-style output reconnections, constructs the current DialogGraph, and calls Act5TestSuiteRunner.
+
+### Important Methods
+
+- BeginAfterOnboarding() and ReplayOnboarding(): control the replayable teaching state.
+- RunAllTests(): runs the deterministic suite, records 0-4 pass count, requests a non-spoiler Lily hint after failure, and completes only at 4/4.
+- ConnectNodes(...): adds missing start-to-intent branches or replaces one non-start output destination.
+- FindLastResult(...) and FindFirstFailure(): provide stable feedback selection for result cards and the conversation panel.
+
+### Failure Cases
+
+Illegal self-links, wrong source conditions, incompatible target types, duplicate links, onboarding edits, and post-completion edits are rejected.
+
+### Unity Test
+
+Run the initial suite, repair one route, confirm results become stale, rerun, and continue until 4/4.
+
+---
+
+### Script Name
+
+Act5TestingStaticPresenter.cs
+
+### Purpose
+
+Builds the Act 5 M0-T46-style UGUI page: header/progress, objective strip, onboarding/replay note, Ghost result panel, pre-built dialog graph, shared drag ports/wires, four expected/actual test cards, rerun state, and completion button. The graph keeps a visible test / repair / rerun sequence and labels left input versus right output sockets directly on each node.
+
+### Attached GameObject
+
+Attached to the Act 5 scene root by Act5TestingPrototypeSceneBuilder.
+
+### Runtime Role
+
+Creates the controller on Start, rebuilds the visible state after tests or graph edits, and returns through the Shell pending-debrief path after completion.
+
+### Important Methods
+
+- RenderSampleData() and RenderState(): create and refresh the runtime page.
+- CreateGraphPanel(...) and CreateNodeCard(...): display the fixed node set and current authored transitions.
+- BeginWireDrag(...), UpdateWireDrag(...), EndWireDrag(...), CompleteWireDrop(...): reuse the Act 3 port components to reconnect routes.
+- CreateTestPanel(...) and CreateTestCard(...): keep visitor, expected, actual, pass/fail, and stale state visible.
+- GetGraphGuideText() and GetPrimaryActionLabel(): keep the numbered test, repair, and rerun instructions visible after onboarding.
+- RebuildWires(): draws the current transitions behind graph nodes after Canvas and nested layouts have resolved.
+- DrawLine(...): anchors each line at the wire layer centre and places its pivot at the source port, matching the local coordinates returned by GetPortLocalCenter(...).
+- HandlePrimaryAction(): runs/reruns the suite or completes Act 5.
+
+### Failure Cases
+
+Invalid drops are ignored. Missing ports skip only the affected visual wire. A missing EventSystem is created automatically. Output sockets are visibly muted until the first test run unlocks editing. Wire geometry must use centre anchors; treating centre-based local coordinates as bottom-left anchored positions shifts the full graph off the board.
+
+### Unity Test
+
+Use the M0-T48 Play Mode checklist at 1920x1080 and confirm every committed and dragged wire touches its source and destination sockets, then confirm cards, text, and complete/debrief flow.
+
+---
+
+### Script Name
+
+Act5TestingStaticPresenterTests.cs
+
+### Purpose
+
+Protects the Act 5 wire-layer coordinate contract that keeps graph lines attached to their node sockets.
+
+### Attached GameObject
+
+None. This is an EditMode presentation regression test.
+
+### Important Test
+
+- DrawLine_UsesCenteredWireLayerCoordinatesWithoutBoardOffset: confirms centre anchors, source pivot, source position, line length, and thickness.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act5TestingStaticPresenterTests or the full EditMode suite.
+
+---
+
+### Script Name
+
+Act5TestingPrototypeSceneBuilder.cs
+
+### Purpose
+
+Creates the Act 5 camera, 1920x1080 overlay canvas, EventSystem, presenter root, generated scene, and approved Build Settings entry.
+
+### Attached GameObject
+
+None. This is an Editor menu utility in Ghost.Presentation.Act5.Editor.
+
+### Runtime Role
+
+No runtime role.
+
+### Important Methods
+
+- BuildAct5TestingPrototypeScene(): available from Ghost > Build Act 5 Testing and Debugging Scene.
+- AppendSceneToBuildSettings(...): adds the Act 5 scene without duplicating existing entries.
+
+### Failure Cases
+
+The builder cannot run until all runtime/presentation scripts compile. Existing scenes and existing Build Settings entries are not edited by hand.
+
+### Unity Test
+
+Run the builder, open Assets/Scenes/Act5TestingDebuggingPrototype.unity, and enter Play Mode.
+
+---
+
+### Script Name
+
+Act5TestSuiteRunnerTests.cs
+
+### Purpose
+
+Proves the authored seeded-fault and reference-fixed graph contracts.
+
+### Attached GameObject
+
+None. This is an EditMode test script.
+
+### Important Tests
+
+- BuggyGraphFailsEveryAuthoredConversation: confirms 0/4 and an incorrect validator result.
+- FixedGraphPassesEveryAuthoredConversation: confirms 4/4 and no validation errors.
+- BuggyGraphReportsExpectedAndActualResponseForRoomCase: confirms expected/actual mismatch detail.
+- BuggyGraphReportsNoResponseForMissingGreetingBranch: confirms the missing start branch is observable.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act5TestSuiteRunnerTests or the full EditMode suite.
+
+---
+
+### Shell Integration Note
+
+M0-T48 adds Act 5 scene/id constants, hub button wiring, intro/debrief beats, Return to Hub support, GameShell builder registration, and the approved Act 5 Build Settings append. Completion uses GhostNarrativeState.Act5Id and the same pending-debrief flow as earlier Acts.
+
+
+---
+
+## M0-T49 Runs 001-002: Final Chapter Repair Ghost's Voice
+
+### Script Name
+
+Act6PipelineModels.cs
+
+### Purpose
+
+Defines the immutable component, playback-step, and validation-result records shared by the Final Chapter data and deterministic validator.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime data.
+
+### Runtime Role
+
+Carries authored labels, component jobs, prior-chapter callbacks, failure lines, playback text, validation errors, and the first broken component id without any UI dependency.
+
+### Failure Cases
+
+Null error collections become an empty array. Unknown component ids are rejected by Act6PipelineData rather than represented by these models.
+
+### Unity Test
+
+Run Act6PipelineValidatorTests in EditMode.
+
+---
+
+### Script Name
+
+Act6PipelineData.cs
+
+### Purpose
+
+Provides the authored six-part palette, canonical five-stage main path, backend side link, final visitor/reply, prior-chapter callbacks, failure lines, and six deterministic playback beats.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime authored data.
+
+### Runtime Role
+
+Supplies fresh read-only lists to the validator and presentation while keeping scoring independent from the UI and backend.
+
+### Important Methods
+
+- CreateMainPipelineOrder(): returns UI input, NLP engine, dialogue management, response generation, and UI output.
+- CreatePaletteComponents(): returns all six cards in an intentionally shuffled order.
+- CreatePlaybackSteps(): follows the final message through five main stages and the backend side fetch.
+- GetComponent(...): resolves labels, jobs, prior work, and failure consequences by stable id.
+
+### Failure Cases
+
+GetComponent throws for an unknown id so malformed authored data cannot silently pass.
+
+### Unity Test
+
+Confirm the palette is shuffled, the correct path validates, and the final lab-hours message produces the authored full reply.
+
+---
+
+### Script Name
+
+Act6PipelineValidator.cs
+
+### Purpose
+
+Deterministically validates the exact five-stage order and the required backend side link.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime logic.
+
+### Important Method
+
+Validate(...): reports empty, misplaced, unknown, duplicate, excess, and missing-backend errors while preserving the first broken expected component for focused feedback.
+
+### Failure Cases
+
+A null or partial main-slot list fails safely. Backend integration in the main path fails, and a correct main path without the side link still fails.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act6PipelineValidatorTests.
+
+---
+
+### Script Name
+
+Act6PipelineInteractionController.cs
+
+### Purpose
+
+Owns Final Chapter onboarding, placement, selection, swapping, validation, stage playback, Ghost mood, hint request, attempt logging, and transition into the ending.
+
+### Attached GameObject
+
+None. Act6PipelineStaticPresenter creates this plain C# controller.
+
+### Important Methods
+
+- PlaceInMainSlot(...) and PlaceInBackendSlot(...): enforce main-path versus side-link roles and support swapping placed cards.
+- ResetPipeline(): clears every placement and result.
+- RunPipeline(): calls only Act6PipelineValidator for correctness, records the attempt, and focuses the first broken stage on failure.
+- AdvancePlayback(): moves through all six authored message beats before revealing Ghost's complete reply.
+- BeginEnding(): exposes the final programmatic ending only after playback finishes.
+
+### Failure Cases
+
+Placement is ignored outside Configure phase. Backend cards cannot enter the main path, main cards cannot enter the backend socket, and failed runs remain editable.
+
+### Unity Test
+
+Exercise both drag/drop and click-select placement, then test wrong order, missing backend, correct playback, and ending entry.
+
+---
+
+### Script Name
+
+IAct6PipelineInteractionHost.cs
+
+### Purpose
+
+Defines the narrow component-selection and destination-placement contract used by Final Chapter pointer views.
+
+### Attached GameObject
+
+None. This is a presentation interface implemented by Act6PipelineStaticPresenter.
+
+### Failure Cases
+
+The pointer views require a configured host; otherwise they ignore interaction safely.
+
+### Unity Test
+
+Confirm cards can be dragged or click-selected into both main and backend destinations.
+
+---
+
+### Script Name
+
+Act6PipelinePartDragView.cs
+
+### Purpose
+
+Makes palette and placed cards draggable, creates a cursor-following preview, and supplies click selection as an accessible fallback.
+
+### Attached GameObject
+
+Added at runtime to every Final Chapter component card.
+
+### Important Methods
+
+- Configure(...): binds component id, display label, root canvas, and interaction host.
+- OnBeginDrag(...), OnDrag(...), and OnEndDrag(...): manage raycasts and the temporary preview.
+- ClearActivePreviews(): removes stale previews during presenter rebuilds or completed drops.
+
+### Failure Cases
+
+Missing canvas or event data cancels preview movement without changing puzzle state. Disable/destroy restores raycasts and removes owned previews.
+
+### Unity Test
+
+Drag from palette and occupied slots; confirm the preview tracks the pointer and disappears after drop or cancellation.
+
+---
+
+### Script Name
+
+Act6PipelineSlotDropView.cs
+
+### Purpose
+
+Turns each numbered main slot and the backend socket into both drop targets and click-placement targets.
+
+### Attached GameObject
+
+Added at runtime to the five main slots and one backend socket.
+
+### Failure Cases
+
+Drops without an Act6PipelinePartDragView are ignored. Main/backend role errors are delegated to the controller for explicit player feedback.
+
+### Unity Test
+
+Confirm a selected card can be placed by clicking a destination and a dragged card can be dropped on the same destination.
+
+---
+
+### Script Name
+
+Act6PipelineStaticPresenter.cs
+
+### Purpose
+
+Builds the complete Final Chapter UGUI experience: phase header, objective, replayable Lily onboarding, Ghost result panel, shuffled palette, numbered stable pipeline slots, backend side socket, failure feedback, staged playback, and ending overlay.
+
+### Attached GameObject
+
+Attached to the generated Final Chapter scene root by Act6VoicePipelinePrototypeSceneBuilder.
+
+### Important Methods
+
+- RenderSampleData() and RenderState(): create and refresh the runtime page from controller state.
+- CreateOnboardingPanel(): explains the purpose, five-stage message route, backend exception, and exact drag/click task before interaction begins.
+- CreatePalettePanel(...) and CreatePipelinePanel(...): render the six cards, five main slots, arrows, backend socket, live status, reset, and primary action.
+- CreateMainSlot(...) and CreateBackendSlot(...): reveal each correct component's authored job and prior-chapter connection.
+- HandlePrimaryAction(): runs validation, advances every playback beat, or starts the ending according to phase.
+- CreateEndingOverlay(): assembles the happy Ghost, glow, personalized text, credits, and skip control used by Act6EndingSequence.
+
+### Failure Cases
+
+Unknown/missing component data remains a validator error rather than UI scoring. Layout uses fixed header/objective/conversation heights and flexible body columns for the 1920x1080 target; smaller aspect ratios still require visual regression testing.
+
+### Unity Test
+
+Use the M0-T49 Play Mode checklist at 1920x1080 and verify readable instructions, stable slots, every failure state, six-step playback, ending, skip, and return to title.
+
+---
+
+### Script Name
+
+Act6EndingSequence.cs
+
+### Purpose
+
+Runs the programmatic final animation with unscaled-time fades, Ghost glow/float, player-name thank-you, Lily closing line, credits scroll, skip, completion persistence, and return to the Shell title.
+
+### Attached GameObject
+
+Added at runtime to the Final Chapter presenter root.
+
+### Important Methods
+
+- Configure(...): receives the overlay, Ghost, glow, text, credits, and skip references.
+- Play(): resets the visual state and starts one sequence.
+- Skip(): completes through the same FinishEnding path as the full sequence.
+- FinishEnding(): marks GhostNarrativeState.FinalChapterId complete and loads GameShellPrototype.
+
+### Failure Cases
+
+Repeated Play/Skip calls are idempotent. Missing optional visual references skip that animation piece but still complete and return to the Shell.
+
+### Unity Test
+
+Watch the full ending once, then replay and skip immediately; both paths must mark Final Chapter complete and return to the title without Console errors.
+
+---
+
+### Script Name
+
+Act6VoicePipelinePrototypeSceneBuilder.cs
+
+### Purpose
+
+Creates the Final Chapter camera, 1920x1080 canvas, Input System EventSystem, presenter root, generated scene, and approved Build Settings entry.
+
+### Attached GameObject
+
+None. This is an Editor menu utility in Ghost.Presentation.Act6.Editor.
+
+### Important Method
+
+BuildAct6VoicePipelinePrototypeScene(): available from Ghost > Build Final Chapter Repair Ghost's Voice Scene.
+
+### Failure Cases
+
+The builder requires all Final Chapter and Shell scripts to compile. It appends the scene only when its path is absent.
+
+### Unity Test
+
+Run the builder, open Assets/Scenes/Act6VoicePipelinePrototype.unity, and enter Play Mode.
+
+---
+
+### Script Name
+
+Act6PipelineValidatorTests.cs
+
+### Purpose
+
+Protects the canonical main-path order, backend side-link rule, partial-pipeline diagnosis, role separation, and deterministic duplicate handling.
+
+### Attached GameObject
+
+None. This is an EditMode test script.
+
+### Important Tests
+
+- CorrectMainOrderAndBackendPass: proves the reference build succeeds.
+- SwappedOpeningStagesFailAtUiInput and PartialPipelineReportsFirstMissingStage: prove focused first-break feedback.
+- MissingBackendFailsAfterCorrectMainPath and BackendCannotReplaceAMainPipelineStage: protect the side-link model.
+- DuplicateMainComponentFailsDeterministically: protects stable duplicate/order failure reporting.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act6PipelineValidatorTests or the full EditMode suite.
+
+---
+
+### Shell Integration Note
+
+Run 003 reclassifies this implementation as the Final Chapter. The retained Act6Pipeline class and asset names preserve existing Unity meta identities, but gameplay completion now uses GhostNarrativeState.FinalChapterId. Chapter 6 is the separate backend-action teaching puzzle documented below.
+
+---
+
+## M0-T49 Run 003: Chapter 0, Chapter 6 Teaching, and Final Chapter Split
+
+### Structure Correction
+
+The user-approved route is now explicit:
+
+- Chapter 0 is an opening story with no lesson validator or score.
+- Chapters 1-6 are teaching chapters.
+- Chapter 6 teaches backend action and response generation.
+- Final Chapter uses the existing full voice-pipeline capstone and ending.
+
+The old Act6Pipeline class, folder, and scene filename remain for Unity asset stability. Player-facing text and narrative completion treat that implementation as Final Chapter.
+
+---
+
+### Script Name
+
+Chapter0StoryData.cs
+
+### Purpose
+
+Defines six authored opening-story beats based on the confirmed late-lab premise: Lily introduces Ghost, Ghost's speech is tangled, and the player agrees to help one message at a time.
+
+### Attached GameObject
+
+None. This is presentation-owned authored story data.
+
+### Runtime Role
+
+Creates a fresh ordered beat list personalized with GhostNarrativeState.PlayerName. Each beat carries speaker text and Ghost mood only; it contains no puzzle answer or scoring rule.
+
+### Failure Cases
+
+A blank player name falls back to Junior. The data does not invent a Chapter 0 lesson or validator.
+
+### Unity Test
+
+Play Chapter0OpeningStory from the Shell and confirm all six beats appear in order.
+
+---
+
+### Script Name
+
+Chapter0StoryPresenter.cs
+
+### Purpose
+
+Builds the complete Chapter 0 opening scene at runtime with a late-lab stage, Lily portrait, Ghost face, current-speaker emphasis, dialogue progress, Continue, Skip opening, and Enter the lab.
+
+### Attached GameObject
+
+Attached to the Chapter 0 scene root by Chapter0StorySceneBuilder.
+
+### Important Methods
+
+- BeginStory(): loads the personalized story beats and renders beat 1.
+- Advance(): moves to the next beat without scoring.
+- FinishStory(): sets Chapter 0's pending debrief and returns to GameShellPrototype.
+- CreateLabStage(...): builds the stable lab backdrop and character frames.
+- CreateDialogue(...): shows the active speaker, line, progress action, and final Enter the lab action.
+
+### Failure Cases
+
+Advance ignores empty or completed story state. FinishStory is idempotent. Chapter 0 is marked complete by the Shell debrief flow, not before the debrief can play.
+
+### Unity Test
+
+Verify Continue, Skip opening, final Enter the lab, personalized name, speaker highlights, Shell return, and the one-time Chapter 0 debrief.
+
+---
+
+### Script Name
+
+Chapter0StorySceneBuilder.cs
+
+### Purpose
+
+Creates Chapter0OpeningStory.unity with a camera, 1920x1080 scaled UGUI canvas, Input System EventSystem, and Chapter0StoryPresenter root.
+
+### Attached GameObject
+
+None. This is an Editor menu utility in Ghost.Presentation.Story.Editor.
+
+### Important Method
+
+BuildChapter0OpeningStoryScene(): available from Ghost > Build Chapter 0 Opening Story Scene.
+
+### Failure Cases
+
+The builder requires Story and Shell assemblies to compile. It appends the scene only when absent; GameShellSceneBuilder later establishes canonical Build Settings order.
+
+### Unity Test
+
+Run the builder, open Assets/Scenes/Chapter0OpeningStory.unity, and enter Play Mode.
+
+---
+
+### Script Name
+
+Act6BackendResponseModels.cs
+
+### Purpose
+
+Defines the immutable card, playback-step, and validation-result models used by the Chapter 6 backend lesson.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime data.
+
+### Runtime Role
+
+Carries stable card roles, job/failure text, five playback steps, validation errors, and the first broken role without any Unity UI dependency.
+
+### Failure Cases
+
+Null strings and error collections are normalized safely.
+
+### Unity Test
+
+Run Act6BackendResponseValidatorTests in EditMode.
+
+---
+
+### Script Name
+
+Act6BackendResponseData.cs
+
+### Purpose
+
+Authors the Chapter 6 visitor request, three socket roles, three correct cards, three role-matched distractors, backend result, complete reply, and five playback beats.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime authored data.
+
+### Runtime Role
+
+Teaches this concrete chain: lab records -> fetch lab closing time -> lab-hours response. Distractors use the object-room task so each role can be wrong without violating socket type.
+
+### Important Methods
+
+- CreateCards(): returns all six draggable cards.
+- CreatePlaybackSteps(): returns the visitor, data, action, response, and delivered-reply sequence.
+- GetExpectedCardId(...): defines the deterministic answer for each role.
+- GetCard(...) and GetRoleLabel(...): resolve stable authored ids.
+
+### Failure Cases
+
+Unknown role or card ids throw instead of silently becoming correct.
+
+### Unity Test
+
+Confirm the correct three-card chain produces The lab closes at 8 PM.
+
+---
+
+### Script Name
+
+Act6BackendResponseValidator.cs
+
+### Purpose
+
+Deterministically checks the selected data source, backend action, and response template.
+
+### Attached GameObject
+
+None. This is pure Ghost.Runtime puzzle logic.
+
+### Important Method
+
+Validate(...): validates all three sockets, reports empty, unknown, wrong-role, and wrong-answer errors, and preserves the first broken role for focused feedback.
+
+### Failure Cases
+
+A null or partial board fails safely. A card from another role cannot satisfy a socket. Presentation and backend services never decide correctness.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act6BackendResponseValidatorTests.
+
+---
+
+### Script Name
+
+Act6BackendInteractionController.cs
+
+### Purpose
+
+Owns Chapter 6 onboarding, card selection, socket placement, swaps, reset, deterministic validation, five-step playback, Ghost mood, attempts, hints, and completion state.
+
+### Attached GameObject
+
+None. Act6BackendStaticPresenter creates this plain C# controller.
+
+### Important Methods
+
+- PlaceSelectedCard(...) and PlaceCard(...): enforce role sockets and predictable replacement.
+- Reset(): returns every card to the palette.
+- Run(): calls only Act6BackendResponseValidator and focuses the first broken role.
+- AdvancePlayback(): reveals how raw backend data becomes the final visitor-facing sentence.
+
+### Failure Cases
+
+Placement is ignored outside Configure phase. Wrong-role drops give explicit feedback. Failed runs remain editable.
+
+### Unity Test
+
+Exercise drag/drop, click-select, each distractor, reset, the correct chain, and all playback steps.
+
+---
+
+### Script Name
+
+IAct6BackendInteractionHost.cs
+
+### Purpose
+
+Defines the narrow card-selection and role-socket placement contract used by Chapter 6 pointer views.
+
+### Attached GameObject
+
+None. Implemented by Act6BackendStaticPresenter.
+
+### Failure Cases
+
+Unconfigured pointer views ignore interaction safely.
+
+### Unity Test
+
+Confirm both drag/drop and click-select placement reach the same controller methods.
+
+---
+
+### Script Name
+
+Act6BackendCardDragView.cs
+
+### Purpose
+
+Makes Chapter 6 cards draggable and click-selectable, with a cursor-following preview that does not move the stable source layout.
+
+### Attached GameObject
+
+Added at runtime to palette and placed cards.
+
+### Failure Cases
+
+Missing canvas, host, or event data cancels the preview without changing puzzle state. Disable/destroy removes owned previews.
+
+### Unity Test
+
+Drag from palette and from a filled socket; verify the preview disappears after drop or cancellation.
+
+---
+
+### Script Name
+
+Act6BackendSlotDropView.cs
+
+### Purpose
+
+Turns each DATA SOURCE, ACTION, and RESPONSE socket into both a drop target and a selected-card destination.
+
+### Attached GameObject
+
+Added at runtime to all three role sockets.
+
+### Failure Cases
+
+Drops without an Act6BackendCardDragView are ignored; role feedback comes from the controller.
+
+### Unity Test
+
+Place cards by dragging and by click-selecting a card followed by a socket.
+
+---
+
+### Script Name
+
+Act6BackendStaticPresenter.cs
+
+### Purpose
+
+Builds the complete Chapter 6 teaching UI: clear objective, Lily onboarding, 170-pixel Ghost panel, six-card palette, three fixed role sockets with arrows, status feedback, reset/run controls, and five-step message playback.
+
+### Attached GameObject
+
+Attached to the generated Chapter 6 root by Act6BackendResponseSceneBuilder.
+
+### Important Methods
+
+- RenderState(): refreshes the page from controller state.
+- CreateOnboardingPanel(): explains why real data is needed and exactly what the three roles do.
+- CreatePalette(...) and CreatePipeline(...): render stable cards, sockets, arrows, state colors, and controls.
+- HandlePrimaryAction(): opens the board, validates, advances playback, or completes through the Shell debrief.
+
+### Failure Cases
+
+The presenter does not score. Stable socket dimensions prevent feedback, highlighting, or card labels from shifting the board. 1920x1080 remains the primary authored target.
+
+### Unity Test
+
+Use the Run 003 checklist and verify readable purpose/task text, all wrong states, correct playback, completion, and Return to Hub.
+
+---
+
+### Script Name
+
+Act6BackendResponseSceneBuilder.cs
+
+### Purpose
+
+Creates Act6BackendResponsePrototype.unity with a camera, 1920x1080 canvas, Input System EventSystem, and Act6BackendStaticPresenter root.
+
+### Attached GameObject
+
+None. This is an Editor menu utility in Ghost.Presentation.Act6BackendResponse.Editor.
+
+### Important Method
+
+BuildAct6BackendResponseScene(): available from Ghost > Build Chapter 6 Backend Action and Response Scene.
+
+### Failure Cases
+
+The builder requires the runtime, presentation, and Shell assemblies to compile. It does not hand-edit scene YAML.
+
+### Unity Test
+
+Run the builder, open Assets/Scenes/Act6BackendResponsePrototype.unity, and enter Play Mode.
+
+---
+
+### Script Name
+
+Act6BackendResponseValidatorTests.cs
+
+### Purpose
+
+Protects the Chapter 6 reference chain, empty-board diagnosis, every role-specific distractor, and cross-role rejection.
+
+### Attached GameObject
+
+None. This is an EditMode test script.
+
+### Important Tests
+
+- ReferenceBackendActionAndResponsePass.
+- EmptyBoardFailsAtDataSource.
+- WrongSourceStopsAtDataSource.
+- WrongActionStopsAtAction.
+- WrongResponseStopsAtResponse.
+- CardFromWrongRoleCannotSatisfySocket.
+
+### Unity Test
+
+Run Ghost.Tests.EditMode.Act6BackendResponseValidatorTests or the full EditMode suite.
+
+---
+
+### Shell Integration Note
+
+ShellSceneNames now maps Chapter 0 to Chapter0OpeningStory, Chapter 6 to Act6BackendResponsePrototype, and Final Chapter to the retained Act6VoicePipelinePrototype asset. GameShellPresenter starts Chapter 0 after first-time naming/account setup, exposes replay and Final Chapter buttons, gives separate Chapter 6/final intros, and tracks Final Chapter with FinalChapterId. GameShellSceneBuilder serializes both story-route buttons and registers the canonical scene order: Shell, Chapter 0, Chapters 1-6, Final Chapter, then unrelated existing scenes.
+
+### Inspector Setup
+
+No manual Inspector wiring is required when using the three menu builders. Regenerate Chapter 0, Chapter 6, Final Chapter, then Game Shell in that order. The builders create and serialize all required cameras, canvases, EventSystems, presenter roots, buttons, and Build Settings entries.
+
+### Automated Verification
+
+Unity 6000.4.11f1 batchmode generated all four affected scenes without compiler errors. Act6BackendResponseValidatorTests passed 6/6, the reclassified Final Chapter Act6PipelineValidatorTests passed 6/6, and the complete EditMode suite passed 77/77.
+## M0-T49 Run 005 Remediation Pass
+
+### Completion and Navigation
+
+- `ShellReturnToHubOverlay.cs`: `Return to Hub` is pure scene navigation. It no longer maps scenes to act ids or calls `SetPendingDebriefAct`.
+- `Act2EntityExtractionStaticPresenter.cs`: the Complete phase now renders an explicit `Complete Act` button. Only the final successful authored errand can reach that phase; the button sets the Act 2 pending debrief and loads the Shell.
+- `ShellReturnToHubOverlayTests.cs`: reads the overlay source and guards against reintroducing `SetPendingDebriefAct` or the removed scene-to-debrief helper.
+
+### Shell Layout
+
+- `GameShellSceneBuilder.cs`: the hub uses a dedicated compact vertical layout. At 1920x1080 the active seven-child budget is 588px: 24px vertical padding + 36px spacing + 44px heading + 40px copy + 72px fundamentals + 52px story route + 240px lesson grid + 40px narrative Continue + 40px Back to Title. This remains 76px inside the 664px Shell body.
+- Chapter cards remain a stable 3-by-2 grid with two 116px rows and 8px between them. Content is compacted rather than hidden.
+
+### Chapter 6 Validator-Only Feedback and Click Contract
+
+- `Act6BackendResponseModels.cs` / `Act6BackendResponseValidator.cs`: the existing deterministic validator now records which authored role ids failed while preserving the same accepted cards, errors, first-broken role, and `IsCorrect` rule.
+- `Act6BackendInteractionController.cs`: removes the UI-side expected-id comparison and adds `ReturnRoleCardToPalette`. Any placement change clears stale validation.
+- `Act6BackendStaticPresenter.cs`: untested placements remain neutral and read `PLACED - run the route to test this responsibility.` Per-slot success/failure appears only from `LastValidation` after Run.
+- `IAct6BackendInteractionHost.cs`, `Act6BackendSlotDropView.cs`, and `Act6BackendCardDragView.cs`: palette cards may click-select; placed cards do not click-select. One click on a filled socket returns that card to the palette, and consumed pointer events cannot perform a second stale action during synchronous re-render.
+- `Act6BackendResponseValidatorTests.cs`: covers validator-owned per-role states and returning a filled role while clearing stale validation.
+
+### Lily Pixel Art
+
+- `Assets/Resources/Characters/LilyPixelFullBody.png`: transparent original pixel-art Lily with a high blonde ponytail, deep navy-blue blazer, red KCL lanyard, charcoal trousers, and black Oxford shoes.
+- `Assets/Resources/Characters/LilyPixelPortrait.png`: transparent upper-body crop from the same approved asset for small Shell and banter portrait slots.
+- `LilyPixelPortraitFactory.cs`: loads Unity-imported full-body and portrait Sprite sub-assets with point filtering; the prior code-drawn portrait remains only as a missing-resource fallback.
+- `Chapter0StoryPresenter.cs`: displays the new full-body sprite with white tint and preserved aspect, fixing the prior transparent Image tint.
+- `Act6PipelineStaticPresenter.cs` / `Act6EndingSequence.cs`: Final Chapter shows the new Lily sprite only during Lily's closing line, then hides it before credits. Final completion logic remains `FinalChapterId`.
+
+### Inspector Setup
+
+No manual wiring is required. Run the Chapter 0, Chapter 6 Backend Response, Final Chapter, and Game Shell builders, with Game Shell last. The Lily PNG must remain under `Assets/Resources/Characters/` so `LilyPixelPortraitFactory` can load it in Editor and WebGL.
+
+### Play Mode Test
+
+Use the single current M0-T49 Run 005 checklist in `Docs/UNITY_TEST_CHECKLIST.md`. In particular, return immediately from every chapter to verify no completion, complete Act 2 through its new button, inspect the 1080p hub, verify Chapter 6 remains neutral before Run and returns a filled card on one click, sanity-check Act 3 wire dragging, and complete/skip the Final ending.
+
+## M0-T49 Run 006 Character Pixel-Style Unification
+
+### Character Assets
+
+- `LilyPixelFullBody.png`: replaced with a transparent 96x128 low-resolution RPG sprite. Lily keeps the approved high blonde ponytail, deep navy-blue blazer, red KCL lanyard, charcoal trousers, tablet, and black Oxford shoes, but uses chunky square pixels, a limited palette, a dark outline, and simplified facial features.
+- `LilyPixelPortrait.png`: replaced with a transparent 96x96 upper-body crop in the same pixel language.
+- `GhostPixelNeutral.png`, `GhostPixelHappy.png`, `GhostPixelConfused.png`, and `GhostPixelSad.png`: transparent 96x96 sprites with one consistent sheet-ghost body, large established dark eyes, small arms, wavy tail, and blue-lavender shadow pixels.
+- All six files use hard 0/255 alpha and contain no smooth semi-transparent edge pixels.
+
+### GhostFaceView.cs / GhostPixelSpriteFactory
+
+- `GhostPixelSpriteFactory.GetSprite(...)` maps `GhostMood` to the four `Resources/Characters/GhostPixel*` textures, creates a full-rect runtime Sprite, caches it, and forces point filtering.
+- `GhostFaceView.SetMood(...)` prefers the matching image and disables the old overlaid eyes, mouth, and question mark. If the texture is unavailable, it restores the original programmatic face behavior.
+- Because all Chapters and the Final ending already use `GhostFaceView`, the style change applies without changing puzzle presenters or deterministic logic.
+
+### LilyDialogueFrame.cs / AmbientBanterPanel.cs
+
+- Ghost dialogue now falls back to `GhostPixelNeutral` when no explicit serialized Ghost portrait is assigned.
+- Lily continues to load the new low-resolution full-body/portrait textures through `LilyPixelPortraitFactory`; its previous code-drawn portrait remains fallback-only.
+
+### Automated Coverage
+
+- `ShellReturnToHubOverlayTests.cs` now also checks all six character textures load at their authored 96px dimensions.
+- `GhostFaceUsesPixelSpriteForEveryMood` creates a `GhostFaceView`, switches through every `GhostMood`, confirms a `GhostPixel*` Sprite is selected with point filtering, and confirms the old left-eye overlay is hidden.
+
+### Inspector Setup
+
+No new Inspector references are required. Keep all six PNGs under `Assets/Resources/Characters/`. Existing scenes receive the new art at runtime through `GhostFaceView`, `LilyPixelPortraitFactory`, `LilyDialogueFrame`, and `AmbientBanterPanel`; scene YAML does not need manual editing.
+
+### Play Mode Test
+
+At 1920x1080, check Chapter 0, one teaching Chapter, Shell dialogue/banter, and the Final ending. Lily and Ghost must read as the same chunky low-resolution RPG art style with crisp nearest-neighbor edges. Confirm Ghost visibly changes between neutral, happy, confused, and sad without duplicate old eyes or text-mouth marks.
+
+## M0-T49 Run 007 Lily Colour Correction
+
+- `LilyPixelFullBody.png` and `LilyPixelPortrait.png` keep the Run 006 low-resolution RPG silhouette, high ponytail, glasses, red KCL lanyard, grey shirt, charcoal trousers, and tablet.
+- The suit blazer is restored from black to deep navy blue.
+- The Oxford shoes are restored from brown to black.
+- Both assets remain 96px, point-filtered, hard-alpha images; no runtime code, Inspector wiring, scene, or gameplay behavior changes.
+
+## M0-T49 Run 008 Batchmode Verification
+
+### EditMode Test Setup Corrections
+
+- `Act6BackendResponseValidatorTests.cs`: the filled-role return test now seeds a real deterministic validator result through the private `LastValidation` setter. This preserves the stale-validation precondition without starting the Play Mode-only backend client runner in EditMode.
+- `ShellReturnToHubOverlayTests.cs`: the Ghost pixel-sprite test calls `SetMood` before looking up generated child images, so `GhostFaceView` has created its runtime hierarchy before assertions run.
+- These are test-harness corrections only. Runtime puzzle, scoring, navigation, backend, and scene-builder behavior did not change.
+
+### Git Guard
+
+- `.gitattributes`: Unity scene YAML is exempt from Git's trailing-space check because Unity serializes empty scalar values as lines such as `m_Name: `. Other files remain covered by the normal `git diff --check` rules.
+
+### Verification Result
+
+- The four required builders regenerated Chapter 0, Chapter 6 Backend Response, Final Chapter, and Game Shell in that order, with Game Shell last.
+- The full Unity EditMode suite passed 87/87 after the two test setup corrections. Focused suites passed 8/8 for `ShellReturnToHubOverlayTests`, 8/8 for `Act6BackendResponseValidatorTests`, and 1/1 for `Act5TestingStaticPresenterTests`.
+- Serialized guards found exactly one Main Camera, Canvas, and EventSystem and zero missing scripts in each regenerated scene.
+- No Inspector changes are required. The only remaining verification is the single current 1920x1080 human Play Mode checklist in `Docs/UNITY_TEST_CHECKLIST.md`.
+
+## Run 012 Lily Footwear and Sprite Import Repair
+
+### LilyPixelFullBody.png
+
+- Keeps the approved Run 007 96x128 RPG pixel sprite, including its proportions, high ponytail, round glasses, navy-blue blazer, red KCL lanyard, tablet, charcoal trousers, pose, and bookish expression.
+- Changes only the lower footwear region. Black low-vamp Mary Jane flats show the top of each foot and a short ankle line.
+- Pixel comparison against the Run 007 source reports zero changed pixels above y=110; the complete difference box is limited to x=39..62 and y=110..121.
+- `LilyPixelPortrait.png` is unchanged because the requested change is below the portrait crop.
+
+### LilyPixelSpriteImporter.cs
+
+- `RepairLilyPixelSpriteImports()` configures the full-body and portrait PNG files as single sprites through Unity's `TextureImporter` API.
+- It uses point filtering, 100 pixels per unit, no mipmaps, clamp wrapping, alpha transparency, and no texture compression.
+- This removes stale sprite-sheet rectangles left from the older high-resolution art. The repair is run through `-executeMethod`; the `.meta` files are written by Unity rather than edited by hand.
+
+### Inspector Setup
+
+No scene or Inspector reference changes are required. Keep both Lily PNG files under `Assets/Resources/Characters/`.
+
+### Play Mode Test
+
+At 1920x1080, inspect Lily in Chapter 0 and the Final Chapter. Confirm the full sprite is crisp, fully visible, and not cropped; the blazer is navy blue, the lanyard is red, and both Mary Jane shoes remain readable. Open a Shell dialogue to confirm the existing portrait remains unchanged.
+## M0-T49 Run 013 Lily Shoe Coverage and Dissertation Review Package
+
+### LilyPixelFullBody.png
+
+- Keeps every approved Run 007 character pixel above y=110 unchanged.
+- Raises the black Mary Jane vamp by one pixel row and the thin strap by one row compared with Run 012.
+- Leaves three short ankle rows and one narrow instep row visible, so the shoe covers more of the foot while keeping the first-version low-vamp shape.
+- The difference from the Run 007 base remains inside x=39..62 and y=110..121: 180 changed pixels, zero changes above y=110, and hard 0/255 alpha.
+
+### Dissertation Review Package
+
+- `Docs/DISSERTATION_USER_BRIEF_CONSOLIDATED.md` records the user's literature, language, tool-comparison, evaluation, format, and grading requirements.
+- `Docs/DISSERTATION_WORK_COMPLETED_SUMMARY.md` separates completed report work from open evidence and format tasks.
+- `Docs/CLAUDE_REVIEW_PROMPT_DISSERTATION_FINAL_003.md` requires a source-checked literature review and a weighted KCL rubric mark.
+- `Docs/dissertation_review_sources/` preserves the supplied cover, LaTeX template, chapter guidance, rubric extract, earlier report extract, macOS archive metadata, readable manifest, and SHA-256 list.
+
+### Inspector Setup
+
+No manual scene or Inspector changes are required. Keep the Lily PNGs under `Assets/Resources/Characters/`; the Editor import helper keeps them in Single sprite mode with point filtering.
+
+### Play Mode Test
+
+At 1920x1080, inspect Lily in Chapter 0 and the Final Chapter. Confirm that the Run 007 appearance is unchanged and only a small ankle and instep strip remains above each black shoe. The portrait must remain unchanged.
+
+## M0-T49 Run 022: Guided Final Chapter and Later Ask Lily
+
+### Final Chapter guided repair
+
+- `Act6PipelineData.cs` defines six repair steps. Each step pairs one learned method with one
+  concrete shortcut and provides the short question shown on the board.
+- `Act6PipelineInteractionController.cs` stores the focused step and the six choices, advances after
+  a choice, returns to the first broken step after a failed run, and builds a hint context from the
+  current choice and test evidence.
+- `Act6PipelineStaticPresenter.cs` replaces the twelve-card palette with a six-step progress row and
+  two choice cards for the current step. The three test cards appear after all six choices are filled.
+  Its Lily note includes a direct `Ask Lily` button.
+- `Act6PipelineValidatorTests.cs` protects the guided candidate pairs. The presenter smoke test
+  checks six progress controls, two visible choices, and the absence of the old palette.
+
+The existing validator and three visitor cases remain the source of the result. The change reduces the
+amount shown at one time without changing the correct six-chapter integration.
+
+### Ask Lily in Chapters 4-6 and Final Chapter
+
+- `Act4ConfidenceInteractionController.cs`, `Act5TestingInteractionController.cs`,
+  `Act6BackendInteractionController.cs`, and `Act6PipelineInteractionController.cs` each build a
+  short state summary from the current puzzle. Their presenters open Lily chat from the chapter note.
+- `AmbientBanterPanel.cs` can now open chat even when a later chapter has no ambient banter panel.
+- `LilyChatWindow.cs` keeps the chapter state and request trigger for each chat turn.
+- `GhostBackendClient.cs` sends `stateSummary` and `trigger` with `POST /chat`.
+- `BanterData.cs` provides local fallback replies for Chapter 4, Chapter 5, Chapter 6, and the Final
+  Chapter.
+- `LaterChapterHintContextTests.cs` checks that all four later contexts are present and do not expose
+  internal answer identifiers.
+
+The backend seeds the four later learning contexts and includes the current puzzle state in the
+restricted prompt. If the backend or model is unavailable, the matching local chapter line is shown.
+
+### Inspector setup
+
+No manual Inspector wiring is required. The presenters create the new buttons and guided board at
+runtime. Keep `Render On Start` enabled on each generated chapter presenter.
+
+### Play Mode test
+
+Open Chapters 4, 5, 6, and the Final Chapter and press `Ask Lily` after changing the puzzle state.
+Confirm the chat opens and the reply remains related to the current chapter. In the Final Chapter,
+confirm only two choices are visible for the focused step, all six steps can be revisited, the test
+button remains unavailable until all six have a choice, and a failed run focuses the first broken
+step.
+
+
+## M0-T49 Run 023: Free-Form Final Chapter and Floating Lily
+
+Run 023 supersedes the guided two-choice Final Chapter from Run 022.
+
+### Final Chapter board
+
+- `Act6PipelineData.cs` again supplies twelve cards for a free-form board: five learned skills, five
+  shortcuts, and two backend actions. Player-facing labels and job lines are short and concrete.
+- `Act6PipelineInteractionController.cs` again supports selection, drag/drop placement, stage swaps,
+  the backend side socket, reset, and the three-case test suite. It also builds the current five-stage
+  state for Ask Lily and sends a different Lily reaction for selection, placement, wrong-role
+  placement, reset, failed tests, successful tests, and playback.
+- `Act6PipelineStaticPresenter.cs` again renders the palette, five main slots, backend socket, and
+  three visitor-test cards. Repeated card and slot explanations are shortened.
+- `Act6PipelineStaticPresenterTests.cs` confirms the palette has twelve cards, both fixed endpoints,
+  and three test cards, with no guided repair panel.
+- `Act6PipelineValidatorTests.cs` keeps the deterministic route cases and checks every palette label
+  and job line remains within a concise length.
+
+### Floating Lily in Chapters 4-6 and Final Chapter
+
+- `AmbientBanterHook.cs` maps the Chapter 4, Chapter 5, Chapter 6, and Final Chapter scenes to the
+  same draggable floating panel used by Chapters 1-3.
+- `AmbientBanterPanel.cs` keeps the latest state for each chapter, passes it into Ask Lily, and can
+  display an immediate Lily reaction without opening chat. The existing small Lily/Ghost portrait
+  remains part of the panel.
+- `BanterData.cs` adds short rotating Lily and Ghost lines for the four later scenes.
+- The Chapter 4, Chapter 5, Chapter 6, and Final presenters register their current controller state
+  with the floating panel. Their temporary embedded Ask Lily buttons are removed.
+- `LaterChapterHintContextTests.cs` checks the later scene mappings, banter content, state summaries,
+  and a real Final Chapter selection reaction on the floating panel.
+
+### Inspector setup
+
+No manual Inspector setup is required. The floating panel, portrait, drag handle, and Ask Lily button
+are created at runtime. Keep `Render On Start` enabled on the four chapter presenters.
+
+### Play Mode test
+
+Re-enter each later chapter after scripts compile. Confirm the same small portrait panel used in
+Chapters 1-3 appears and can be dragged. In the Final Chapter, select and place several different
+cards and confirm Lily's line changes without showing a correct/incorrect mark. Run one failing route,
+compare the three visitor cards, open Ask Lily, then repair the route and complete the ending.
+
+## M0-T50 Run 001: Local WebGL Installer
+
+The release keeps the browser client and local services in one Windows installation. The player
+installs `GhostSetup.exe` and opens Ghost from the Start menu or desktop shortcut. The launcher
+starts the packaged Node.js service and Ollama process on loopback addresses, then opens
+`http://localhost:3000` in the default browser. Progress and logs are written under the player's
+local application-data directory instead of the installation directory.
+
+`GhostWebGLReleaseBuilder` defines the nine release scenes explicitly and sends them to Unity's
+WebGL build pipeline. This keeps the unused sample scene out of the release without rewriting the
+project's Build Settings. `GHOST_WEBGL_OUTPUT` can redirect the build when it is called from
+`build-release.ps1`.
+
+The backend reads `GHOST_WEB_ROOT` when it starts. When that directory is present, Express serves
+the Unity WebGL files and adds the content-encoding and content-type headers required by Unity's
+Brotli-compressed data, JavaScript, and WebAssembly files. The existing REST routes remain on the
+same local origin.
+
+`GhostLauncher.exe` is a self-contained Windows launcher. It uses absolute paths inside the
+installed package, so it does not depend on a system Node.js or Ollama installation. Ollama listens
+on port 11435 with the packaged Granite model and cloud access disabled. Node.js listens on port
+3000 and uses a SQLite file under `%LOCALAPPDATA%\Ghost\data`. Normal startup can continue with
+static hints if the model runtime is unavailable. The `--self-test` path is stricter: it checks
+the REST health route, WebGL page, Granite model discovery, and one model-generated Lily hint before
+returning success.
+
+`build-release.ps1` builds and tests the backend, builds WebGL, publishes the launcher, and stages
+portable Node.js, the CPU/Vulkan Ollama runtime, Granite 3.1 Dense 2B, production dependencies, and
+licence notices. `build-installer.ps1` uses Inno Setup to create one installer.
+`test-clean-environment.ps1` runs the staged package with a restricted `PATH` and temporary user
+data. `test-installer.ps1` additionally performs a silent install, runs the same self-test, runs
+the uninstaller, and checks that the installed application directory is removed.
+
+### Inspector setup
+
+No Inspector setup is required. The release builder reads the existing generated scene files and
+does not add serialized scene references.
+
+### Play Mode and release test
+
+This deployment path is checked separately from Unity Play Mode. For an Editor check, use
+`Ghost > Build > WebGL Release`. For the distributable check, run the four commands in
+`Deployment/README.md`, install `Build/Installer/GhostSetup.exe`, and confirm that Ghost opens in
+the default browser. The recorded automated self-test requires the bundled model path to return an
+LLM-backed hint; it does not treat a static fallback as a clean-environment pass.
+
+## M0-T50 Run 002: Canonical D-drive build and Chapter 3 repair
+
+Run 002 rebuilt the release from `D:\Code\Ghost`, which is the canonical repository. The release
+script now waits for the Unity process to finish and checks its exit code before it looks for WebGL
+output. This prevents a successful GUI Unity build from being reported as missing while it is still
+running.
+
+The first D-drive WebGL build reproduced five missing-script warnings on Chapter 3 palette items.
+`Act3DialogGraphPaletteItemDragView` had been declared inside
+`Act3DialogGraphNodeDragView.cs`. Unity could add that component at runtime, but it could not save a
+normal script GUID for the second `MonoBehaviour`. Moving the palette component into
+`Act3DialogGraphPaletteItemDragView.cs` gives both behaviours a file that matches the class name.
+The five scene references now use that script's GUID. The rebuilt WebGL log contains no
+missing-script warning.
+
+The canonical release passed 147 EditMode tests, 10 backend route tests, the staged-package
+self-test, the installed-package self-test, and a browser startup check. The installed self-test
+uses a restricted `PATH` and verifies the WebGL page, REST backend, SQLite startup, packaged Granite
+model discovery, and one model-backed hint. These results are recorded in
+`Docs/codex_runs/M0-T50_002_sync_to_canonical_repo.md`.
+
+### Inspector setup
+
+No manual Inspector setup is required. The repaired Chapter 3 scene already refers to the separated
+palette drag component, and the WebGL release builder reads the existing scene files.
+
+### Play Mode and release test
+
+Unity Editor Play Mode was not rerun during this deployment repair. The generated WebGL client was
+opened in a fresh Edge profile, where the loading overlay cleared and the game canvas appeared. The
+installer self-test then exercised the packaged services and local model without using a system
+Node.js or Ollama installation. A separate physical clean Windows machine is still required for the
+final external-machine check.
+## M0-T51 Run 001: Global visual system and Windows desktop release
+
+### Shared visual system
+
+`GhostUITheme.cs` is now the sole runtime source for UI font selection, minimum text sizing, colour tokens, rounded sprites, and the standard `Panel`, `Card`, `Chip`, `DropZone`, `PushButton`, and `Label` factories. Small compatibility overloads let existing scene geometry and existing GameObjects use the same factories without local copies.
+
+The following C# presentation scripts now consume the theme directly:
+
+- `Act1IntentClassificationStaticPresenter.cs` uses themed piles, cards, labels, and controls; its serialized `intentGroupListRoot` field is preserved through `FormerlySerializedAs` while the code name is now `pileList`.
+- `Act2EntityExtractionStaticPresenter.cs`, `Act3DialogGraphStaticPresenter.cs`, `Act4ConfidenceStaticPresenter.cs`, `Act5TestingStaticPresenter.cs`, `Act6BackendStaticPresenter.cs`, `Act6PipelineStaticPresenter.cs`, and `FinalChapterConversationPresenter.cs` use the shared text tokens and matching rounded surface factories without changing their controllers or validators.
+- `Chapter0StoryPresenter.cs`, `AmbientBanterHook.cs`, `AmbientBanterPanel.cs`, `LilyChatWindow.cs`, `GhostFaceView.cs`, and `LilyDialogueFrame.cs` use the same typography and surfaces for story, companion, chat, and ghost UI.
+- `Act2EntityTokenDragView.cs`, `Act6PipelinePartDragView.cs`, and `Act6BackendCardDragView.cs` use themed drag previews rather than local font fallbacks or bare rectangular previews.
+- `Act1IntentClassificationPrototypeSceneBuilder.cs`, `Act3DialogGraphPrototypeSceneBuilder.cs`, and `GameShellSceneBuilder.cs` use `GhostUITheme` for the hierarchy they author. The other chapter builders only create a Canvas and presenter root, so they have no local UI factories to migrate.
+- `ChatbotFundamentalsPresenter.cs` and `ShellReturnToHubOverlay.cs` route their remaining runtime-created gameplay buttons through `PushButton`, closing the global bare-button audit.
+
+All chapter presenters now construct a 44 px header, a 40 px objective strip at `HeadingSize`, a 170 px conversation panel, and a main information/body region with a 96 px minimum and flexible height. Information panels use 12 px internal padding where they are constructed by the presenter.
+
+Direct `Image` construction remains only for non-panel graphics: full-screen backdrops, Ghost/Lily/visitor portraits, confidence slider graphics, graph ports and wires, test-map ports and wires, and ending glow artwork. Rounded panels, cards, chips, buttons, and drop zones are created through `GhostUITheme`.
+
+### Windows desktop delivery
+
+`GhostWebGLReleaseBuilder.cs` now contains `GhostDesktopReleaseBuilder`. The legacy filename is retained so the existing Unity `.meta` file is not renamed; the class builds the same nine scenes to `Build\Windows\Ghost.exe` with `BuildTarget.StandaloneWindows64` and keeps the scene-existence and throw-on-failure checks.
+
+`Deployment/Launcher/Program.cs` starts the packaged backend and Ollama services, validates `app\player\Ghost.exe`, and launches the native player. Its self-test checks the Windows player payload instead of requesting a WebGL page. `Backend/src/server.ts` now starts only the REST API; the retired WebGL static host and Brotli/MIME handling are gone.
+
+`Deployment/build-release.ps1` stages the standalone player under `Build\Release\Ghost\app\player`. The Inno Setup definition uses the player executable for installed icons while shortcuts continue to start `GhostLauncher.exe`, ensuring services are ready before Unity opens. The installer test checks that the native player was installed.
+
+### Inspector setup
+
+No new manual Inspector references are required. Keep each generated chapter presenter's existing `Render On Start` setting. `GhostUITheme.cs.meta` is generated by Unity on import. Regenerate the shell and all eight chapter scenes through their existing `Ghost/Build...` menu commands after the repository's Act 4 model/controller compile mismatch is resolved.
+
+### Play Mode and release test
+
+At 1920x1080, open Chapter 1 and Chapters 2-6 plus the Final Chapter. Confirm the 44 px header and right-aligned progress, 40 px objective strip, three expanding information blocks, 170 px Ghost conversation, readable themed text, and rounded cards/buttons/drop zones. Exercise each chapter's existing drag, click, validation, reset, and Ask Lily paths to confirm presentation changes did not alter puzzle results.
+
+For the native release, run `Deployment\build-release.ps1`, confirm `Build\Windows\Ghost.exe` and its data folder exist, then run the clean-environment and installer tests described in `Deployment\README.md`.
+## M0-T51 Run 002: Unity verification and Act 1 builder repair
+
+`Act1IntentClassificationPrototypeSceneBuilder.cs` now creates the intent-group template through the existing three-argument `GhostUITheme.DropZone` overload, then reapplies the template's original anchors and zero offsets to the returned `RectTransform`. This is a compile-only repair for the Run 001 theme migration; it does not change intent grouping, validation, authored data, or runtime puzzle behaviour.
+
+All nine scene builders were rerun after the repair. The regenerated gameplay hierarchy keeps the M0-T51 authored proportions: 44 px header, 40 px objective strip, information blocks with a 96 px minimum and flexible height, and a 170 px Ghost conversation panel. Flexible information blocks may render taller when the vertical layout distributes spare space.
+
+### Inspector setup
+
+No manual Inspector setup is required. The nine generated scenes already contain the rebuilt presenter hierarchies and existing serialized references.
+
+### Play Mode and release test
+
+Open Chapters 1 and 4 at 1920x1080 and confirm the full hierarchy remains visible with no overlap: header and progress, objective strip, flexible teaching/information blocks, conversation panel, and lower controls. The Run 002 automated evidence is recorded in `Docs/codex_runs/M0-T51_002_unity_verification.md`; interactive drag, click, and completion flows remain a separate human Play Mode check.
+## M0-T51 Run 003: layout repair
+
+Run 003 keeps the M0-T51 theme tokens and deterministic gameplay unchanged while repairing the
+containers exposed by the larger type scale. Shell buttons now use their label's preferred width and
+have a 44px minimum height; chapter cards reserve separate title, description, and button space.
+Chapter headers reserve the 220px Return-to-Hub overlay area, keep the title flexible, and give progress
+indicators fixed widths. Objective strips explicitly use zero flexible height.
+
+Act 4 gives the visitor-queue title and guide their own fixed rows. Act 5 enlarges node cards and their
+text rows; ports remain anchored to card edges and wires still use transformed port centres, so no port
+math changed. The Final Chapter separates Ghost's status region from the face and lets the no-backend
+label fill its row. Chapter 0 moves its progress and skip controls left of the global overlay.

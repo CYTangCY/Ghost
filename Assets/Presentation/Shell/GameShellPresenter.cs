@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Ghost.Presentation.Backend;
-using Ghost.Presentation.Fundamentals;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,10 +10,8 @@ namespace Ghost.Presentation.Shell
     {
         [SerializeField] private GameObject titleScreen;
         [SerializeField] private GameObject nameEntryScreen;
-        [SerializeField] private GameObject fundamentalsScreen;
         [SerializeField] private GameObject actHubScreen;
         [SerializeField] private LilyDialogueFrame lilyDialogueFrame;
-        [SerializeField] private ChatbotFundamentalsPresenter fundamentalsPresenter;
         [SerializeField] private Button startButton;
         [SerializeField] private InputField playerNameInput;
         [SerializeField] private Button confirmNameButton;
@@ -22,10 +19,14 @@ namespace Ghost.Presentation.Shell
         [SerializeField] private Button createAccountButton;
         [SerializeField] private Button useAccountButton;
         [SerializeField] private Text accountStatusText;
-        [SerializeField] private Button fundamentalsButton;
+        [SerializeField] private Button chapter0Button;
         [SerializeField] private Button act1Button;
         [SerializeField] private Button act2Button;
         [SerializeField] private Button act3Button;
+        [SerializeField] private Button act4Button;
+        [SerializeField] private Button act5Button;
+        [SerializeField] private Button act6Button;
+        [SerializeField] private Button finalChapterButton;
         [SerializeField] private Button narrativeContinueButton;
         [SerializeField] private Button backToTitleButton;
 
@@ -42,7 +43,7 @@ namespace Ghost.Presentation.Shell
             Button act3,
             Button back)
         {
-            Configure(title, null, null, hub, dialogueFrame, null, start, null, null, null, null, null, null, null, act1, act2, act3, null, back);
+            Configure(title, null, hub, dialogueFrame, start, null, null, null, null, null, null, act1, act2, act3, null, null, null, null, back);
         }
 
         public void Configure(
@@ -60,58 +61,16 @@ namespace Ghost.Presentation.Shell
             Button act1,
             Button act2,
             Button act3,
-            Button continueNarrative,
-            Button back)
-        {
-            Configure(
-                title,
-                nameEntry,
-                null,
-                hub,
-                dialogueFrame,
-                null,
-                start,
-                nameInput,
-                confirmName,
-                accountInput,
-                createAccount,
-                useAccount,
-                accountStatus,
-                null,
-                act1,
-                act2,
-                act3,
-                continueNarrative,
-                back);
-        }
-
-        public void Configure(
-            GameObject title,
-            GameObject nameEntry,
-            GameObject fundamentals,
-            GameObject hub,
-            LilyDialogueFrame dialogueFrame,
-            ChatbotFundamentalsPresenter fundamentalsSequence,
-            Button start,
-            InputField nameInput,
-            Button confirmName,
-            InputField accountInput,
-            Button createAccount,
-            Button useAccount,
-            Text accountStatus,
-            Button fundamentalsEntry,
-            Button act1,
-            Button act2,
-            Button act3,
+            Button act4,
+            Button act5,
+            Button act6,
             Button continueNarrative,
             Button back)
         {
             titleScreen = title;
             nameEntryScreen = nameEntry;
-            fundamentalsScreen = fundamentals;
             actHubScreen = hub;
             lilyDialogueFrame = dialogueFrame;
-            fundamentalsPresenter = fundamentalsSequence;
             startButton = start;
             playerNameInput = nameInput;
             confirmNameButton = confirmName;
@@ -119,14 +78,62 @@ namespace Ghost.Presentation.Shell
             createAccountButton = createAccount;
             useAccountButton = useAccount;
             accountStatusText = accountStatus;
-            fundamentalsButton = fundamentalsEntry;
             act1Button = act1;
             act2Button = act2;
             act3Button = act3;
+            act4Button = act4;
+            act5Button = act5;
+            act6Button = act6;
             narrativeContinueButton = continueNarrative;
             backToTitleButton = back;
         }
 
+        public void Configure(
+            GameObject title,
+            GameObject nameEntry,
+            GameObject hub,
+            LilyDialogueFrame dialogueFrame,
+            Button start,
+            InputField nameInput,
+            Button confirmName,
+            InputField accountInput,
+            Button createAccount,
+            Button useAccount,
+            Text accountStatus,
+            Button act1,
+            Button act2,
+            Button act3,
+            Button act4,
+            Button act5,
+            Button act6,
+            Button continueNarrative,
+            Button back,
+            Button chapter0Entry,
+            Button finalChapterEntry)
+        {
+            Configure(
+                title,
+                nameEntry,
+                hub,
+                dialogueFrame,
+                start,
+                nameInput,
+                confirmName,
+                accountInput,
+                createAccount,
+                useAccount,
+                accountStatus,
+                act1,
+                act2,
+                act3,
+                act4,
+                act5,
+                act6,
+                continueNarrative,
+                back);
+            chapter0Button = chapter0Entry;
+            finalChapterButton = finalChapterEntry;
+        }
         private void Start()
         {
             BackendSync.EnsureStarted();
@@ -135,23 +142,27 @@ namespace Ghost.Presentation.Shell
             WireButton(confirmNameButton, ConfirmPlayerNameAndShowHub);
             WireButton(createAccountButton, CreateAccountAndShowHub);
             WireButton(useAccountButton, UseAccountAndShowHub);
-            WireButton(fundamentalsButton, ShowFundamentals);
+            WireButton(chapter0Button, StartChapter0);
             WireButton(act1Button, () => ShowActIntro(GhostNarrativeState.Act1Id));
             WireButton(act2Button, () => ShowActIntro(GhostNarrativeState.Act2Id));
             WireButton(act3Button, () => ShowActIntro(GhostNarrativeState.Act3Id));
+            WireButton(act4Button, () => ShowActIntro(GhostNarrativeState.Act4Id));
+            WireButton(act5Button, () => ShowActIntro(GhostNarrativeState.Act5Id));
+            WireButton(act6Button, () => ShowActIntro(GhostNarrativeState.Act6Id));
+            WireButton(finalChapterButton, () => ShowActIntro(GhostNarrativeState.FinalChapterId));
             WireButton(narrativeContinueButton, ContinueNarrative);
             WireButton(backToTitleButton, ShowTitle);
-
-            if (fundamentalsPresenter != null)
-            {
-                fundamentalsPresenter.Finished -= ShowActHub;
-                fundamentalsPresenter.Finished += ShowActHub;
-            }
 
             if (!string.IsNullOrWhiteSpace(GhostNarrativeState.PendingDebriefActId))
             {
                 ShowActHub();
                 PlayPendingDebrief();
+                return;
+            }
+
+            if (GhostNarrativeState.ConsumeResumeAtHub())
+            {
+                ShowActHub();
                 return;
             }
 
@@ -163,7 +174,6 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, true);
             SetScreenActive(nameEntryScreen, false);
-            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, false);
             ShowDialogue(ShellDialogueData.TitleScreenId);
         }
@@ -184,7 +194,6 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, true);
-            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, false);
             PrepareAccountFields();
             ShowDialogue(ShellDialogueData.NameEntryScreenId);
@@ -195,32 +204,14 @@ namespace Ghost.Presentation.Shell
             ClearNarrativeFlow();
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, false);
-            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, true);
             ShowDialogue(ShellDialogueData.ActHubScreenId);
-        }
-
-        public void ShowFundamentals()
-        {
-            ClearNarrativeFlow();
-            SetScreenActive(titleScreen, false);
-            SetScreenActive(nameEntryScreen, false);
-            SetScreenActive(actHubScreen, false);
-            SetScreenActive(fundamentalsScreen, true);
-
-            if (fundamentalsPresenter == null)
-            {
-                ShowActHub();
-                return;
-            }
-
-            fundamentalsPresenter.Begin();
         }
 
         public void ConfirmPlayerNameAndShowHub()
         {
             GhostNarrativeState.SetPlayerName(playerNameInput == null ? null : playerNameInput.text);
-            ShowActHub();
+            ShowChapter0OrHub();
         }
 
         public void CreateAccountAndShowHub()
@@ -251,7 +242,7 @@ namespace Ghost.Presentation.Shell
                 GhostNarrativeState.SetPlayerName(response.Value.displayName);
                 BackendSync.PushProgress();
                 SetAccountStatus("Account ready: " + response.Value.userName + " / " + response.Value.accountId);
-                ShowActHub();
+                ShowChapter0OrHub();
             });
         }
 
@@ -286,10 +277,27 @@ namespace Ghost.Presentation.Shell
             pendingLaunchActId = actId;
             SetScreenActive(titleScreen, false);
             SetScreenActive(nameEntryScreen, false);
-            SetScreenActive(fundamentalsScreen, false);
             SetScreenActive(actHubScreen, true);
-            ShowLine(ShellDialogueData.GetBeat(actId, ShellDialogueData.IntroPhaseId));
+            ShellDialogueLine introLine;
+            if (string.Equals(actId, GhostNarrativeState.Act6Id, System.StringComparison.Ordinal))
+            {
+                introLine = ShellDialogueData.GetAct6Intro(AreEarlierActsComplete());
+            }
+            else if (string.Equals(actId, GhostNarrativeState.FinalChapterId, System.StringComparison.Ordinal))
+            {
+                introLine = ShellDialogueData.GetFinalChapterIntro(AreTeachingChaptersComplete());
+            }
+            else
+            {
+                introLine = ShellDialogueData.GetBeat(actId, ShellDialogueData.IntroPhaseId);
+            }
+            ShowLine(introLine);
             SetNarrativeContinueVisible("Continue to " + ShellDialogueData.GetActTitle(actId));
+        }
+
+        public void StartChapter0()
+        {
+            SceneManager.LoadScene(ShellSceneNames.Chapter0SceneName);
         }
 
         public void StartAct1()
@@ -305,6 +313,26 @@ namespace Ghost.Presentation.Shell
         public void StartAct3()
         {
             SceneManager.LoadScene(ShellSceneNames.Act3SceneName);
+        }
+
+        public void StartAct4()
+        {
+            SceneManager.LoadScene(ShellSceneNames.Act4SceneName);
+        }
+
+        public void StartAct5()
+        {
+            SceneManager.LoadScene(ShellSceneNames.Act5SceneName);
+        }
+
+        public void StartAct6()
+        {
+            SceneManager.LoadScene(ShellSceneNames.Act6SceneName);
+        }
+
+        public void StartFinalChapter()
+        {
+            SceneManager.LoadScene(ShellSceneNames.FinalChapterSceneName);
         }
 
         private void ContinueNarrative()
@@ -378,7 +406,45 @@ namespace Ghost.Presentation.Shell
                 case GhostNarrativeState.Act3Id:
                     StartAct3();
                     return;
+                case GhostNarrativeState.Act4Id:
+                    StartAct4();
+                    return;
+                case GhostNarrativeState.Act5Id:
+                    StartAct5();
+                    return;
+                case GhostNarrativeState.Act6Id:
+                    StartAct6();
+                    return;
+                case GhostNarrativeState.FinalChapterId:
+                    StartFinalChapter();
+                    return;
             }
+        }
+
+        private static bool AreEarlierActsComplete()
+        {
+            return GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act1Id) &&
+                GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act2Id) &&
+                GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act3Id) &&
+                GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act4Id) &&
+                GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act5Id);
+        }
+
+        private static bool AreTeachingChaptersComplete()
+        {
+            return AreEarlierActsComplete() &&
+                GhostNarrativeState.IsActCompleted(GhostNarrativeState.Act6Id);
+        }
+
+        private void ShowChapter0OrHub()
+        {
+            if (GhostNarrativeState.IsActCompleted(GhostNarrativeState.Chapter0Id))
+            {
+                ShowActHub();
+                return;
+            }
+
+            StartChapter0();
         }
 
         private void LoadAccountProgressAndShowHub(AccountResponse account)
@@ -400,22 +466,18 @@ namespace Ghost.Presentation.Shell
                         true,
                         true);
                     SetAccountStatus("Loaded account: " + account.userName);
-                    ShowActHub();
+                    ShowChapter0OrHub();
                     return;
                 }
 
                 GhostNarrativeState.ApplyBackendProgress(account.displayName, new string[0], true, true);
                 SetAccountStatus("Account found, but progress could not be loaded. Starting from an empty local state.");
-                ShowActHub();
+                ShowChapter0OrHub();
             });
         }
 
         private void OnDestroy()
         {
-            if (fundamentalsPresenter != null)
-            {
-                fundamentalsPresenter.Finished -= ShowActHub;
-            }
         }
 
         private void PrepareAccountFields()

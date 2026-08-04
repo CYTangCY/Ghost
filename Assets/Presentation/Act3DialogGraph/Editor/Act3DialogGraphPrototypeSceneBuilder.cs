@@ -1,3 +1,4 @@
+using Ghost.Presentation.Common;
 using Ghost.Presentation.Act3DialogGraph;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -62,7 +63,7 @@ namespace Ghost.Presentation.Act3.Editor
 
         private static void CreateStaticUi(Transform canvasTransform)
         {
-            var root = CreatePanel(
+            var root = GhostUITheme.Panel(
                 "Act 3 Dialog Graph Prototype",
                 canvasTransform,
                 Vector2.zero,
@@ -81,27 +82,27 @@ namespace Ghost.Presentation.Act3.Editor
 
             var presenter = root.gameObject.AddComponent<Act3DialogGraphStaticPresenter>();
 
-            CreateLabel(
+            GhostUITheme.Label(
                 "Title",
                 root,
                 "Act 3: Ghost's Reply Map",
-                44,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
-                new Color(0.15f, 0.12f, 0.22f),
+                GhostUITheme.Ink,
                 68f);
 
-            CreateLabel(
+            GhostUITheme.Label(
                 "Subtitle",
                 root,
                 "Add simple cards, move them around, then connect them so Ghost knows when to answer or ask for the room.",
-                20,
+                GhostUITheme.TitleSize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
-                new Color(0.30f, 0.28f, 0.38f),
+                GhostUITheme.InkSoft,
                 70f);
 
-            var body = CreatePanel(
+            var body = GhostUITheme.Panel(
                 "Prototype Body",
                 root,
                 Vector2.zero,
@@ -111,6 +112,7 @@ namespace Ghost.Presentation.Act3.Editor
                 new Color(1f, 1f, 1f, 0f));
 
             var bodyLayoutElement = body.gameObject.AddComponent<LayoutElement>();
+            bodyLayoutElement.minHeight = 96f;
             bodyLayoutElement.flexibleHeight = 1f;
 
             var bodyLayout = body.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -124,14 +126,16 @@ namespace Ghost.Presentation.Act3.Editor
             var graphPanel = CreateColumnPanel("Graph Canvas Panel", body, 900f, 1120f, 1f, 18, new Color(0.98f, 0.98f, 1f));
             var goalPanel = CreateColumnPanel("Goal Test Panel", body, 290f, 290f, 0f, 18, new Color(1f, 0.985f, 0.94f));
 
-            CreateLabel("Palette Panel Title", palettePanel, "Palette", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.17f, 0.28f), 42f);
-            var paletteRoot = CreateListRoot("Node Palette List", palettePanel, 6f);
+            GhostUITheme.Label("Palette Panel Title", palettePanel, "Palette", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 42f);
+            var paletteViewport = CreateScrollViewport("Node Palette Viewport", palettePanel);
+            var paletteRoot = CreateListRoot("Node Palette List", paletteViewport, 6f);
+            AttachScroll(paletteViewport, paletteRoot);
 
-            CreateLabel("Graph Panel Title", graphPanel, "Reply Map", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.15f, 0.12f, 0.22f), 42f);
+            GhostUITheme.Label("Graph Panel Title", graphPanel, "Reply Map", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 42f);
             var graphCanvasRoot = CreateGraphCanvasRoot(graphPanel);
             var validationRoot = CreateValidationRoot(graphPanel);
 
-            CreateLabel("Goal Panel Title", goalPanel, "Guide", 28, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.13f, 0.22f), 42f);
+            GhostUITheme.Label("Goal Panel Title", goalPanel, "Guide", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 42f);
             var goalRoot = CreateListRoot("Goal Test List", goalPanel, 8f);
 
             var templates = new GameObject("Templates", typeof(RectTransform));
@@ -163,7 +167,7 @@ namespace Ghost.Presentation.Act3.Editor
             int horizontalPadding,
             Color color)
         {
-            var panel = CreatePanel(
+            var panel = GhostUITheme.Panel(
                 name,
                 parent,
                 Vector2.zero,
@@ -172,7 +176,7 @@ namespace Ghost.Presentation.Act3.Editor
                 Vector2.zero,
                 color);
 
-            var outline = panel.gameObject.AddComponent<Outline>();
+            var outline = panel.gameObject.GetComponent<Outline>();
             outline.effectColor = new Color(0.70f, 0.68f, 0.86f, 0.75f);
             outline.effectDistance = new Vector2(2f, -2f);
 
@@ -191,6 +195,54 @@ namespace Ghost.Presentation.Act3.Editor
             layout.childForceExpandHeight = false;
 
             return panel;
+        }
+
+        /// <summary>
+        /// A clipped, scrollable viewport. The palette now holds cards for both visitors, which needs
+        /// roughly 868px in a column about 430px tall - without this, over half the cards existed but
+        /// could never be reached.
+        /// </summary>
+        private static RectTransform CreateScrollViewport(string name, Transform parent)
+        {
+            var viewport = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+            viewport.SetParent(parent, false);
+
+            var element = viewport.gameObject.AddComponent<LayoutElement>();
+            element.flexibleHeight = 1f;
+            element.minHeight = 200f;
+
+            viewport.gameObject.AddComponent<RectMask2D>();
+            return viewport;
+        }
+
+        private static void AttachScroll(RectTransform viewport, RectTransform content)
+        {
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = Vector2.zero;
+
+            // The content must size itself to its children, otherwise the ScrollRect has nothing to
+            // scroll through.
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var listElement = content.GetComponent<LayoutElement>();
+            if (listElement != null)
+            {
+                listElement.flexibleHeight = 0f;
+            }
+
+            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 24f;
+            scroll.inertia = true;
         }
 
         private static RectTransform CreateListRoot(string name, Transform parent, float spacing)
@@ -213,7 +265,7 @@ namespace Ghost.Presentation.Act3.Editor
 
         private static RectTransform CreateGraphCanvasRoot(Transform parent)
         {
-            var root = CreatePanel(
+            var root = GhostUITheme.Panel(
                 "Graph Canvas Region",
                 parent,
                 Vector2.zero,
@@ -238,7 +290,7 @@ namespace Ghost.Presentation.Act3.Editor
 
         private static RectTransform CreateValidationRoot(Transform parent)
         {
-            var root = CreatePanel(
+            var root = GhostUITheme.Panel(
                 "Validation Controls",
                 parent,
                 Vector2.zero,
@@ -265,7 +317,7 @@ namespace Ghost.Presentation.Act3.Editor
 
         private static GameObject CreatePaletteItemTemplate(Transform parent)
         {
-            var item = CreatePanel(
+            var item = GhostUITheme.Card(
                 "Palette Item Template",
                 parent,
                 Vector2.zero,
@@ -274,14 +326,14 @@ namespace Ghost.Presentation.Act3.Editor
                 Vector2.zero,
                 new Color(0.92f, 0.97f, 1f)).gameObject;
 
-            CreateLabel("PaletteItemTitle", item.transform, "Node", 18, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.18f, 0.30f), 24f);
-            CreateLabel("PaletteItemDetail", item.transform, "Description", 13, FontStyle.Normal, TextAnchor.MiddleLeft, new Color(0.28f, 0.34f, 0.44f), 20f);
+            GhostUITheme.Label("PaletteItemTitle", item.transform, "Node", GhostUITheme.HeadingSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 24f);
+            GhostUITheme.Label("PaletteItemDetail", item.transform, "Description", GhostUITheme.SmallSize, FontStyle.Normal, TextAnchor.UpperLeft, GhostUITheme.InkSoft, 44f);
             return item;
         }
 
         private static GameObject CreateTestCaseTemplate(Transform parent)
         {
-            var item = CreatePanel(
+            var item = GhostUITheme.Card(
                 "Test Case Template",
                 parent,
                 Vector2.zero,
@@ -290,71 +342,10 @@ namespace Ghost.Presentation.Act3.Editor
                 Vector2.zero,
                 new Color(1f, 0.985f, 0.92f)).gameObject;
 
-            CreateLabel("TestCaseTitle", item.transform, "test-case-id", 17, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.18f, 0.13f, 0.22f), 24f);
-            CreateLabel("TestCaseDetail", item.transform, "intent + entity -> response", 13, FontStyle.Normal, TextAnchor.MiddleLeft, new Color(0.34f, 0.28f, 0.38f), 34f);
+            GhostUITheme.Label("TestCaseTitle", item.transform, "test-case-id", GhostUITheme.BodySize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink, 24f);
+            GhostUITheme.Label("TestCaseDetail", item.transform, "intent + entity -> response", GhostUITheme.SmallSize, FontStyle.Normal, TextAnchor.MiddleLeft, GhostUITheme.InkSoft, 34f);
             return item;
         }
 
-        private static RectTransform CreatePanel(
-            string name,
-            Transform parent,
-            Vector2 anchorMin,
-            Vector2 anchorMax,
-            Vector2 offsetMin,
-            Vector2 offsetMax,
-            Color color)
-        {
-            var panel = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-            panel.SetParent(parent, false);
-            panel.anchorMin = anchorMin;
-            panel.anchorMax = anchorMax;
-            panel.offsetMin = offsetMin;
-            panel.offsetMax = offsetMax;
-
-            var image = panel.gameObject.AddComponent<Image>();
-            image.color = color;
-
-            return panel;
-        }
-
-        private static Text CreateLabel(
-            string name,
-            Transform parent,
-            string text,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color,
-            float preferredHeight)
-        {
-            var label = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            label.transform.SetParent(parent, false);
-            label.text = text;
-            label.font = GetBuiltinFont();
-            label.fontSize = fontSize;
-            label.fontStyle = fontStyle;
-            label.alignment = alignment;
-            label.color = color;
-            label.horizontalOverflow = HorizontalWrapMode.Wrap;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
-            label.raycastTarget = false;
-
-            var layoutElement = label.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = preferredHeight;
-            layoutElement.preferredHeight = preferredHeight;
-
-            return label;
-        }
-
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

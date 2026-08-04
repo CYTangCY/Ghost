@@ -28,34 +28,36 @@ puzzle correctness stays deterministic (validators, graph simulation, test cases
 never decided by the LLM. The per-Act "Systems later" notes below say how each Act touches those
 systems.
 
-- **Act 1 — Intent Classification.** Player groups message cards by purpose. Teaches that different
-  wording can share one intent. (Foundation.)
-- **Act 2 — Entity Extraction.** Player tags phrases/chips and assigns entity types. Teaches that a
-  chatbot must pull key details (names/places/times/objects), synonyms, and system vs custom
-  entities. Connects to Act 1: intent = what is wanted; entity = the details inside that request.
-- **Act 3 — Dialog Management via Node Graph (flagship).** Player assembles a dialog node graph
-  (nodes, branching, slots, responses, context). Teaches how a conversation is structured. Connects
-  to Acts 1–2: intents trigger nodes and entities fill slots/conditions. The node graph is the
-  flagship mechanic, reused/extended in Acts 4–6.
-- **Act 4 — Confidence and Fallback.** Player tunes thresholds and adds fallback/disambiguation
-  nodes in the graph, including sentiment-based routing/escalation (sentiment as a routing signal, not
-  scoring). Teaches confidence scoring and graceful failure. Extends the Act 3 graph.
-- **Act 5 — Testing and Debugging.** Player runs test conversations through the graph and fixes
-  faults. Teaches chatbot testing/debugging. Extends the Act 3 graph.
-- **Act 6 — Integration / Backend Action / Response Generation.** Player adds backend/action and
-  response-generation nodes. Teaches how a bot fetches data and forms a reply. Extends the Act 3
-  graph.
-- **Act 7 — NLP Pipeline Lab.** POS tagging, sentiment, machine translation (the former optional
-  Act *); tokenisation and NER are taught in Act 2, so Act 7 covers the remaining subtasks.
-  Supplementary lab that supports the concepts behind earlier Acts.
-- **Act 8 — Capstone / "Repair Ghost's Voice".** Player reconnects the five chatbot components into
-  a working pipeline (the former Act 0 mechanic). Teaches how the whole system fits together; the
-  integration demo that ties every prior Act's concept into one playable whole.
+### User-Approved Story / Teaching Structure Override (2026-07-15)
 
-Fundamentals note: the former Act 0 (chatbot definition, rule-based vs AI-enabled, five components,
-four challenges) is preserved — its concepts are introduced by Lily in the Game Shell, and its
-"Rebuild Ghost's Voice" pipeline mechanic becomes the Act 8 capstone. The detailed per-Act sections
-below still use the earlier numbering and are being migrated to this structure.
+The playable structure is now explicit:
+
+- **Chapter 0 - Opening Story.** A narrative prologue only. It introduces the late-night lab, Lily,
+  the player as Lily's junior, Ghost's garbled voice, and the reason they begin helping. It is not a
+  chatbot lesson and has no puzzle score.
+- **Chapters 1-6 - Teaching Chapters.** Intent classification, entity extraction, dialogue
+  management, confidence/fallback, testing/debugging, then backend action/response generation.
+  Every numbered teaching chapter has deterministic gameplay and visible consequences.
+- **Final Chapter - Repair Ghost's Voice.** The five-component pipeline is the final integration
+  interaction. It reuses every lesson, then owns Ghost's restored voice, player-name thank-you, Lily's
+  closing beat, credits, and title return.
+
+This 2026-07-15 user decision supersedes the temporary 2026-07-04 ship-plan wording that treated the
+capstone and ending as Chapter 6. The optional Game Shell 'Ghost's Voice Basics' remains a reference
+overview; it is not Chapter 0. The former internal Act6Pipeline class/file names may remain temporarily
+to preserve imported Unity asset identities, but their player-facing role is the Final Chapter.
+
+- **Chapter 1 - Intent Classification.** Player groups messages by purpose.
+- **Chapter 2 - Entity Extraction.** Player marks the important details inside requests.
+- **Chapter 3 - Dialogue Management.** Player builds the reply map and follow-up flow.
+- **Chapter 4 - Confidence and Fallback.** Player tunes confidence and safe fallback/handoff routes.
+- **Chapter 5 - Testing and Debugging.** Player previews, tests, repairs, and reruns the reply map.
+- **Chapter 6 - Backend Action and Response Generation.** Player connects a stored-data source,
+  chooses the action that retrieves the needed deterministic fact, and places the response template
+  that turns that fact into a complete reply.
+- **Final Chapter - Full-System Integration.** Player reconnects UI input, NLP engine, dialogue
+  management, response generation, and UI output, with backend integration as a side link, then sees
+  the authored ending story.
 
 M0-T35 implementation note (2026-06-27): the Game Shell now includes a compact playable
 "Ghost's Voice Basics" overview that covers chatbot definition, NLP/ML pillars, rule-based vs
@@ -509,27 +511,71 @@ test consequence live in that conversation panel rather than competing with the 
 
 ### Confirmed Topic
 
-- scoring
+- confidence scoring
 - threshold calibration
-- disambiguation
+- fallback / clarification
+- human handoff / escalation
+- sentiment as an authored routing signal
 - fallback design
 
 ### Learning Objective
 
-TBD.
+The player should understand that a confidence score represents how certain a chatbot is about the
+intent it detected, and that a confidence threshold controls whether it answers or uses a fallback.
+A threshold that is too low makes Ghost bluff at uncertain or unstructured messages; one that is too
+high makes Ghost reject clear requests. The player should also understand that a fallback asks for a
+safer rephrasing, while a complex or upset request may need a planned human handoff. Sentiment is used
+only as one authored routing signal for that escalation, never as correctness or scoring.
 
 ### Cute Ghost Communication Problem
 
-TBD.
+Ghost's confidence dial is broken. Ghost either answers messages it barely understands with cheerful
+but wrong certainty, or freezes and asks everyone to repeat themselves. One frustrated visitor has a
+complex problem that Ghost should pass to Lily instead of trying to solve alone.
 
 ### Puzzle Mechanic
 
-Likely:
-slider calibration and fallback selection.
+Slider calibration plus simple node wiring. The player tunes one 0-100 confidence-threshold slider,
+attaches a `Fallback` route that asks uncertain visitors to rephrase, attaches a `Handoff` route that
+calls Lily for the authored complex/upset case, then chooses `Run the day` to play the visitor queue.
+
+### Player Action
+
+The player balances the confidence threshold, connects both safety routes, and watches six authored
+visitor messages travel through Ghost's reply map. Each message has a fixed confidence score and
+authored routing expectation. The player revises the dial or wiring after seeing the consequences and
+runs the day again.
+
+### Success Consequence
+
+With the threshold inside the authored acceptable range and both routes connected, Ghost answers the
+clear requests, asks uncertain or garbled visitors to rephrase, and calls Lily for the hard frustrated
+case. Lily handles that visitor, Ghost finishes the day happily, and the deterministic day-run
+validator allows the Act to complete.
+
+### Failure Consequence
+
+- Threshold too low: Ghost confidently gives a cute but wrong answer to the garbled message.
+- Threshold too high: Ghost asks even clear visitors to rephrase, and the queue becomes annoyed.
+- Missing fallback: Ghost has no safe route for uncertain input.
+- Missing handoff: Ghost tries the hard frustrated case alone and melts down.
+- Any mismatched day outcome keeps the result visible, leaves the controls editable, and offers
+  `Try again`.
+
+### Lily Hint Style
+
+Lily stays slightly nervous and practical. She asks the player to compare what happened at the two
+ends of the dial and to notice which message needs another person, without stating the acceptable
+range or wiring solution. Her handoff line lightly connects to chatbot planning: a good system plans
+what to do when a request is too complex.
+
+Example:
+"Um... the dial isn't meant to make Ghost brave. It's meant to decide when Ghost knows enough to
+answer. Maybe watch who gets a real reply, and who should get a safer way out...?"
 
 ### Implementation Priority
 
-Medium.
+High for the six-chapter ship plan; implemented as M0-T47.
 
 ---
 
@@ -537,72 +583,222 @@ Medium.
 
 ### Confirmed Topic
 
-chatbot testing and debugging.
+- chatbot preview and testing
+- test conversations
+- expected versus actual responses
+- debugging and revision
+- regression-style reruns after a graph change
 
 ### Learning Objective
 
-TBD.
+The player should understand that a chatbot which looks complete still needs to be previewed and
+tested before it can be trusted. A test conversation supplies a known input and expected response;
+running several cases exposes different faults that one successful example can miss. The player
+should inspect expected-versus-actual results, trace failures back to dialog-graph wiring, revise the
+graph, and rerun the full suite to confirm that the fixes did not break another conversation.
 
 ### Cute Ghost Communication Problem
 
-TBD.
+Ghost's reply map looks finished, but its rehearsal visitors receive confidently mismatched answers.
+One visitor gives a room and is asked for it again, one asks about lab hours and hears an unrelated
+reply, and Ghost cannot greet a new visitor at all. Lily asks the player to run every rehearsal before
+letting Ghost handle the real queue.
 
 ### Puzzle Mechanic
 
-Likely:
-ordered list, log review, or debugging puzzle.
-
-### Implementation Priority
-
-Medium.
-
----
-
-## Act 6: Integration and Deployment
-
-### Confirmed Topic
-
-- integration
-- deployment design
-- configuration
-
-### Learning Objective
-
-TBD.
-
-### Cute Ghost Communication Problem
-
-TBD.
-
-### Puzzle Mechanic
-
-Likely:
-form configuration or deployment design puzzle.
-
-### Implementation Priority
-
-Medium / late.
-
----
-
-## Act 8: Capstone — "Repair Ghost's Voice" (revised roadmap)
-
-### Confirmed Topic
-
-Integration of all prior Acts: the five chatbot components working together as one pipeline.
+Test-run and graph-repair loop. The level begins with a pre-built Act 3-style dialog graph containing
+three authored wiring faults: swapped room-present/room-missing routes, a lab-hours branch connected
+to the wrong response, and a missing start connection for the greeting intent. The player chooses
+`Run all tests`, reads each failing card's visitor message plus expected and actual reply, then uses
+the existing Act 3 wire-drag interaction to reconnect the faulty graph outputs.
 
 ### Player Action
 
-The player reconnects the five components (UI → NLP engine → Dialogue management system → Response
-generation module → UI, with Backend integration) into a working pipeline — reusing the former
-Act 0 "Rebuild Ghost's Voice" mechanic as the final integration demo.
+The player previews four authored conversations, runs the full deterministic suite, compares red
+expected-versus-actual results, and repairs the graph. After each edit the previous results remain a
+diagnostic reference until the player reruns all tests. The player repeats the test / inspect / revise
+loop until all four cases are green.
 
-### Connection to Earlier Acts
+### Success Consequence
 
-Ties together intent (Act 1), entity (Act 2), dialog node graph (Act 3), confidence/fallback
-(Act 4), testing (Act 5), and backend/response (Act 6): the player sees the whole system Ghost
-needs to communicate clearly.
+When `DialogGraphValidator` and `DialogGraphSimulator` produce the expected response for every
+authored conversation, Ghost rehearses the complete queue correctly, the conversation panel shows a
+happy response, and the player may complete the Act through the Shell debrief path.
+
+### Failure Consequence
+
+- The first run exposes the seeded faults rather than hiding them behind a generic error count.
+- Each failed case shows its visitor message, expected reply, and actual reply or `no response`.
+- A partial repair can turn some cards green while the remaining failures stay red.
+- Rerunning the whole suite catches regressions; the Act cannot complete while any case fails or the
+  graph has structural validation errors.
+
+### Lily Hint Style
+
+Lily is practical and a little hesitant. She points the player toward the first mismatch and asks
+which wire could have produced that actual reply, without naming the destination node or completing
+the repair. She reinforces that previewing once is not enough: after changing the graph, run every
+conversation again.
+
+Example:
+`Um... the map can look tidy and still send someone to the wrong answer. Could we compare what that
+visitor expected with where the wire actually took them, then run all four again...?`
 
 ### Implementation Priority
 
-Late / if time allows.
+High for the six-chapter ship plan; implemented as M0-T48.
+
+---
+
+## Chapter 0: Opening Story
+
+> User-approved structural mapping added 2026-07-15. This chapter uses the confirmed premise and tone
+> from NARRATIVE.md; it does not add a new academic lesson.
+
+### Story Purpose
+
+Introduce the player as Lily's junior during a late shift in the lightly haunted research lab. Ghost
+tries to speak but produces garbled fragments. Lily, nervous but capable, asks the player to help one
+message at a time. The sequence establishes why Chapters 1-6 exist before any teaching puzzle begins.
+
+### Player Action
+
+Advance through a short authored conversation between Lily and Ghost. The player's entered name is
+used in Lily's lines. A visible Skip control reaches the same completed state. Finishing or skipping
+marks Chapter 0 seen and opens the Shell lesson selection.
+
+### Boundaries
+
+Chapter 0 contains no quiz, validator, course definition, or puzzle score. It reuses only confirmed
+premise facts: late lab, Lily as the player's postdoctoral senior, cute Ghost, garbled voice, and the
+shared decision to help.
+
+### Implementation Priority
+
+Required story framing before the six teaching chapters.
+
+---
+
+## Chapter 6: Backend Action and Response Generation
+
+> User-approved teaching mapping added 2026-07-15. This restores the earlier confirmed Act 6 course
+> role and separates it from the Final Chapter capstone/ending.
+
+### Confirmed Topic
+
+- backend integration as the connection to stored or external information
+- an action as the explicit operation that requests the needed fact
+- a deterministic backend result as data, not a finished conversational reply
+- response generation as the step that turns the result into natural language
+- IBM SkillsBuild section 1.3 component responsibilities
+
+### Learning Objective
+
+The player should distinguish three responsibilities. A backend source stores facts. An action asks
+that source for a specific fact. Response generation inserts the returned fact into a suitable reply.
+The backend does not decide puzzle correctness and raw data is not yet Ghost's spoken answer.
+
+### Cute Ghost Communication Problem
+
+Ghost's tested dialogue route correctly recognizes a lab-hours request, but then it either asks the
+wrong records for data, performs the wrong lookup, or blurts the raw value '8 PM' without a sentence.
+The player must finish the route so Ghost can fetch the fact and phrase it clearly.
+
+### Puzzle Mechanic
+
+A drag/click socket board with three stable roles:
+
+1. DATA SOURCE - connect the authored Lab records backend.
+2. ACTION - place Fetch lab closing time.
+3. RESPONSE - place The lab closes at {closing_time}.
+
+The palette also contains authored distractors for a room-directory source, object-location action,
+and mismatched response. Placement remains editable and is checked only by a new deterministic
+Act6BackendResponseValidator.
+
+### Player Action
+
+1. Follow the already-tested lab-hours route from Chapter 5.
+2. Drag or click one card into each role socket.
+3. Run the route.
+4. Observe the action request, backend result closing_time=8 PM, and template substitution as separate
+   playback stages.
+5. Revise the first incorrect role and rerun until Ghost says the complete reply.
+
+### Success Consequence
+
+The Lab records source receives Fetch lab closing time, returns the authored value 8 PM, and response
+generation produces 'The lab closes at 8 PM.' Ghost speaks clearly, Chapter 6 completes through the
+normal Shell debrief path, and the Final Chapter remains a separate story/capstone destination.
+
+### Failure Consequence
+
+- Wrong source: the requested lab-hours field is unavailable.
+- Wrong action: the backend returns a fact for another route.
+- Wrong response template: Ghost has the right fact but phrases the wrong answer.
+- Empty role: playback stops before the missing responsibility.
+
+The run names the first broken role, shows its consequence, and returns to the editable board.
+
+### Lily Hint Style
+
+Lily asks which system owns the fact, which action requests it, and which sentence should contain it.
+She does not state all three card names at once.
+
+Example:
+'Um... the records hold the fact, but they still need a precise request. And even after the value
+comes back, Ghost needs a sentence around it.'
+
+### Deterministic Correctness
+
+Act6BackendResponseValidator compares the three placed ids with authored expected ids. Backend and LLM
+services may log or decorate the run, but they never score or gate completion.
+
+### Implementation Priority
+
+Required sixth teaching chapter.
+
+---
+
+## Final Chapter: Repair Ghost's Voice
+
+> User-approved finale mapping added 2026-07-15. This reclassifies the implemented M0-T49
+> five-component pipeline and ending; it is no longer player-facing Chapter 6.
+
+### Confirmed Topic
+
+Full-system integration of all six teaching chapters, followed by the ending story.
+
+### Integration Interaction
+
+The board shows a fixed Visitor message and Ghost reply, five editable main stages, and one backend
+side socket. Twelve concise cards remain available at the same time: five learned skills, five
+plausible shortcuts, and two backend actions. Each card shows only its name and one short description,
+so the player can compare and arrange the whole route without reading a chapter explanation on every
+card. Cards can be dragged or selected and placed, and occupied stages can be swapped.
+
+Lily uses the same draggable portrait panel as Chapters 1-3. Her line changes when the player selects,
+places, misplaces, or resets a card. The reaction describes the responsibility or risk without marking
+the position correct. Ask Lily opens the existing chat window with the current five-stage route,
+backend action, and latest visitor-test evidence.
+
+Selecting **Run all 3 tests** sends a greeting, a missing-room request, and the lab-hours request
+through the assembled path. Each case shows its expected and actual reply. Different faults affect
+different cases, so a partial repair can pass some cards while others remain red. Changing a card
+makes the previous results stale, and all three cases must be rerun together.
+
+### Story Consequence
+
+The authored final lab-hours visitor message travels stage by stage. Ghost gives its complete reply,
+becomes happy and glowing, thanks GhostNarrativeState.PlayerName, Lily gives her proud closing line,
+credits scroll, and the game returns to the title. Full playback and Skip ending reach the same final
+state.
+
+### Separation Rule
+
+The Final Chapter may reuse learned concepts but does not replace Chapter 6 teaching. Chapter 0 owns
+the opening story, Chapters 1-6 own curriculum, and only the Final Chapter owns the final credits.
+
+### Implementation Priority
+
+Required final story and capstone after the six teaching chapters.

@@ -46,6 +46,80 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public bool LastValidationWasCorrect { get; private set; }
 
+        private int visitorIndex;
+
+        /// <summary>How many visitors have walked in so far. Starts at one and grows on each success.</summary>
+        public int RevealedVisitorCount { get; private set; } = 1;
+
+        /// <summary>The visitor currently at the desk during the build phase.</summary>
+        public Act3DialogGraphSampleData.VisitorScript ArrivedVisitor
+        {
+            get
+            {
+                var scripts = Act3DialogGraphSampleData.CreateVisitorScripts();
+                var index = RevealedVisitorCount - 1;
+                return index >= 0 && index < scripts.Count ? scripts[index] : null;
+            }
+        }
+
+        /// <summary>Which visitor is at the desk during playback, 1-based for display.</summary>
+        public int CurrentVisitorNumber => CurrentPhase == Act3ExperiencePhase.Playback ? visitorIndex + 1 : 0;
+
+        public int VisitorCount => Act3DialogGraphSampleData.CreateVisitorScripts().Count;
+
+        public Act3DialogGraphSampleData.VisitorScript CurrentVisitor
+        {
+            get
+            {
+                if (CurrentPhase != Act3ExperiencePhase.Playback)
+                {
+                    return null;
+                }
+
+                var scripts = Act3DialogGraphSampleData.CreateVisitorScripts();
+                return visitorIndex >= 0 && visitorIndex < scripts.Count ? scripts[visitorIndex] : null;
+            }
+        }
+
+        public bool HasMoreVisitors =>
+            RevealedVisitorCount < Act3DialogGraphSampleData.CreateVisitorScripts().Count;
+
+        /// <summary>
+        /// Ends the current visitor's turn. If anyone is still waiting outside, the next one walks in
+        /// and the player goes back to editing with a new requirement; otherwise the act is done.
+        /// </summary>
+        public void AdvanceVisitor()
+        {
+            if (CurrentPhase != Act3ExperiencePhase.Playback)
+            {
+                return;
+            }
+
+            var total = Act3DialogGraphSampleData.CreateVisitorScripts().Count;
+            if (RevealedVisitorCount < total)
+            {
+                RevealedVisitorCount++;
+                CurrentPhase = Act3ExperiencePhase.Build;
+                HasValidationAttempt = false;
+                LastValidationWasCorrect = false;
+                LastValidationErrors = Array.Empty<string>();
+                CurrentReaction = Act3GhostReaction.Neutral;
+
+                var next = ArrivedVisitor;
+                LastFeedbackMessage = next != null
+                    ? "Another visitor walks in: \"" + next.VisitorLine + "\" Extend the map for this one."
+                    : "Another visitor walks in.";
+            }
+            else
+            {
+                CurrentPhase = Act3ExperiencePhase.Complete;
+                CurrentReaction = Act3GhostReaction.Happy;
+                LastFeedbackMessage = "Every visitor got the reply their message deserved.";
+            }
+
+            StateChanged?.Invoke();
+        }
+
         public bool HasFailedValidation => HasValidationAttempt && !LastValidationWasCorrect;
 
         public string LastFeedbackMessage { get; private set; }
@@ -169,7 +243,14 @@ namespace Ghost.Presentation.Act3DialogGraph
                 return false;
             }
 
-            RemoveExistingTransitionFromOutput(fromId, condition);
+            // One wire per output port is right for an intent branch or a slot check, but the start
+            // node has to fan out to every intent it handles - it picks a branch by matching the
+            // visitor's intent, so a second Always edge is required, not a replacement.
+            if (!IsStartNode(fromId))
+            {
+                RemoveExistingTransitionFromOutput(fromId, condition);
+            }
+
             session.AddTransition(fromId, toId, condition);
             NotifyGraphChanged();
             return true;
@@ -206,7 +287,7 @@ namespace Ghost.Presentation.Act3DialogGraph
 
         public DialogGraphResult ValidateCurrentState()
         {
-            var result = session.ValidateCurrentState();
+            var result = session.ValidateCurrentState(RevealedVisitorCount);
             GhostBackendClient.PostAttempt(
                 GhostNarrativeState.Act3Id,
                 GhostBackendClient.CreateAttemptResult(result.IsCorrect),
@@ -223,7 +304,15 @@ namespace Ghost.Presentation.Act3DialogGraph
             LastValidationWasCorrect = result.IsCorrect;
             LastFeedbackMessage = feedbackMessage;
             LastValidationErrors = new List<string>(result.Errors);
-            CurrentPhase = result.IsCorrect ? Act3ExperiencePhase.Complete : Act3ExperiencePhase.Build;
+            if (result.IsCorrect)
+            {
+                visitorIndex = RevealedVisitorCount - 1;
+                CurrentPhase = Act3ExperiencePhase.Playback;
+            }
+            else
+            {
+                CurrentPhase = Act3ExperiencePhase.Build;
+            }
             CurrentReaction = result.IsCorrect
                 ? Act3GhostReaction.Happy
                 : IsEmptyOrIncompleteGraph()
@@ -321,6 +410,12 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             return true;
+        }
+
+        private bool IsStartNode(string nodeId)
+        {
+            var node = FindNode(nodeId);
+            return node != null && node.Type == DialogNodeType.Start;
         }
 
         private void RemoveExistingTransitionFromOutput(string fromId, DialogTransitionCondition condition)
@@ -457,6 +552,7 @@ namespace Ghost.Presentation.Act3DialogGraph
     {
         Onboarding,
         Build,
+        Playback,
         Complete
     }
 

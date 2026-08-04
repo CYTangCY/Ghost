@@ -5,9 +5,13 @@ using UnityEngine.EventSystems;
 namespace Ghost.Presentation.Act3DialogGraph
 {
     [RequireComponent(typeof(RectTransform))]
-    public sealed class Act3DialogGraphOutputPortView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public sealed class Act3DialogGraphOutputPortView : MonoBehaviour,
+        IBeginDragHandler,
+        IDragHandler,
+        IEndDragHandler,
+        IDropHandler
     {
-        private Act3DialogGraphStaticPresenter presenter;
+        private IDialogGraphWireInteractionHost presenter;
         private RectTransform rectTransform;
         private CanvasGroup canvasGroup;
         private string nodeId;
@@ -31,7 +35,7 @@ namespace Ghost.Presentation.Act3DialogGraph
         }
 
         public void Initialize(
-            Act3DialogGraphStaticPresenter presenter,
+            IDialogGraphWireInteractionHost presenter,
             string nodeId,
             DialogTransitionCondition condition)
         {
@@ -62,6 +66,24 @@ namespace Ghost.Presentation.Act3DialogGraph
             }
 
             presenter?.EndWireDrag(this);
+        }
+
+        public void OnDrop(PointerEventData eventData)
+        {
+            if (eventData == null || eventData.pointerDrag == null)
+            {
+                return;
+            }
+
+            var inputPort = eventData.pointerDrag.GetComponent<Act3DialogGraphInputPortView>();
+            if (inputPort == null)
+            {
+                return;
+            }
+
+            // Same connection, dragged the other way round.
+            presenter?.CompleteWireDrop(this, inputPort);
+            eventData.Use();
         }
 
         private void OnDisable()

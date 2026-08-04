@@ -38,6 +38,13 @@ namespace Ghost.Presentation.Shell
                 return;
             }
 
+            // Coming back from a chapter should land on chapter select, not the title screen the
+            // player already worked through.
+            if (targetSceneName == ShellSceneNames.GameShellSceneName)
+            {
+                GhostNarrativeState.RequestResumeAtHub();
+            }
+
             SceneManager.LoadScene(targetSceneName);
         }
     }

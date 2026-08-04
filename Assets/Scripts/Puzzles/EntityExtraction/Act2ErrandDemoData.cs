@@ -8,6 +8,9 @@ namespace Ghost.Puzzles.EntityExtraction
         public const string LabAtNightErrandId = "errand-lab-at-night";
         public const string LaboratorySynonymErrandId = "errand-laboratory-synonym";
         public const string LanternObjectErrandId = "errand-lantern-object";
+        public const string LanternRoomErrandId = "errand-lantern-room-context";
+        public const string CarryToLibraryErrandId = "errand-carry-to-library";
+        public const string TuneDecoyErrandId = "errand-tune-decoy";
         public const string LabRoomCanonicalLabel = "lab room";
 
         public static IReadOnlyList<ErrandDefinition> CreateErrands()
@@ -55,6 +58,50 @@ namespace Ghost.Puzzles.EntityExtraction
                             Act2ErrandSlotId.What,
                             "Ghost reaches under the desk with empty little hands.",
                             "Ghost proudly delivers the wrong object and then looks very sorry.")
+                    }),
+                new ErrandDefinition(
+                    LanternRoomErrandId,
+                    FindMessage(messages, "lantern-room-context"),
+                    "Ghost goes looking for a lantern to carry, because last time lantern was a thing.",
+                    "Ghost reads lantern room as a place this time and hums in the right doorway at 8am.",
+                    new[]
+                    {
+                        new SlotFailureLine(
+                            Act2ErrandSlotId.Where,
+                            "Ghost knows the hour but not the doorway, and hums in the stairwell instead.",
+                            "Ghost takes lantern for an object again and hunts for something to pick up."),
+                        new SlotFailureLine(
+                            Act2ErrandSlotId.When,
+                            "Ghost finds the lantern room and then waits there all day.",
+                            "Ghost arrives at the wrong hour and hums to an empty room.")
+                    }),
+                new ErrandDefinition(
+                    CarryToLibraryErrandId,
+                    FindMessage(messages, "carry-to-library"),
+                    "Ghost picks up something, wanders off, and cannot remember where it was meant to go.",
+                    "Ghost carries the lantern to the library and sets it down at six, exactly as asked.",
+                    new[]
+                    {
+                        new SlotFailureLine(
+                            Act2ErrandSlotId.What,
+                            "Ghost sets off to move something, but never decides what.",
+                            "Ghost carries the wrong thing across the building, very carefully."),
+                        new SlotFailureLine(
+                            Act2ErrandSlotId.Where,
+                            "Ghost holds the lantern in the corridor, because the note named no rooms.",
+                            "Ghost only tagged one of the two rooms, so it collects the lantern and has nowhere to put it.")
+                    }),
+                new ErrandDefinition(
+                    TuneDecoyErrandId,
+                    FindMessage(messages, "tune-decoy"),
+                    "Ghost searches the whole floor for a room called Lonely Corridor and does not find one.",
+                    "Ghost works out that Lonely Corridor is the tune, not the place, and just hums at 7pm.",
+                    new[]
+                    {
+                        new SlotFailureLine(
+                            Act2ErrandSlotId.When,
+                            "Ghost hums whenever it feels like it, which is mostly at 3am.",
+                            "Ghost picks the wrong hour and hums to nobody.")
                     })
             };
         }
@@ -79,8 +126,8 @@ namespace Ghost.Puzzles.EntityExtraction
             }
 
             var slots = new List<ErrandSlot>();
-            AddSlotIfExpected(message, slots, Act2ErrandSlotId.What, Act2EntityExtractionSampleData.ObjectEntityTypeId, "WHAT", "custom: lab object words");
-            AddSlotIfExpected(message, slots, Act2ErrandSlotId.Where, Act2EntityExtractionSampleData.RoomEntityTypeId, "WHERE", "custom: lab room words");
+            AddSlotIfExpected(message, slots, Act2ErrandSlotId.What, Act2EntityExtractionSampleData.ObjectEntityTypeId, "WHAT", "custom: object words");
+            AddSlotIfExpected(message, slots, Act2ErrandSlotId.Where, Act2EntityExtractionSampleData.RoomEntityTypeId, "WHERE", "custom: room words");
             AddSlotIfExpected(message, slots, Act2ErrandSlotId.When, Act2EntityExtractionSampleData.TimeEntityTypeId, "WHEN", "system: built-in time");
             return slots;
         }

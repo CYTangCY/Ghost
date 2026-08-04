@@ -1,0 +1,47 @@
+It is suggested that the report should contain the following chapters:
+
+Cover page: The cover page can be downloaded [here](https://keats.kcl.ac.uk/mod/resource/view.php?id=7375015) (or at the end of this section)
+Abstract:  It is a precis of the report (normally in one page), which should include:
+A brief introduction to the project objectives
+A brief description of the main work of the project
+A brief description of the contributions, major findings, results achieved and principal conclusion of the project
+Acknowledgment:  It is a short paragraph to thank those whose have contributed to the project work.
+Table of Contents:  It is to include and identify the main sections, sub-sections and appendices (if there is any) of the report.  Page number must be included.
+Nomenclature:  All abbreviations and symbols used in the report must be listed and defined in alphabetic order.
+List of figures and tables
+Introduction:
+Project Aims, Objectives and Introduction: It provides the background of the work. The problems and project objectives should be stated comprehensively. The motivations of the project should be presented. The techniques and approaches used to deal with the problem should be stated with justifications, and the contributions and main results achieved should be stated clearly. The structure of the report can be described briefly at the end.
+Background and Literature Survey:  It gives an overall picture about the work with a clear review of the relevant literature. The background of the project should be given. What have been done to deal with the problem should be stated clearly. The pros and cons of various existing algorithms and approaches should be stated as well. Differences between your proposed method and the existing ones should be briefly described. It is important to make sure that the discussion is structured and coherent; the key issues are summarised; key and relevant references are used critically analysed and the literature is covered comprehensively.
+The following links may help on the literature review:
+[IEEE Xplore digital library](http://ieeexplore.ieee.org/Xplore/guesthome.jsp): a resource for accessing IEEE published scientific and technical publications (You must be with King's network to get access to the digital library)
+[ScienceDirect.com](http://www.sciencedirect.com/): an electronic database offering journal papers not published by IEEE (You must be with King's network to get access to the database)
+Background Theories: The background theories supporting the work should be given in this section. Provide references when someone’s work is recalled.
+Main Results:  The chapter reports the contributions of your work.  For example, it could contain the following sub-sections to summarise the contribution of the project such as Theoretical Development, Analysis and Design, Implementation and Experimental Work, Results, Observation and Discussion. It can be delivered in the following chapters:
+Objectives, Specifications and Design: It recalls the objectives in a more detailed way to justify the development of a set of requirements and specifications, and identify a coherent set of issues to be addressed. It explains in detail the design and how the design can achieve the project aim (solve the problem).
+Methodology and Implementation: It presents and justifies the methodology used to deal with the problem and describes in detail the implementation procedures. The background theory presented in the previous chapter can be recalled to support the proposed implementation. The originality, novelty and contribution are to be demonstrated with the discussion of the strengths and limitations.
+Results, Analysis and Evaluation: It summarises the results obtained from the proposed design and methodology. The way to obtain the results should be described in detail. Analysis and evaluation have to be performed. Comparisons should be made. It should justify if the project aims, objectives, requirements and specifications have been achieved.
+Legal, Social, Ethical and Professional Issues: A chapter gives a reasoned discussion about legal, social ethical and professional issues within the context of your project problem. You should also demonstrate that you are aware of the Code of Conduct & Code of Good Practice issued by the British Computer Society (BSC) ([https://www.bcs.org/membership/become-a-member/bcs-code-of-conduct/](https://www.bcs.org/membership/become-a-member/bcs-code-of-conduct/)) for computer science project and Rule of Conduct issued by The Institution of Engineering and Technology (IET) ([https://www.theiet.org/about/governance/rules-of-conduct/](https://www.theiet.org/about/governance/rules-of-conduct/)) for engineering project.  You should have applied their principles, where appropriate, as you carried out your project. You could consider aspects like: the effects of your project on the public well-being, security, software trustworthiness and risks, Intellectual Property and related issues, etc.
+Conclusion: It is a chapter to sum up the main points of the work, such as the aims and objectives of the project, the contributions and results you have achieved.  Future plan and development can be mentioned in this section. It is normally in one or two pages.
+References: A list of source materials supporting your work, for example, algorithm, background, concepts, diagrams, equations, ideas, theories, etc.  Materials using in the report that is not your own must be given a reference.  All references must contain all details: authors, title of the work, sources (journal title, conference title, publisher (for books)), date of publication, page numbers.  General guidelines for reference format can be found [here](http://www.kcl.ac.uk/library/help/plagiarism/index.aspx).
+Appendices: Supplementary materials could be included.  Each appendix must be labelled (for example, Appendix A, Appendix A.1, Appendix A.2,  Appendix B, Appendix B.1, etc.) and with heading.  All Appendices must be referred in the text.  
+Please note the following points when you write your report:
+Consider the outline of the report.  It is a good idea to start with the table of contents, which gives you an overall structure of the report.
+Show understanding of the topic and demonstrate the contribution of the work.  70% of the content of the report should be your own contributions and achievements.
+Always use your own words. Using text directly from other resources is absolutely a kind of plagiarism, which will definitely be picked up by Turnitin and markers.
+The main report and any appendices must constitute one document.
+Pages must be numbered consecutively.  
+Captions must be provided for all figures and tables.
+Equations (or important equations), figures and tables must be numbered.
+All figures and tables must be referred to in the text.
+Units of all variables must be provided.
+Numerical values (floating-point number) should be in 4 decimal places.
+Contractions should not be used.
+Check the punctuation of sentences.  In particular, those sentences with equation.  For example, if an equation is at the end of a sentence, a full stop should be used.
+All variables must be defined.
+Font face of variables throughout the report (in the text, equation, figures and table) must be consistent.
+Use proper headings for chapters, sections, subsections.
+Chapters, sections, subsections should be numbered and with the same numbering system throughout the report.
+It is suggested that vector and matrix variables should be in bold, scalar variables should be in italic.
+References must be used for materials used in the report that are not yours.
+A standard reference format must be adopted and be consistently applied through the report.  General guidelines for reference format can be found [here](http://www.kcl.ac.uk/library/help/plagiarism/index.aspx).
+Always backup your files.  

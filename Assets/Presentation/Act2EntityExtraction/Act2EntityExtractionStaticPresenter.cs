@@ -1,10 +1,13 @@
+using Ghost.Presentation.Common;
 using System;
 using System.Collections.Generic;
 using Ghost.Presentation.GhostAvatar;
+using Ghost.Presentation.Shell;
 using Ghost.Puzzles.EntityExtraction;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Ghost.Presentation.Act2EntityExtraction
@@ -24,8 +27,6 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private static readonly Color ConversationColor = new Color(0.93f, 0.97f, 1f);
         private static readonly Color ObjectiveColor = new Color(0.14f, 0.18f, 0.32f);
         private static readonly Color WarmNoteColor = new Color(1f, 0.96f, 0.82f);
-        private static readonly Color TextColor = new Color(0.14f, 0.11f, 0.22f);
-        private static readonly Color SubtleTextColor = new Color(0.35f, 0.32f, 0.45f);
         private static readonly Color TokenColor = new Color(1f, 0.985f, 0.92f);
         private static readonly Color SelectedTokenColor = new Color(1f, 0.93f, 0.68f);
         private static readonly Color AssignedTokenColor = new Color(0.90f, 1f, 0.92f);
@@ -108,7 +109,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
             var layout = GetOrAdd<VerticalLayoutGroup>(gameObject);
             layout.padding = new RectOffset(36, 36, 26, 24);
-            layout.spacing = 9f;
+            layout.spacing = 14f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -117,30 +119,34 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateHeader()
         {
-            var header = CreateLayoutPanel("Header", transform, new Color(1f, 1f, 1f, 0f));
+            var header = GhostUITheme.Panel("Header", transform, new Color(1f, 1f, 1f, 0f)).rectTransform;
             var headerLayout = GetOrAdd<HorizontalLayoutGroup>(header.gameObject);
             headerLayout.spacing = 16f;
+            headerLayout.padding = new RectOffset(0, 220, 0, 0);
             headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
             headerLayout.childForceExpandWidth = false;
             headerLayout.childForceExpandHeight = true;
 
             var layoutElement = header.gameObject.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 56f;
-            layoutElement.minHeight = 56f;
+            layoutElement.preferredHeight = 44f;
+            layoutElement.minHeight = 44f;
+            // The header is a fixed title row, but its inner horizontal group force-expands height,
+            // which reports flexible height to the page and let the header eat all the spare space.
+            layoutElement.flexibleHeight = 0f;
 
-            var title = CreateText("Title", header, TitleText, 38, FontStyle.Bold, TextAnchor.MiddleLeft, TextColor);
+            var title = GhostUITheme.Label("Title", header, TitleText, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink);
             var titleLayout = title.gameObject.AddComponent<LayoutElement>();
             titleLayout.flexibleWidth = 1f;
 
-            var progress = CreateText(
+            var progress = GhostUITheme.Label(
                 "Errand Progress",
                 header,
                 "Errand " + controller.CurrentErrandNumber + "/" + controller.ErrandCount,
-                20,
+                GhostUITheme.TitleSize,
                 FontStyle.Bold,
                 TextAnchor.MiddleRight,
-                SubtleTextColor);
+                GhostUITheme.InkSoft);
             var progressLayout = progress.gameObject.AddComponent<LayoutElement>();
             progressLayout.preferredWidth = 210f;
             progressLayout.minWidth = 210f;
@@ -148,19 +154,20 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateObjectiveStrip()
         {
-            var strip = CreateLayoutPanel("Objective Strip", transform, ObjectiveColor);
+            var strip = GhostUITheme.Panel("Objective Strip", transform, ObjectiveColor).rectTransform;
             var layoutElement = strip.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 48f;
-            layoutElement.preferredHeight = 48f;
+            layoutElement.minHeight = 40f;
+            layoutElement.preferredHeight = 40f;
+            layoutElement.flexibleHeight = 0f;
 
             var layout = GetOrAdd<HorizontalLayoutGroup>(strip.gameObject);
-            layout.padding = new RectOffset(18, 18, 7, 7);
+            layout.padding = new RectOffset(12, 12, 4, 4);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            var label = CreateText("Objective Text", strip, GetObjectiveText(), 18, FontStyle.Bold, TextAnchor.MiddleLeft, Color.white);
+            var label = GhostUITheme.Label("Objective Text", strip, GetObjectiveText(), GhostUITheme.HeadingSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.InkOnDark);
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
 
@@ -201,7 +208,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateOnboardingPanel()
         {
-            var panel = CreateLayoutPanel("Onboarding Panel", transform, WarmNoteColor);
+            var panel = GhostUITheme.Panel("Onboarding Panel", transform, WarmNoteColor).rectTransform;
             AddOutline(panel.gameObject, new Color(0.86f, 0.58f, 0.22f, 0.95f), new Vector2(2f, -2f));
 
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
@@ -216,57 +223,60 @@ namespace Ghost.Presentation.Act2EntityExtraction
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            CreateText("Onboarding Title", panel, OnboardingTitle, 20, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.28f, 0.18f, 0.08f));
-            var body = CreateText("Onboarding Body", panel, OnboardingBody, 17, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.25f, 0.20f, 0.18f));
+            GhostUITheme.Label("Onboarding Title", panel, OnboardingTitle, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.28f, 0.18f, 0.08f));
+            var body = GhostUITheme.Label("Onboarding Body", panel, OnboardingBody, GhostUITheme.BodySize, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.25f, 0.20f, 0.18f));
             body.lineSpacing = 1.04f;
             body.gameObject.AddComponent<LayoutElement>().preferredHeight = 88f;
 
-            var button = CreateButton(panel, "Watch Ghost fail", new Color(0.84f, 0.92f, 1f), 190f);
+            var button = GhostUITheme.PushButton(panel, "Watch Ghost fail", new Color(0.84f, 0.92f, 1f), 190f);
             button.onClick.AddListener(controller.BeginAfterOnboarding);
         }
 
         private void CreateLilyNoteStrip()
         {
-            var panel = CreateLayoutPanel("Lily Note Strip", transform, WarmNoteColor);
+            var panel = GhostUITheme.Panel("Lily Note Strip", transform, WarmNoteColor).rectTransform;
             AddOutline(panel.gameObject, new Color(0.86f, 0.58f, 0.22f, 0.85f), new Vector2(1.5f, -1.5f));
 
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 54f;
-            layoutElement.preferredHeight = 54f;
+            layoutElement.minHeight = 96f;
+            layoutElement.preferredHeight = 96f;
 
             var layout = GetOrAdd<HorizontalLayoutGroup>(panel.gameObject);
-            layout.padding = new RectOffset(16, 12, 7, 7);
+            layout.padding = new RectOffset(12, 12, 12, 12);
             layout.spacing = 10f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
 
-            var note = CreateText(
+            var note = GhostUITheme.Label(
                 "Lily Note",
                 panel,
                 "Lily: Um... split the sentence, tag only the detail Ghost needs, then let the errand prove it.",
-                15,
+                GhostUITheme.BodySize,
                 FontStyle.Normal,
                 TextAnchor.MiddleLeft,
                 new Color(0.25f, 0.20f, 0.18f));
             note.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
-            var replay = CreateButton(panel, "Replay Lily", new Color(1f, 0.98f, 0.88f), 130f);
+            var replay = GhostUITheme.PushButton(panel, "Replay Lily", new Color(1f, 0.98f, 0.88f), 130f);
             replay.onClick.AddListener(controller.ReplayOnboarding);
         }
 
         private void CreateConversationPanel()
         {
-            var panel = CreateLayoutPanel("Conversation Panel", transform, ConversationColor);
+            var panel = GhostUITheme.Panel("Conversation Panel", transform, ConversationColor).rectTransform;
             AddOutline(panel.gameObject, new Color(0.58f, 0.68f, 0.88f, 0.85f), new Vector2(2f, -2f));
 
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 170f;
-            layoutElement.preferredHeight = 170f;
+            layoutElement.minHeight = 178f;
+            layoutElement.preferredHeight = 178f;
+            // Same trap as the header: the inner group force-expands height, so without this the
+            // panel reports flexible height and stretches down the rest of the page.
+            layoutElement.flexibleHeight = 0f;
 
             var layout = GetOrAdd<HorizontalLayoutGroup>(panel.gameObject);
-            layout.padding = new RectOffset(18, 18, 10, 10);
+            layout.padding = new RectOffset(12, 12, 12, 12);
             layout.spacing = 16f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -283,7 +293,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             var face = faceRoot.AddComponent<GhostFaceView>();
             face.SetMood(MapMood(controller.CurrentMood));
 
-            var textColumn = CreateLayoutPanel("Conversation Text Column", panel, new Color(1f, 1f, 1f, 0f));
+            var textColumn = GhostUITheme.Panel("Conversation Text Column", panel, new Color(1f, 1f, 1f, 0f)).rectTransform;
             textColumn.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
             var columnLayout = GetOrAdd<VerticalLayoutGroup>(textColumn.gameObject);
@@ -293,11 +303,11 @@ namespace Ghost.Presentation.Act2EntityExtraction
             columnLayout.childForceExpandWidth = true;
             columnLayout.childForceExpandHeight = false;
 
-            CreateText("Errand Label", textColumn, GetConversationLabel(), 18, FontStyle.Bold, TextAnchor.MiddleLeft, TextColor);
-            var message = CreateText("Visitor Message", textColumn, "Visitor note: " + controller.MessageText, 17, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.18f, 0.30f));
+            GhostUITheme.Label("Errand Label", textColumn, GetConversationLabel(), GhostUITheme.HeadingSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink);
+            var message = GhostUITheme.Label("Visitor Message", textColumn, "Visitor note: " + controller.MessageText, GhostUITheme.BodySize, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.18f, 0.30f));
             message.gameObject.AddComponent<LayoutElement>().preferredHeight = 36f;
 
-            var outcome = CreateText("Outcome Text", textColumn, GetConversationOutcomeText(), 16, FontStyle.Normal, TextAnchor.UpperLeft, SubtleTextColor);
+            var outcome = GhostUITheme.Label("Outcome Text", textColumn, GetConversationOutcomeText(), GhostUITheme.BodySize, FontStyle.Normal, TextAnchor.UpperLeft, GhostUITheme.InkSoft);
             outcome.lineSpacing = 1.03f;
             outcome.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
         }
@@ -334,8 +344,9 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateMainBody()
         {
-            var body = CreateLayoutPanel("Main Body", transform, new Color(1f, 1f, 1f, 0f));
+            var body = GhostUITheme.Panel("Main Body", transform, new Color(1f, 1f, 1f, 0f)).rectTransform;
             var bodyLayoutElement = body.gameObject.AddComponent<LayoutElement>();
+            bodyLayoutElement.minHeight = 96f;
             bodyLayoutElement.flexibleHeight = 1f;
 
             var bodyLayout = GetOrAdd<HorizontalLayoutGroup>(body.gameObject);
@@ -352,12 +363,12 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private void CreateMessagePanel(Transform parent)
         {
             var panel = CreateColumnPanel("Message Panel", parent, PanelColor, 0.52f);
-            CreateText("Message Panel Title", panel, controller.HasSplitCurrentMessage ? "Message Tokens" : "Solid Sentence", 25, FontStyle.Bold, TextAnchor.MiddleLeft, TextColor);
+            GhostUITheme.Label("Message Panel Title", panel, controller.HasSplitCurrentMessage ? "Message Tokens" : "Solid Sentence", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink);
 
             if (!controller.HasSplitCurrentMessage)
             {
                 CreateSolidSentence(panel);
-                var splitButton = CreateButton(panel, "Split", new Color(1f, 0.93f, 0.68f), 150f);
+                var splitButton = GhostUITheme.PushButton(panel, "Split", new Color(1f, 0.93f, 0.68f), 150f);
                 splitButton.interactable = controller.CurrentPhase == Act2ErrandPhase.IntroFail;
                 splitButton.onClick.AddListener(controller.SplitMessage);
                 return;
@@ -368,7 +379,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateSolidSentence(Transform parent)
         {
-            var sentence = CreateLayoutPanel("Solid Sentence Card", parent, new Color(1f, 0.99f, 0.94f));
+            var sentence = GhostUITheme.Card("Solid Sentence Card", parent, new Color(1f, 0.99f, 0.94f)).rectTransform;
             AddOutline(sentence.gameObject, new Color(0.78f, 0.70f, 0.88f, 0.72f), new Vector2(2f, -2f));
             sentence.gameObject.AddComponent<LayoutElement>().preferredHeight = 130f;
 
@@ -379,14 +390,14 @@ namespace Ghost.Presentation.Act2EntityExtraction
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            var text = CreateText("Sentence Text", sentence, controller.MessageText, 24, FontStyle.Bold, TextAnchor.MiddleCenter, TextColor);
+            var text = GhostUITheme.Label("Sentence Text", sentence, controller.MessageText, GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleCenter, GhostUITheme.Ink);
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         private void CreateTokenGrid(Transform parent)
         {
-            var gridPanel = CreateLayoutPanel("Token Drop Area", parent, new Color(1f, 1f, 1f, 0f));
+            var gridPanel = GhostUITheme.Panel("Token Drop Area", parent, new Color(1f, 1f, 1f, 0f)).rectTransform;
             gridPanel.GetComponent<Image>().raycastTarget = true;
             gridPanel.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
             var returnDrop = GetOrAdd<Act2EntityTokenReturnDropTarget>(gridPanel.gameObject);
@@ -410,9 +421,9 @@ namespace Ghost.Presentation.Act2EntityExtraction
         private void CreateActionCardPanel(Transform parent)
         {
             var panel = CreateColumnPanel("Action Card Panel", parent, BluePanelColor, 0.48f);
-            CreateText("Action Card Title", panel, "Ghost's Action Card", 25, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.18f, 0.30f));
+            GhostUITheme.Label("Action Card Title", panel, "Ghost's Action Card", GhostUITheme.TitleSize, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.10f, 0.18f, 0.30f));
 
-            var slotList = CreateLayoutPanel("Slot List", panel, new Color(1f, 1f, 1f, 0f));
+            var slotList = GhostUITheme.Panel("Slot List", panel, new Color(1f, 1f, 1f, 0f)).rectTransform;
             slotList.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
 
             var listLayout = GetOrAdd<VerticalLayoutGroup>(slotList.gameObject);
@@ -432,7 +443,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private RectTransform CreateColumnPanel(string name, Transform parent, Color color, float flexibleWidth)
         {
-            var panel = CreateLayoutPanel(name, parent, color);
+            var panel = GhostUITheme.Panel(name, parent, color).rectTransform;
             AddOutline(panel.gameObject, new Color(0.70f, 0.68f, 0.86f, 0.75f), new Vector2(2f, -2f));
 
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
@@ -455,7 +466,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             var slotResult = controller.GetSlotResult(slot.SlotId);
             var assignment = controller.GetAssignment(slot.SlotId);
             var slotColor = GetSlotColor(slot, slotResult);
-            var view = CreateLayoutPanel("Slot " + slot.DisplayName, parent, slotColor);
+            var view = GhostUITheme.DropZone("Slot " + slot.DisplayName, parent, slotColor).rectTransform;
             AddOutline(view.gameObject, new Color(0.46f, 0.58f, 0.78f, 0.82f), new Vector2(2f, -2f));
 
             var layoutElement = view.gameObject.AddComponent<LayoutElement>();
@@ -479,12 +490,12 @@ namespace Ghost.Presentation.Act2EntityExtraction
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            var title = CreateText("Slot Header", view, slot.DisplayName + "  " + slot.KindLabel, 18, FontStyle.Bold, TextAnchor.MiddleLeft, TextColor);
+            var title = GhostUITheme.Label("Slot Header", view, slot.DisplayName + "  " + slot.KindLabel, GhostUITheme.HeadingSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Ink);
             title.gameObject.AddComponent<LayoutElement>().preferredHeight = 26f;
 
             if (assignment == null)
             {
-                CreateText("Slot Placeholder", view, "Drop matching message token here.", 15, FontStyle.Italic, TextAnchor.MiddleLeft, SubtleTextColor);
+                GhostUITheme.Label("Slot Placeholder", view, "Drop matching message token here.", GhostUITheme.BodySize, FontStyle.Italic, TextAnchor.MiddleLeft, GhostUITheme.InkSoft);
             }
             else
             {
@@ -492,13 +503,13 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 var resolution = GetResolutionText(slot, assignment, slotResult);
                 if (!string.IsNullOrWhiteSpace(resolution))
                 {
-                    CreateText("Resolution", view, resolution, 14, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.12f, 0.44f, 0.26f));
+                    GhostUITheme.Label("Resolution", view, resolution, GhostUITheme.SmallSize, FontStyle.Bold, TextAnchor.MiddleLeft, GhostUITheme.Good);
                 }
             }
 
             if (slotResult != null)
             {
-                CreateText("Slot State", view, FormatSlotResult(slotResult), 14, FontStyle.Bold, TextAnchor.MiddleLeft, GetSlotStateTextColor(slotResult.State));
+                GhostUITheme.Label("Slot State", view, FormatSlotResult(slotResult), GhostUITheme.SmallSize, FontStyle.Bold, TextAnchor.MiddleLeft, GetSlotStateColor(slotResult.State));
             }
         }
 
@@ -545,7 +556,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private RectTransform CreateTokenSurface(string name, Transform parent, string tokenText, Color color)
         {
-            var chip = CreateLayoutPanel(name, parent, color);
+            var chip = GhostUITheme.Chip(name, parent, color).rectTransform;
             AddOutline(chip.gameObject, new Color(0.78f, 0.70f, 0.88f, 0.72f), new Vector2(1.5f, -1.5f));
 
             var layout = GetOrAdd<HorizontalLayoutGroup>(chip.gameObject);
@@ -555,7 +566,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            var label = CreateText("ChipText", chip, tokenText, 17, FontStyle.Bold, TextAnchor.MiddleCenter, TextColor);
+            var label = GhostUITheme.Label("ChipText", chip, tokenText, GhostUITheme.BodySize, FontStyle.Bold, TextAnchor.MiddleCenter, GhostUITheme.Ink);
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             return chip;
@@ -563,7 +574,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
 
         private void CreateActionButtons(Transform parent)
         {
-            var row = CreateLayoutPanel("Action Buttons", parent, new Color(1f, 1f, 1f, 0f));
+            var row = GhostUITheme.Panel("Action Buttons", parent, new Color(1f, 1f, 1f, 0f)).rectTransform;
             var layoutElement = row.gameObject.AddComponent<LayoutElement>();
             layoutElement.minHeight = 58f;
             layoutElement.preferredHeight = 58f;
@@ -580,7 +591,7 @@ namespace Ghost.Presentation.Act2EntityExtraction
                 var runLabel = controller.LastOutcome != null && !controller.LastOutcome.IsSuccess
                     ? "Try again"
                     : "Go, Ghost!";
-                var run = CreateButton(row, runLabel, new Color(0.84f, 0.92f, 1f), 170f);
+                var run = GhostUITheme.PushButton(row, runLabel, new Color(0.84f, 0.92f, 1f), 170f);
                 run.onClick.AddListener(controller.RunErrand);
                 return;
             }
@@ -588,22 +599,33 @@ namespace Ghost.Presentation.Act2EntityExtraction
             if (controller.CurrentPhase == Act2ErrandPhase.Run && controller.LastOutcome != null && controller.LastOutcome.IsSuccess)
             {
                 var label = controller.CurrentErrandNumber == controller.ErrandCount ? "Complete" : "Next errand";
-                var next = CreateButton(row, label, new Color(0.78f, 0.94f, 0.80f), 170f);
+                var next = GhostUITheme.PushButton(row, label, new Color(0.78f, 0.94f, 0.80f), 170f);
                 next.onClick.AddListener(controller.ContinueAfterSuccess);
                 return;
             }
 
             if (controller.CurrentPhase == Act2ErrandPhase.Run)
             {
-                var revise = CreateButton(row, "Revise card", new Color(1f, 0.90f, 0.72f), 170f);
+                var revise = GhostUITheme.PushButton(row, "Revise card", new Color(1f, 0.90f, 0.72f), 170f);
                 revise.onClick.AddListener(controller.ReviseCurrentErrand);
                 return;
             }
 
             if (controller.CurrentPhase == Act2ErrandPhase.Complete)
             {
-                CreateText("Complete Text", row, "All errands pass the existing entity validator.", 16, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.14f, 0.46f, 0.24f));
+                var complete = GhostUITheme.PushButton(
+                    row,
+                    "Complete Act",
+                    new Color(0.78f, 0.94f, 0.80f),
+                    170f);
+                complete.onClick.AddListener(CompleteActAndReturnToHub);
             }
+        }
+
+        private static void CompleteActAndReturnToHub()
+        {
+            GhostNarrativeState.SetPendingDebriefAct(GhostNarrativeState.Act2Id);
+            SceneManager.LoadScene(ShellSceneNames.GameShellSceneName);
         }
 
         private void HandleSlotDrop(Act2ErrandSlotId slotId, string chipKey)
@@ -629,18 +651,18 @@ namespace Ghost.Presentation.Act2EntityExtraction
             return slot.EntityType.Category == EntityCategory.System ? SystemSlotColor : CustomSlotColor;
         }
 
-        private static Color GetSlotStateTextColor(Act2ErrandSlotState state)
+        private static Color GetSlotStateColor(Act2ErrandSlotState state)
         {
             switch (state)
             {
                 case Act2ErrandSlotState.Correct:
-                    return new Color(0.12f, 0.44f, 0.24f);
+                    return GhostUITheme.Good;
                 case Act2ErrandSlotState.Missing:
-                    return new Color(0.64f, 0.38f, 0.08f);
+                    return GhostUITheme.Bad;
                 case Act2ErrandSlotState.Wrong:
-                    return new Color(0.64f, 0.16f, 0.12f);
+                    return GhostUITheme.Bad;
                 default:
-                    return SubtleTextColor;
+                    return GhostUITheme.InkSoft;
             }
         }
 
@@ -695,59 +717,8 @@ namespace Ghost.Presentation.Act2EntityExtraction
             }
         }
 
-        private Button CreateButton(Transform parent, string labelText, Color color, float width)
-        {
-            var root = CreateLayoutPanel(labelText + " Button", parent, color);
-            AddOutline(root.gameObject, new Color(0.48f, 0.54f, 0.76f, 0.70f), new Vector2(2f, -2f));
 
-            var layoutElement = root.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minWidth = width;
-            layoutElement.preferredWidth = width;
-            layoutElement.minHeight = 42f;
 
-            var button = root.gameObject.AddComponent<Button>();
-            button.targetGraphic = root.GetComponent<Image>();
-
-            var label = CreateText("Button Text", root, labelText, 16, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.12f, 0.18f, 0.30f));
-            label.rectTransform.anchorMin = Vector2.zero;
-            label.rectTransform.anchorMax = Vector2.one;
-            label.rectTransform.offsetMin = Vector2.zero;
-            label.rectTransform.offsetMax = Vector2.zero;
-            return button;
-        }
-
-        private static RectTransform CreateLayoutPanel(string name, Transform parent, Color color)
-        {
-            var panel = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-            panel.SetParent(parent, false);
-            var image = panel.gameObject.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = color.a > 0.01f;
-            return panel;
-        }
-
-        private static Text CreateText(
-            string name,
-            Transform parent,
-            string value,
-            int fontSize,
-            FontStyle fontStyle,
-            TextAnchor alignment,
-            Color color)
-        {
-            var text = new GameObject(name, typeof(RectTransform)).AddComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.text = value ?? string.Empty;
-            text.font = GetBuiltinFont();
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.raycastTarget = false;
-            return text;
-        }
 
         private static T GetOrAdd<T>(GameObject target)
             where T : Component
@@ -817,15 +788,5 @@ namespace Ghost.Presentation.Act2EntityExtraction
             eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
 
-        private static Font GetBuiltinFont()
-        {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null)
-            {
-                return font;
-            }
-
-            return Resources.GetBuiltinResource<Font>("Arial.ttf");
-        }
     }
 }

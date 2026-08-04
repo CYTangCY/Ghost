@@ -1,0 +1,52 @@
+MSc FINAL REPORT COVER SHEET - READABLE FIELD SUMMARY
+
+Source file:
+  supplied/MSc Final Report Cover Sheet.doc
+
+Extraction note:
+  This is a best-effort plain-text summary of readable strings in the supplied legacy Word .doc file.
+  No legacy Word converter was installed, and Microsoft Word previously blocked this file type through Trust Center File Block.
+  The original binary file is preserved unchanged. This summary is not a replacement for checking the original cover or current KCL instructions.
+
+Module line:
+  7CCSMPRJ / 7CCSMCFP / 7CCSMDPJ / 7CCSMUIP (use the right module code)
+
+Heading:
+  Individual Project Submission 201X/1X
+
+Required fields:
+  Name
+  Student Number
+  Degree Programme
+  Project Title
+  Supervisor
+  Word count
+
+Release choice:
+  I agree to the release of my project
+  I do not agree to the release of my project
+
+Signature:
+  An e-signature is acceptable. The source says to attach a signature picture or use a drawing function.
+
+Date field:
+  Date
+
+Release statement:
+  Following submission, the Department would like to make the project publicly available through library electronic resources. The student retains copyright.
+
+Organisation text found in the source:
+  Faculty of Natural and Mathematical Sciences
+  Department of Informatics
+  Bush House, King's College London, Strand Campus, 30 Aldwych, London WC2B 4BG
+
+Items that require current student or KCL confirmation:
+  current academic year
+  correct module code
+  current faculty or department wording
+  current release terms
+  student details
+  supervisor
+  final word count
+  signature
+  date

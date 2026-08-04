@@ -93,6 +93,8 @@ namespace Ghost.Tests.EditMode
             session.AddTransition(ids.IntentBranchNodeId, ids.SlotCheckNodeId, DialogTransitionCondition.Always);
             session.AddTransition(ids.SlotCheckNodeId, ids.AnswerResponseNodeId, DialogTransitionCondition.SlotPresent);
             session.AddTransition(ids.SlotCheckNodeId, ids.AskForRoomResponseNodeId, DialogTransitionCondition.SlotMissing);
+            session.AddTransition(ids.StartNodeId, ids.OpeningHoursBranchNodeId, DialogTransitionCondition.Always);
+            session.AddTransition(ids.OpeningHoursBranchNodeId, ids.AnswerOpeningHoursNodeId, DialogTransitionCondition.Always);
 
             return ids;
         }
@@ -104,7 +106,9 @@ namespace Ghost.Tests.EditMode
                 session.AddNode(DialogNodeType.IntentBranch, intentId: Act3DialogGraphSampleData.FindObjectIntentId),
                 session.AddNode(DialogNodeType.SlotCheck, requiredEntityType: Act3DialogGraphSampleData.RoomEntityTypeId),
                 session.AddNode(DialogNodeType.Response, responseId: Act3DialogGraphSampleData.AnswerObjectLocationResponseId),
-                session.AddNode(DialogNodeType.Response, responseId: Act3DialogGraphSampleData.AskForRoomResponseId));
+                session.AddNode(DialogNodeType.Response, responseId: Act3DialogGraphSampleData.AskForRoomResponseId),
+                session.AddNode(DialogNodeType.IntentBranch, intentId: Act3DialogGraphSampleData.OpeningHoursIntentId),
+                session.AddNode(DialogNodeType.Response, responseId: Act3DialogGraphSampleData.AnswerOpeningHoursResponseId));
         }
 
         private static bool ContainsNode(DialogGraphSession session, string nodeId)
@@ -141,13 +145,17 @@ namespace Ghost.Tests.EditMode
                 string intentBranchNodeId,
                 string slotCheckNodeId,
                 string answerResponseNodeId,
-                string askForRoomResponseNodeId)
+                string askForRoomResponseNodeId,
+                string openingHoursBranchNodeId,
+                string answerOpeningHoursNodeId)
             {
                 StartNodeId = startNodeId;
                 IntentBranchNodeId = intentBranchNodeId;
                 SlotCheckNodeId = slotCheckNodeId;
                 AnswerResponseNodeId = answerResponseNodeId;
                 AskForRoomResponseNodeId = askForRoomResponseNodeId;
+                OpeningHoursBranchNodeId = openingHoursBranchNodeId;
+                AnswerOpeningHoursNodeId = answerOpeningHoursNodeId;
             }
 
             public string StartNodeId { get; }
@@ -159,6 +167,10 @@ namespace Ghost.Tests.EditMode
             public string AnswerResponseNodeId { get; }
 
             public string AskForRoomResponseNodeId { get; }
+
+            public string OpeningHoursBranchNodeId { get; }
+
+            public string AnswerOpeningHoursNodeId { get; }
         }
     }
 }

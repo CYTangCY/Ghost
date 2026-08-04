@@ -286,6 +286,8 @@ namespace Ghost.Presentation.Backend
             string message,
             IReadOnlyList<ChatHistoryItem> history,
             string playerName,
+            string stateSummary,
+            string trigger,
             Action<GhostBackendResponse<ChatResponse>> callback = null)
         {
             if (string.IsNullOrWhiteSpace(actId) || string.IsNullOrWhiteSpace(message))
@@ -309,6 +311,8 @@ namespace Ghost.Presentation.Backend
                     level = "1",
                     message = message.Trim(),
                     playerName = string.IsNullOrWhiteSpace(playerName) ? GhostNarrativeState.PlayerName : playerName.Trim(),
+                    stateSummary = stateSummary ?? string.Empty,
+                    trigger = string.IsNullOrWhiteSpace(trigger) ? "manual_ask_lily" : trigger.Trim(),
                     history = CopyChatHistory(history)
                 };
 
@@ -659,6 +663,8 @@ namespace Ghost.Presentation.Backend
         public string level = "1";
         public string message;
         public string playerName;
+        public string stateSummary;
+        public string trigger;
         public ChatHistoryItem[] history = new ChatHistoryItem[0];
     }
 
